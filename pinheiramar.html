@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Residencial PinheiraMar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#0D0D0D;--grey:#6B6B6B;--light:#F5F4F0;--border:#E2E0DB;
+  --accent:#C8A96E;--white:#fff;--ocean:#0E4A58;--coral:#E8744F;--coral-deep:#C85E3A;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--black);background:var(--white);-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+button,input,select{font-family:inherit}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px solid var(--border);height:64px}
+.hdr-in{max-width:1280px;margin:0 auto;padding:0 32px;height:100%;display:flex;align-items:center;gap:24px}
+.logo{text-decoration:none;display:flex;align-items:baseline;gap:1px;flex-shrink:0}
+.logo b{font-size:19px;font-weight:800;letter-spacing:-.04em;color:var(--black)}
+.logo i{font-size:19px;font-weight:300;letter-spacing:.06em;color:var(--accent);font-style:normal}
+.search-bar{flex:1;display:flex;align-items:stretch;height:44px;border:1px solid var(--border);max-width:680px;margin:0 auto}
+.seg{flex:1;padding:0 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:2px;position:relative}
+.seg:last-of-type{border-right:none}
+.seg-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grey)}
+.seg input,.seg-val{border:none;outline:none;background:transparent;font-size:14px;color:var(--black);width:100%;cursor:pointer}
+.seg-val{color:var(--grey)}
+.seg-val.filled{color:var(--black)}
+.srch-btn{padding:0 22px;background:var(--black);color:var(--white);border:none;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;transition:background .15s;flex-shrink:0}
+.srch-btn:hover{background:#333}
+.hdr-right{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.hdr-phone{font-size:13px;color:var(--grey)}
+
+/* guest dropdown */
+.guest-drop{display:none;position:absolute;top:calc(100% + 8px);left:-1px;right:-1px;background:var(--white);border:1px solid var(--border);padding:16px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.1)}
+.guest-drop.open{display:block}
+.guest-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.guest-row span{font-size:14px;font-weight:600}
+.spin-wrap{display:flex;align-items:center;gap:12px}
+.spin-btn{width:28px;height:28px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:16px;display:grid;place-items:center;color:var(--black)}
+.spin-btn:hover{background:var(--light)}
+.spin-val{font-weight:700;font-size:15px;min-width:20px;text-align:center}
+.confirm-btn{width:100%;padding:9px 0;background:var(--black);color:var(--white);border:none;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.04em}
+
+/* HERO */
+.hero{position:relative;height:clamp(480px,70vh,760px);overflow:hidden;display:flex;align-items:flex-end}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%}
+.hero-ov{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.04) 0%,rgba(0,0,0,.12) 35%,rgba(0,0,0,.72) 100%)}
+.hero-cnt{position:relative;max-width:1280px;width:100%;margin:0 auto;padding:0 32px 52px}
+.hero-eye{font-size:10.5px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:14px}
+.hero-h1{font-size:clamp(34px,4.5vw,58px);font-weight:800;line-height:1.02;letter-spacing:-.03em;color:#fff;margin-bottom:18px}
+.hero-h1 em{color:var(--accent);font-weight:300}
+.hero-p{font-size:15.5px;color:rgba(255,255,255,.82);line-height:1.7;margin-bottom:26px;max-width:420px}
+.hero-cta{display:inline-block;padding:13px 30px;background:#fff;color:var(--black);text-decoration:none;font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:background .15s;cursor:pointer;border:none}
+.hero-cta:hover{background:var(--light)}
+
+/* AMENITIES */
+.amen{border-bottom:1px solid var(--border);background:var(--white)}
+.amen-in{max-width:1280px;margin:0 auto;padding:14px 32px;display:flex;gap:36px;overflow-x:auto;scrollbar-width:none}
+.amen-in::-webkit-scrollbar{display:none}
+.amen-item{display:flex;align-items:center;gap:8px;flex-shrink:0;font-size:13.5px;color:var(--grey);font-weight:500}
+.amen-item svg{width:15px;height:15px;stroke:var(--grey);fill:none;stroke-width:2;flex-shrink:0}
+
+/* MAIN */
+.main{max-width:1280px;margin:0 auto;padding:56px 32px 80px}
+
+/* section header */
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:26px}
+.sec-title{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.sec-sub{font-size:14px;color:var(--grey);margin-top:4px}
+.sec-count{font-size:12px;color:var(--grey);letter-spacing:.08em;text-transform:uppercase}
+.section{margin-bottom:68px}
+
+/* featured frente mar */
+.fm-grid{display:grid;grid-template-columns:1.5fr 1fr;grid-template-rows:256px 256px;gap:6px;margin-bottom:6px}
+.fm-big{grid-row:1/3;position:relative;overflow:hidden;cursor:pointer;background:var(--light)}
+.fm-sm{position:relative;overflow:hidden;cursor:pointer;background:var(--light)}
+.fm-big img,.fm-sm img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+.fm-big:hover img,.fm-sm:hover img{transform:scale(1.04)}
+.fm-ov{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.65));padding:48px 22px 20px;color:#fff;pointer-events:none}
+.fm-ov-sm{padding:28px 18px 14px}
+.fm-tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.8;margin-bottom:6px}
+.fm-name{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.fm-name-sm{font-size:15px;font-weight:700}
+.fm-detail{font-size:13.5px;opacity:.82;margin-top:4px}
+
+/* cards */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:38px 26px}
+.cards-scroll{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.cards-scroll::-webkit-scrollbar{display:none}
+.card{display:flex;flex-direction:column;cursor:pointer}
+.card-img{position:relative;overflow:hidden;aspect-ratio:4/3;background:var(--light)}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.card:hover .card-img img{transform:scale(1.04)}
+.card-fm{position:absolute;bottom:10px;left:10px;background:rgba(10,30,40,.72);color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px}
+.card-unavail-ov{position:absolute;inset:0;background:rgba(255,255,255,.5);display:grid;place-items:center}
+.card-unavail-tag{background:var(--white);padding:5px 12px;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--grey);text-transform:uppercase;border:1px solid var(--border)}
+.card-body{padding-top:12px}
+.card-row{display:flex;justify-content:space-between;align-items:baseline}
+.card-name{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.card-cap{font-size:12.5px;color:var(--grey)}
+.card-sub{font-size:13px;color:var(--grey);margin-top:3px}
+.card-price{margin-top:9px}
+.card-price strong{font-size:17px;font-weight:700}
+.card-price span{font-size:12.5px;color:var(--grey)}
+.scroll-nav{display:flex;gap:6px}
+.scroll-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--white);cursor:pointer;display:grid;place-items:center;color:var(--grey);transition:border-color .15s}
+.scroll-btn:hover{border-color:var(--ocean);color:var(--ocean)}
+
+/* results */
+.results-head{margin-bottom:36px}
+.results-title{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.results-sub{font-size:14px;color:var(--grey);margin-top:5px}
+
+/* DESTINATION */
+.dest{background:var(--white);border-top:1px solid var(--border)}
+.dest-hero{position:relative;height:300px;overflow:hidden;background:linear-gradient(160deg,#0A3742 0%,#2E7E8C 60%,#5AAFBC 100%);display:flex;align-items:center;justify-content:center;text-align:center}
+.dest-hero-cnt{color:#fff;padding:0 24px}
+.dest-eye{font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;opacity:.75;margin-bottom:12px}
+.dest-h2{font-size:clamp(26px,4vw,44px);font-weight:800;letter-spacing:-.02em;margin-bottom:12px}
+.dest-p{font-size:15px;opacity:.85;max-width:540px;line-height:1.65;margin:0 auto}
+.wave{position:absolute;bottom:0;width:100%;height:60px}
+.dest-in{max-width:1160px;margin:0 auto;padding:0 32px 60px}
+.dest-tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:36px;overflow-x:auto;scrollbar-width:none}
+.dest-tabs::-webkit-scrollbar{display:none}
+.tab-btn{padding:14px 22px;border:none;background:none;cursor:pointer;font-size:15px;font-weight:500;color:var(--grey);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s}
+.tab-btn.active{font-weight:700;color:var(--ocean);border-bottom-color:var(--ocean)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.dest-2col{display:grid;grid-template-columns:1fr 1.6fr;gap:52px;align-items:start}
+.dest-h3{font-size:28px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.dest-accent{width:48px;height:3px;background:var(--accent);border-radius:2px;margin-bottom:18px}
+.dest-p2{font-size:15px;color:#555;line-height:1.75;margin-bottom:16px}
+.reasons{display:grid;gap:9px}
+.reason{display:flex;align-items:flex-start;gap:11px;padding:10px 13px;background:var(--light);font-size:14px;color:#333;line-height:1.5}
+.reason-ic{font-size:20px;flex-shrink:0}
+.attract-2col{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-bottom:32px}
+.attract-feat{padding:16px 18px;background:var(--light);border-left:4px solid var(--accent);margin-bottom:14px}
+.attract-feat h4{font-size:15px;font-weight:700;margin-bottom:5px}
+.attract-feat p{font-size:13.5px;color:#555;line-height:1.6}
+.attract-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.attract-card{padding:14px 16px;background:var(--light)}
+.attract-card h4{font-size:14.5px;font-weight:700;color:var(--ocean);margin-bottom:5px}
+.attract-card p{font-size:13px;color:#555;line-height:1.6}
+.map-box{overflow:hidden;border:1px solid var(--border)}
+.map-note{font-size:12.5px;color:var(--grey);margin-top:7px}
+.chegar-2col{display:grid;grid-template-columns:1fr 1.2fr;gap:44px;align-items:start}
+.chegar-cards{display:grid;gap:14px}
+.chegar-card{display:flex;gap:13px;padding:14px 16px;background:var(--light)}
+.chegar-ic{font-size:26px;flex-shrink:0}
+.chegar-card h4{font-size:14.5px;font-weight:700;margin-bottom:4px}
+.chegar-card p{font-size:13px;color:#555;line-height:1.6}
+.addr-box{padding:14px 16px;background:var(--light);font-size:13.5px;color:var(--black);line-height:1.8;margin-top:12px}
+.addr-box strong{display:block;margin-bottom:3px;font-size:14px}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);background:var(--light)}
+.footer-in{max-width:1280px;margin:0 auto;padding:44px 32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:36px}
+.footer-wm{display:flex;align-items:baseline;gap:1px;margin-bottom:11px}
+.footer-st{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--grey);margin-bottom:11px}
+.footer-txt{font-size:13px;color:var(--grey);line-height:1.9}
+.footer-copy{border-top:1px solid var(--border);padding:14px 32px;text-align:center;font-size:11.5px;color:var(--grey);letter-spacing:.04em}
+
+/* MODAL BACKDROP */
+.backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;padding:20px}
+.backdrop.open{display:flex}
+.modal{background:var(--white);width:100%;max-width:680px;max-height:90vh;overflow-y:auto;animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.modal-hdr{padding:24px 28px 0;position:relative}
+.modal-close{position:absolute;top:18px;right:20px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--grey);line-height:1;width:32px;height:32px;display:grid;place-items:center}
+.modal-close:hover{color:var(--black)}
+.modal-title{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+.modal-sub{font-size:13.5px;color:var(--grey);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.modal-body{padding:0 28px 24px}
+.modal-ftr{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:var(--light)}
+
+/* Extras step */
+.extra-item{border-bottom:1px solid var(--border);padding:18px 0}
+.extra-item:last-child{border-bottom:none}
+.extra-row{display:grid;grid-template-columns:96px 1fr auto;gap:0;align-items:start}
+.extra-thumb{width:92px;height:76px;overflow:hidden;background:var(--light);flex-shrink:0}
+.extra-thumb img{width:100%;height:100%;object-fit:cover}
+.extra-info{padding:0 16px}
+.extra-name{font-size:15px;font-weight:700;margin-bottom:3px}
+.extra-price{font-size:14px;font-weight:700;color:var(--ocean);margin-bottom:5px}
+.extra-desc{font-size:12.5px;color:var(--grey);line-height:1.55}
+.qty-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:82px}
+.qty-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grey)}
+.qty-spin{display:flex;align-items:center;border:1px solid var(--border);overflow:hidden}
+.qty-btn{width:30px;height:36px;border:none;background:var(--light);cursor:pointer;font-size:17px;display:grid;place-items:center;color:var(--grey)}
+.qty-btn:hover{background:var(--border)}
+.qty-num{width:36px;text-align:center;font-weight:700;font-size:15px;background:#fff}
+.qty-total{font-size:12px;font-weight:700;color:var(--ocean)}
+
+/* scope toggle */
+.scope-row{margin-top:10px;padding-left:108px}
+.scope-lbl{font-size:11.5px;color:var(--grey);margin-bottom:7px}
+.scope-btns{display:flex;gap:7px;flex-wrap:wrap}
+.scope-opt{padding:5px 12px;border:1px solid var(--border);font-size:12px;font-weight:500;background:var(--white);cursor:pointer;transition:all .15s;color:var(--grey)}
+.scope-opt.active{border-color:var(--ocean);background:#EEF6FF;color:var(--ocean);font-weight:700}
+.scope-hint{font-size:11.5px;margin-top:5px}
+.scope-hint.per-apt{color:var(--coral-deep);font-weight:600}
+.scope-hint.per-grp{color:var(--grey)}
+
+/* dados step */
+.book-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.field{margin-bottom:14px}
+.field-lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.field-lbl .req{color:var(--coral)}
+.field-hint{font-size:11px;color:var(--grey);margin-top:3px}
+.f-input{width:100%;padding:10px 13px;border:1px solid var(--border);font-size:14px;color:var(--black);outline:none;transition:border-color .15s;background:var(--white)}
+.f-input:focus{border-color:var(--ocean)}
+.read-box{padding:10px 13px;background:var(--light);border:1px solid var(--border);font-size:14px;font-weight:600;color:var(--black)}
+.guests-split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.guest-apt-lbl{font-size:12px;font-weight:700;color:var(--ocean);margin-bottom:4px}
+.guest-max{font-size:11px;color:var(--grey);margin-top:3px}
+.guest-total{display:flex;justify-content:space-between;padding:7px 11px;background:var(--light);font-size:13px;color:var(--grey);margin-top:8px}
+.combo-note{padding:10px 13px;background:#EEF6FF;border:1px solid #BDD9F8;font-size:13px;color:#1A4A7A;margin-bottom:14px;line-height:1.55}
+
+/* price summary */
+.price-box{background:var(--light);padding:18px;height:fit-content}
+.price-box-title{font-size:15px;font-weight:700;margin-bottom:12px}
+.price-apt-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--grey);margin-bottom:5px;margin-top:8px}
+.price-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13.5px;color:var(--grey)}
+.price-div{border-top:1px dashed #ccc;margin:8px 0}
+.price-total-row{display:flex;justify-content:space-between;font-weight:700;font-size:16px;border-top:1px solid var(--border);padding-top:10px;margin-top:6px}
+.price-sinal{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--coral-deep);margin-top:6px}
+.price-note{font-size:11.5px;color:var(--grey);margin-top:7px;line-height:1.5}
+.badge-obr{font-size:9px;font-weight:800;background:#1C7A5B;color:#fff;padding:1px 4px;border-radius:3px;margin-right:4px;vertical-align:middle}
+.badge-opc{font-size:9px;font-weight:800;background:#0E6A8C;color:#fff;padding:1px 4px;border-radius:3px;margin-right:4px;vertical-align:middle}
+.extras-sum{display:flex;justify-content:flex-end;gap:18px;padding:12px 0 0;font-size:14px}
+.extras-sum-val{font-weight:700;color:var(--ocean)}
+.extras-none{text-align:center;font-size:13.5px;color:var(--grey);padding:12px 0 0}
+
+/* buttons */
+.btn{padding:10px 20px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.03em}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--black)}
+.btn-ghost:hover{border-color:var(--black)}
+.btn-primary{background:var(--ocean);color:#fff}
+.btn-primary:hover{background:#0a3a47}
+.btn-confirm{background:var(--coral);color:#fff;width:100%;padding:14px;font-size:15px;font-weight:800;letter-spacing:.02em}
+.btn-confirm:hover{background:var(--coral-deep)}
+.btn-confirm:disabled{background:#ccc;cursor:not-allowed}
+.btn-back{background:none;border:1px solid var(--border);color:var(--black)}
+.btn-back:hover{border-color:var(--black)}
+
+/* success */
+.success-icon{font-size:52px;text-align:center;margin:8px 0 16px}
+.success-code{font-family:monospace;font-size:24px;font-weight:800;letter-spacing:.1em;text-align:center;color:var(--ocean);margin:8px 0 14px}
+.success-note{font-size:13.5px;color:#555;line-height:1.65;text-align:center}
+
+/* responsive */
+@media(max-width:900px){
+  .fm-grid{grid-template-columns:1fr;grid-template-rows:300px 200px 200px}
+  .fm-big{grid-row:auto}
+  .dest-2col,.attract-2col,.chegar-2col,.book-grid{grid-template-columns:1fr}
+  .hdr-phone{display:none}
+}
+@media(max-width:640px){
+  .hdr-in{padding:0 16px;gap:10px}
+  .main,.dest-in,.footer-in{padding-left:16px;padding-right:16px}
+  .hero-cnt{padding:0 16px 40px}
+  .seg:nth-child(3){display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-in">
+    <a href="#" class="logo"><b>PINHEIRA</b><i>MAR</i></a>
+    <div class="search-bar">
+      <div class="seg">
+        <div class="seg-lbl">Check-in</div>
+        <input type="date" id="ci" onchange="onDateChange()">
+      </div>
+      <div class="seg">
+        <div class="seg-lbl">Check-out</div>
+        <input type="date" id="co" onchange="onDateChange()">
+      </div>
+      <div class="seg" id="guest-seg" onclick="toggleGuests(event)">
+        <div class="seg-lbl">Quem</div>
+        <div class="seg-val" id="guest-display">Adicionar viajantes</div>
+        <div class="guest-drop" id="guest-drop" onclick="event.stopPropagation()">
+          <div class="guest-row">
+            <span>Hóspedes</span>
+            <div class="spin-wrap">
+              <button class="spin-btn" onclick="changeGuests(-1)">−</button>
+              <span class="spin-val" id="guest-val">—</span>
+              <button class="spin-btn" onclick="changeGuests(1)">+</button>
+            </div>
+          </div>
+          <button class="confirm-btn" onclick="confirmGuests()">Confirmar</button>
+        </div>
+      </div>
+      <button class="srch-btn" onclick="doSearch()">Procurar</button>
+    </div>
+    <div class="hdr-right">
+      <span class="hdr-phone">(48) 98476-1800</span>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80&auto=format&fit=crop&crop=center" alt="Praia da Pinheira">
+  <div class="hero-ov"></div>
+  <div class="hero-cnt">
+    <div class="hero-eye">Praia da Pinheira · Palhoça · Santa Catarina</div>
+    <h1 class="hero-h1">Apartamentos<br>à beira-mar,<br><em>do jeito certo.</em></h1>
+    <p class="hero-p">Apartamentos residenciais completos frente ao mar.</p>
+    <button class="hero-cta" onclick="document.getElementById('apts').scrollIntoView({behavior:'smooth'})">Ver Apartamentos</button>
+  </div>
+</section>
+
+<!-- AMENITIES -->
+<div class="amen">
+  <div class="amen-in">
+    <div class="amen-item"><svg viewBox="0 0 24 24"><path d="M2 12c5-5 13-5 18 0"/><path d="M6 16c2.5-2.5 9.5-2.5 12 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>Vista para o mar</div>
+    <div class="amen-item"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12" y2="20" stroke-width="3"/></svg>Wi-Fi incluído</div>
+    <div class="amen-item"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Estacionamento</div>
+    <div class="amen-item"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Cozinha completa</div>
+    <div class="amen-item"><svg viewBox="0 0 24 24"><path d="M3 7c.5-2 2.5-3 4-3h10c1.5 0 3.5 1 4 3"/><rect x="1" y="7" width="22" height="12" rx="1"/><path d="M1 15h22"/></svg>Apartamento privado</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main" id="apts">
+
+  <!-- search results -->
+  <div id="results-sec" style="display:none">
+    <div class="results-head">
+      <div class="results-title" id="results-title"></div>
+      <div class="results-sub" id="results-sub"></div>
+    </div>
+    <div class="cards-grid" id="results-grid"></div>
+  </div>
+
+  <!-- editorial home -->
+  <div id="home-sec">
+
+    <!-- Frente Mar -->
+    <div class="section">
+      <div class="sec-head">
+        <div><div class="sec-title">Frente Mar</div><div class="sec-sub">Vista privilegiada directamente para o mar</div></div>
+        <div class="sec-count">6 unidades</div>
+      </div>
+      <div class="fm-grid">
+        <div class="fm-big" onclick="openModal('a102')">
+          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&q=75&auto=format&fit=crop" alt="Apto 102" loading="lazy">
+          <div class="fm-ov"><div class="fm-tag">Destaque</div><div class="fm-name">Apto 102</div><div class="fm-detail">Térreo · até 4 pessoas · R$&nbsp;285/noite</div></div>
+        </div>
+        <div class="fm-sm" onclick="openModal('a207')">
+          <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=75&auto=format&fit=crop" alt="Apto 207" loading="lazy">
+          <div class="fm-ov fm-ov-sm"><div class="fm-name-sm">Apto 207</div><div class="fm-detail">1º Piso · até 8 pessoas · R$&nbsp;430/noite</div></div>
+        </div>
+        <div class="fm-sm" onclick="openModal('a315')">
+          <img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=600&q=75&auto=format&fit=crop" alt="Apto 315" loading="lazy">
+          <div class="fm-ov fm-ov-sm"><div class="fm-name-sm">Apto 315</div><div class="fm-detail">2º Piso · até 8 pessoas · R$&nbsp;450/noite</div></div>
+        </div>
+      </div>
+      <div id="fm-rest" class="cards-grid" style="margin-top:22px"></div>
+    </div>
+
+    <!-- All -->
+    <div class="section">
+      <div class="sec-head">
+        <div><div class="sec-title">Todos os apartamentos</div><div class="sec-sub">17 unidades na Praia da Pinheira</div></div>
+      </div>
+      <div class="cards-grid" id="all-grid"></div>
+    </div>
+  </div>
+</main>
+
+<!-- DESTINATION -->
+<section class="dest">
+  <div class="dest-hero">
+    <svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="#fff"/></svg>
+    <div class="dest-hero-cnt">
+      <div class="dest-eye">Praia da Pinheira · Palhoça · Santa Catarina</div>
+      <h2 class="dest-h2">Conheça a Pinheira e seus Encantos</h2>
+      <p class="dest-p">Uma das praias mais frequentadas da região de Florianópolis — tradição açoriana, piscinas naturais e o melhor do litoral catarinense.</p>
+    </div>
+  </div>
+  <div class="dest-in">
+    <div class="dest-tabs">
+      <button class="tab-btn active" onclick="showTab('destino',this)">A Pinheira</button>
+      <button class="tab-btn" onclick="showTab('atrativos',this)">Atrativos</button>
+      <button class="tab-btn" onclick="showTab('chegar',this)">Como chegar</button>
+    </div>
+    <div id="tab-destino" class="tab-pane active">
+      <div class="dest-2col">
+        <div>
+          <h3 class="dest-h3">Viva o Melhor da Vida</h3>
+          <div class="dest-accent"></div>
+          <p class="dest-p2">A Praia da Pinheira é uma das praias mais frequentadas da grande Florianópolis, recebendo visitantes de todos os estados do Brasil e estrangeiros.</p>
+          <p class="dest-p2">Localizada numa enseada a 35 km do centro e a 48 km de Florianópolis, é dividida em Praia de Baixo e Praia de Cima — em oposição uma a outra.</p>
+          <p class="dest-p2">O desenvolvimento chegou, mas a paz da convivência entre visitantes e nativos permanece, e os ranchos dos pescadores ainda caracterizam a praia.</p>
+        </div>
+        <div>
+          <h4 style="font-size:17px;font-weight:700;margin-bottom:13px;color:var(--black)">Por que escolher a Pinheira?</h4>
+          <div class="reasons">
+            <div class="reason"><span class="reason-ic">🌊</span>Praia de baixa agitação, perfeita para famílias com crianças</div>
+            <div class="reason"><span class="reason-ic">🐟</span>Pesca artesanal e gastronomia fresca todos os dias</div>
+            <div class="reason"><span class="reason-ic">🌅</span>Pôr do sol deslumbrante sobre o Pontão e as rochas</div>
+            <div class="reason"><span class="reason-ic">🏄</span>Praias vizinhas para surf, mergulho e trilhas</div>
+            <div class="reason"><span class="reason-ic">🛡️</span>Comunidade acolhedora e ambiente seguro</div>
+            <div class="reason"><span class="reason-ic">🏖️</span>A 2 km da mundialmente famosa Guarda do Embaú</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-atrativos" class="tab-pane">
+      <div class="attract-2col">
+        <div>
+          <h3 class="dest-h3">Atrativos e Passeios</h3>
+          <p class="dest-p2">A Enseada da Pinheira oferece experiências para todos os perfis — da praia deserta para surfistas ao passeio familiar.</p>
+          <div class="map-box"><iframe src="https://maps.google.com/maps?q=Praia+da+Pinheira,+Palhoça,+SC&output=embed&zoom=13" width="100%" height="230" style="border:0;display:block" loading="lazy"></iframe></div>
+          <p class="map-note">📍 Enseada da Pinheira — Palhoça, Santa Catarina</p>
+        </div>
+        <div>
+          <div class="attract-feat"><h4>Praia de Baixo ⭐</h4><p>7 km de enseada, águas calmas, perfeita para famílias e esportes aquáticos. Pesca artesanal com peixes frescos todos os dias.</p></div>
+          <div class="attract-feat"><h4>Guarda do Embaú ⭐</h4><p>A 2 km da Pinheira, na foz do Rio da Madre. Famosa em todo o Brasil por surfistas, artistas e modelos.</p></div>
+        </div>
+      </div>
+      <div class="attract-grid">
+        <div class="attract-card"><h4>Pontão da Pinheira</h4><p>Rochas com piscinas naturais formadas pelas marés. Ideal para banhos e pôr do sol.</p></div>
+        <div class="attract-card"><h4>Pedra do Urubu</h4><p>Vista panorâmica de toda a enseada, Praia do Sonho e Ponta dos Papagaios.</p></div>
+        <div class="attract-card"><h4>Praia de Cima</h4><p>Águas limpas, bares e restaurantes. Animação para os veranistas.</p></div>
+        <div class="attract-card"><h4>Prainha</h4><p>Praia deserta com ondas para surfistas. Águas agitadas e cristalinas.</p></div>
+        <div class="attract-card"><h4>Praia do Maço</h4><p>Deserta, acessada por trilhas. Para quem busca natureza selvagem.</p></div>
+        <div class="attract-card"><h4>Serra do Tabuleiro</h4><p>Parque estadual com trilhas guiadas e fauna e flora nativas.</p></div>
+      </div>
+    </div>
+    <div id="tab-chegar" class="tab-pane">
+      <div class="chegar-2col">
+        <div class="chegar-cards">
+          <div class="chegar-card"><span class="chegar-ic">✈️</span><div><h4>De avião</h4><p>Aeroporto Hercílio Luz (Florianópolis) — 48 km. Aluguer de carro ou transfer privado.</p></div></div>
+          <div class="chegar-card"><span class="chegar-ic">🚗</span><div><h4>De carro</h4><p>BR-101 Sul → SC-282 → Palhoça → Praia da Pinheira. GPS: "Residencial PinheiraMar".</p></div></div>
+          <div class="chegar-card"><span class="chegar-ic">🚌</span><div><h4>De ônibus</h4><p>Terminal de Florianópolis → Palhoça → van/mototáxi. Aprox. 1h30.</p></div></div>
+          <div class="chegar-card"><span class="chegar-ic">📍</span><div><h4>Distâncias</h4><p>Centro Florianópolis: 35 km · Aeroporto: 48 km · Guarda do Embaú: 2 km.</p></div></div>
+        </div>
+        <div>
+          <div class="map-box"><iframe src="https://maps.google.com/maps?q=Praia+da+Pinheira+Palhoca+SC+Brasil&output=embed&zoom=14" width="100%" height="300" style="border:0;display:block" loading="lazy"></iframe></div>
+          <div class="addr-box"><strong>Endereço</strong>Rua Dom Patrício, 82 — Praia da Pinheira<br>Palhoça · Santa Catarina · CEP 88.139-427<br><span style="display:flex;align-items:center;gap:6px;margin-top:7px">📞 (48) 98476-1800</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-in">
+    <div><div class="footer-wm"><b class="logo" style="font-size:16px"><b>PINHEIRA</b><i style="font-weight:300;letter-spacing:.06em;color:var(--accent);font-style:normal">MAR</i></b></div><p class="footer-txt">Rua Dom Patrício, 82<br>Praia da Pinheira · Palhoça — SC</p></div>
+    <div><div class="footer-st">Contacto</div><p class="footer-txt">(48) 98476-1800<br>contato@pinheiramar.com.br<br>www.pinheiramar.com.br</p></div>
+    <div><div class="footer-st">Horários</div><p class="footer-txt">Check-in — a partir das 13:00<br>Check-out — até às 10:00</p></div>
+    <div><div class="footer-st">Como chegar</div><p class="footer-txt">35 km de Florianópolis<br>48 km do Aeroporto<br>BR-101 → Palhoça → Pinheira</p></div>
+  </div>
+  <div class="footer-copy">© 2026 RESIDENCIAL PINHEIRAMAR — TODOS OS DIREITOS RESERVADOS</div>
+</footer>
+
+<!-- BOOKING MODAL -->
+<div class="backdrop" id="modal-backdrop" onclick="handleBackdropClick(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-sub" id="modal-sub"></div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-ftr" id="modal-ftr"></div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="backdrop" id="success-backdrop" onclick="this.classList.remove('open')">
+  <div class="modal" style="max-width:440px" onclick="event.stopPropagation()">
+    <div class="modal-hdr"><button class="modal-close" onclick="document.getElementById('success-backdrop').classList.remove('open')">×</button></div>
+    <div class="modal-body" style="text-align:center;padding-top:8px">
+      <div class="success-icon">✅</div>
+      <div class="modal-title" style="text-align:center">Reserva recebida!</div>
+      <p style="color:var(--grey);font-size:14px;margin:8px 0 4px">Código de reserva:</p>
+      <div class="success-code" id="success-code"></div>
+      <p class="success-note">Entraremos em contacto por email e WhatsApp para confirmar o pagamento do sinal.</p>
+    </div>
+    <div class="modal-ftr" style="justify-content:center">
+      <button class="btn btn-confirm" style="width:auto;padding:10px 32px" onclick="document.getElementById('success-backdrop').classList.remove('open')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const APTS = [
+  {id:'a101',nome:'Apto 101',piso:'Térreo',  vista:'Beira-mar', cap:4,preco:245},
+  {id:'a102',nome:'Apto 102',piso:'Térreo',  vista:'Frente Mar',cap:4,preco:285},
+  {id:'a114',nome:'Apto 114',piso:'Térreo',  vista:'Beira-mar', cap:6,preco:320},
+  {id:'a118',nome:'Apto 118',piso:'1º Piso', vista:'Beira-mar', cap:2,preco:180},
+  {id:'a203',nome:'Apto 203',piso:'1º Piso', vista:'Beira-mar', cap:4,preco:250},
+  {id:'a204',nome:'Apto 204',piso:'1º Piso', vista:'Frente Mar',cap:4,preco:290},
+  {id:'a206',nome:'Apto 206',piso:'1º Piso', vista:'Beira-mar', cap:6,preco:330},
+  {id:'a207',nome:'Apto 207',piso:'1º Piso', vista:'Frente Mar',cap:8,preco:430},
+  {id:'a209',nome:'Apto 209',piso:'1º Piso', vista:'Beira-mar', cap:4,preco:250},
+  {id:'a210',nome:'Apto 210',piso:'1º Piso', vista:'Beira-mar', cap:4,preco:250},
+  {id:'a211',nome:'Apto 211',piso:'1º Piso', vista:'Beira-mar', cap:2,preco:190},
+  {id:'a212',nome:'Apto 212',piso:'1º Piso', vista:'Beira-mar', cap:2,preco:190},
+  {id:'a305',nome:'Apto 305',piso:'2º Piso', vista:'Frente Mar',cap:4,preco:300},
+  {id:'a313',nome:'Apto 313',piso:'2º Piso', vista:'Beira-mar', cap:8,preco:420},
+  {id:'a315',nome:'Apto 315',piso:'2º Piso', vista:'Frente Mar',cap:8,preco:450},
+  {id:'a316',nome:'Apto 316',piso:'2º Piso', vista:'Beira-mar', cap:6,preco:340},
+  {id:'a317',nome:'Apto 317',piso:'2º Piso', vista:'Beira-mar', cap:6,preco:340},
+];
+const TAXAS_OBR = [
+  {id:'tx1',nome:'Higienização e Serviços de Hospedagem',preco:175},
+  {id:'tx2',nome:'Vaga de Estacionamento p/ 1 Automóvel (taxa única)',preco:50},
+];
+const TAXAS_OPC = [
+  {id:'tx3',nome:'Quero levar meu Pet (taxa única)',preco:200,
+   desc:'Cães e Gatos acima de 6 meses e de pequeno porte (até 10 kg). Taxa única por pet, limitado a 2 pets por apartamento.',
+   img:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=120&q=70&auto=format&fit=crop',
+   defaultScope:'hospede'},
+  {id:'tx4',nome:'Kit Praia (2 cadeiras + 1 Guarda Sol)',preco:75,
+   desc:'Taxa única para o período hospedado. Os itens devem ser devolvidos nas mesmas condições.',
+   img:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=120&q=70&auto=format&fit=crop',
+   defaultScope:'hospede'},
+  {id:'tx5',nome:'Vaga Adicional de Estacionamento',preco:50,
+   desc:'Vaga adicional sujeita a disponibilidade. Confirmada no check-in.',
+   img:'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=120&q=70&auto=format&fit=crop',
+   defaultScope:'apartamento'},
+];
+const IMGS = [
+  'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=600&q=75&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=75&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=75&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=600&q=75&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=600&q=75&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=600&q=75&auto=format&fit=crop',
+];
+const imgFor = id => IMGS[id.charCodeAt(id.length-1) % IMGS.length];
+const R = v => 'R$\u00a0'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+const nights = (a,b) => Math.round((new Date(b)-new Date(a))/(864e5));
+const fmtD = s => { const d=new Date(s+'T12:00:00'); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); };
+
+// ── STATE ──
+let guestCount=0, currentApt=null, currentApt2=null;
+let qtds={}, scopes={};
+
+// ── SEARCH ──
+function onDateChange(){
+  const ci=document.getElementById('ci').value, co=document.getElementById('co').value;
+  if(ci && co && nights(ci,co)>=1){
+    const n=nights(ci,co);
+    const ciEl=document.getElementById('ci'), coEl=document.getElementById('co');
+    coEl.min=new Date(new Date(ci).getTime()+864e5).toISOString().split('T')[0];
+  }
+}
+function toggleGuests(e){
+  e.stopPropagation();
+  document.getElementById('guest-drop').classList.toggle('open');
+}
+function changeGuests(d){
+  guestCount=Math.max(0,guestCount+d);
+  document.getElementById('guest-val').textContent=guestCount||'—';
+}
+function confirmGuests(){
+  document.getElementById('guest-drop').classList.remove('open');
+  document.getElementById('guest-display').textContent=guestCount>0?`${guestCount} hóspede${guestCount>1?'s':''}` :'Adicionar viajantes';
+  document.getElementById('guest-display').className='seg-val'+(guestCount>0?' filled':'');
+}
+document.addEventListener('click',e=>{
+  if(!document.getElementById('guest-seg').contains(e.target)) document.getElementById('guest-drop').classList.remove('open');
+});
+function doSearch(){
+  const ci=document.getElementById('ci').value, co=document.getElementById('co').value;
+  if(!ci||!co||nights(ci,co)<1){alert('Por favor selecione datas válidas.');return;}
+  const n=nights(ci,co);
+  document.getElementById('home-sec').style.display='none';
+  document.getElementById('results-sec').style.display='block';
+  const avail=APTS.filter(a=>!guestCount||a.cap>=guestCount);
+  const unavail=APTS.filter(a=>guestCount&&a.cap<guestCount);
+  document.getElementById('results-title').textContent=`${avail.length} apartamento${avail.length!==1?'s disponíveis':' disponível'}`;
+  document.getElementById('results-sub').textContent=`${fmtD(ci)} — ${fmtD(co)}${guestCount?` · ${guestCount} hóspede${guestCount>1?'s':''}`:''} · ${n} noite${n>1?'s':''}`;
+  document.getElementById('results-grid').innerHTML=[
+    ...avail.map(a=>cardHTML(a,true,a.preco*n,n)),
+    ...unavail.map(a=>cardHTML(a,false,0,n))
+  ].join('');
+  document.getElementById('results-sec').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cardHTML(a,avail,total,n){
+  const fm=a.vista==='Frente Mar';
+  const rate=total&&n?Math.round(total/n):a.preco;
+  return `<div class="card${!avail?' card-unavail':''}" onclick="${avail?`openModal('${a.id}')`:''}" style="${avail?'':'cursor:default'}">
+    <div class="card-img">
+      <img src="${imgFor(a.id)}" alt="${a.nome}" loading="lazy">
+      ${!avail?'<div class="card-unavail-ov"><span class="card-unavail-tag">INDISPONÍVEL</span></div>':''}
+      ${fm?'<div class="card-fm">FRENTE MAR</div>':''}
+    </div>
+    <div class="card-body">
+      <div class="card-row"><div class="card-name">${a.nome}</div><div class="card-cap">até ${a.cap} hósp.</div></div>
+      <div class="card-sub">${a.piso} · ${a.vista}</div>
+      ${total&&n?`<div class="card-sub" style="margin-top:3px">Total ${R(total+225)} · ${n} noite${n>1?'s':''}</div>`:''}
+      <div class="card-price"><strong>${R(rate)}</strong> <span>/noite</span></div>
+    </div>
+  </div>`;
+}
+
+// ── HOME RENDER ──
+(function(){
+  const fmRest=APTS.filter(a=>a.vista==='Frente Mar'&&!['a102','a207','a315'].includes(a.id));
+  document.getElementById('fm-rest').innerHTML=fmRest.map(a=>cardHTML(a,true,0,0)).join('');
+  document.getElementById('all-grid').innerHTML=APTS.map(a=>cardHTML(a,true,0,0)).join('');
+})();
+
+// ── MODAL ──
+function openModal(id){
+  currentApt=APTS.find(a=>a.id===id);
+  currentApt2=null;
+  qtds=Object.fromEntries(TAXAS_OPC.map(t=>[t.id,0]));
+  scopes=Object.fromEntries(TAXAS_OPC.map(t=>[t.id,t.defaultScope]));
+  if(!currentApt)return;
+  renderExtrasStep();
+  document.getElementById('modal-backdrop').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  document.getElementById('modal-backdrop').classList.remove('open');
+  document.body.style.overflow='';
+  currentApt=null; currentApt2=null;
+}
+function handleBackdropClick(e){
+  if(e.target===document.getElementById('modal-backdrop'))closeModal();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ── EXTRAS STEP ──
+function renderExtrasStep(){
+  if(!currentApt)return;
+  document.getElementById('modal-title').textContent='Adicionar opções extras';
+  document.getElementById('modal-sub').textContent=
+    `${currentApt.nome}${currentApt2?' + '+currentApt2.nome:''} · `+
+    (document.getElementById('ci').value?fmtD(document.getElementById('ci').value)+' – '+fmtD(document.getElementById('co').value):'selecione datas');
+
+  let html='<div>';
+  TAXAS_OPC.forEach(tx=>{
+    const q=qtds[tx.id]||0;
+    const sc=scopes[tx.id];
+    const hasApt2=!!currentApt2;
+    html+=`<div class="extra-item" id="extra-${tx.id}">
+      <div class="extra-row">
+        <div class="extra-thumb"><img src="${tx.img}" alt="${tx.nome}" onerror="this.style.display='none'"></div>
+        <div class="extra-info">
+          <div class="extra-name">${tx.nome}</div>
+          <div class="extra-price">${R(tx.preco)}</div>
+          <div class="extra-desc">${tx.desc}</div>
+        </div>
+        <div class="qty-wrap">
+          <div class="qty-lbl">Quantidade</div>
+          <div class="qty-spin">
+            <button class="qty-btn" onclick="changeQty('${tx.id}',-1)">−</button>
+            <div class="qty-num" id="qty-${tx.id}">${q}</div>
+            <button class="qty-btn" onclick="changeQty('${tx.id}',1)">+</button>
+          </div>
+          ${q>0?`<div class="qty-total">${R(tx.preco*q)}</div>`:''}
+        </div>
+      </div>
+      ${hasApt2&&q>0?`
+      <div class="scope-row">
+        <div class="scope-lbl">Este serviço aplica-se a:</div>
+        <div class="scope-btns">
+          <button class="scope-opt${sc==='hospede'?' active':''}" onclick="setScope('${tx.id}','hospede')">👥 Grupo inteiro <span style="opacity:.7">(cobrado uma vez)</span></button>
+          <button class="scope-opt${sc==='apartamento'?' active':''}" onclick="setScope('${tx.id}','apartamento')">🏠 Por apartamento <span style="opacity:.7">(cobrado em cada)</span></button>
+        </div>
+        <div class="scope-hint${sc==='apartamento'?' per-apt':' per-grp'}" id="scope-hint-${tx.id}">
+          ${sc==='apartamento'?`→ ${R(tx.preco*q)} × 2 apartamentos = ${R(tx.preco*q*2)}`:`→ ${R(tx.preco*q)} cobrado uma vez para todo o grupo`}
+        </div>
+      </div>`:''}
+    </div>`;
+  });
+  // summary
+  const selectedTotal=TAXAS_OPC.filter(t=>(qtds[t.id]||0)>0).reduce((s,t)=>{
+    const q=qtds[t.id]; const sc=scopes[t.id];
+    return s+t.preco*q*(currentApt2&&sc==='apartamento'?2:1);
+  },0);
+  html+=selectedTotal>0
+    ?`<div class="extras-sum"><span style="color:var(--grey)">Extras opcionais seleccionados:</span><span class="extras-sum-val">${R(selectedTotal)}</span></div>`
+    :`<div class="extras-none">Nenhum extra seleccionado — pode continuar sem adicionar.</div>`;
+  html+='</div>';
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal-ftr').innerHTML=`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="renderDadosStep()">Continuar →</button>`;
+}
+function changeQty(id,d){
+  qtds[id]=Math.max(0,(qtds[id]||0)+d);
+  renderExtrasStep();
+}
+function setScope(id,sc){
+  scopes[id]=sc;
+  renderExtrasStep();
+}
+
+// ── DADOS STEP ──
+function renderDadosStep(){
+  if(!currentApt)return;
+  const ci=document.getElementById('ci').value, co=document.getElementById('co').value;
+  const n=(ci&&co&&nights(ci,co)>=1)?nights(ci,co):0;
+  const apt=currentApt, apt2=currentApt2;
+
+  // compute totals
+  const obr=TAXAS_OBR.reduce((s,t)=>s+t.preco,0);
+  const opcApt1=TAXAS_OPC.filter(t=>(qtds[t.id]||0)>0).reduce((s,t)=>s+t.preco*(qtds[t.id]||0),0);
+  const opcApt2=apt2?TAXAS_OPC.filter(t=>(qtds[t.id]||0)>0&&scopes[t.id]==='apartamento').reduce((s,t)=>s+t.preco*(qtds[t.id]||0),0):0;
+  const subtotal1=n?apt.preco*n:apt.preco;
+  const subtotal2=apt2&&n?apt2.preco*n:0;
+  const total1=subtotal1+obr+opcApt1;
+  const total2=apt2?subtotal2+obr+opcApt2:0;
+  const totalC=total1+(apt2?total2:0);
+  const sinal=Math.round(totalC*0.5);
+
+  // price summary html
+  let priceHtml=`<div class="price-box-title">Resumo de preços</div>`;
+  const pRow=(lbl,val,badge='')=>`<div class="price-row"><span>${badge}${lbl}</span><span>${R(val)}</span></div>`;
+  const bObr=`<span class="badge-obr">OBR</span>`;
+  const bOpc=`<span class="badge-opc">OPC</span>`;
+  if(apt2) priceHtml+=`<div class="price-apt-lbl">${apt.nome}</div>`;
+  if(n) priceHtml+=pRow(`${R(apt.preco)}/noite × ${n} noite${n>1?'s':''}`,subtotal1);
+  TAXAS_OBR.forEach(t=>priceHtml+=pRow(t.nome,t.preco,bObr));
+  TAXAS_OPC.filter(t=>(qtds[t.id]||0)>0).forEach(t=>{
+    const q=qtds[t.id]; const sc=scopes[t.id];
+    const lbl=t.nome+(q>1?` ×${q}`:'')+(apt2&&sc==='hospede'?' (grupo)':'');
+    priceHtml+=pRow(lbl,t.preco*q,bOpc);
+  });
+  if(apt2&&n){
+    priceHtml+=`<div class="price-div"></div><div class="price-apt-lbl">${apt2.nome}</div>`;
+    priceHtml+=pRow(`${R(apt2.preco)}/noite × ${n} noite${n>1?'s':''}`,subtotal2);
+    TAXAS_OBR.forEach(t=>priceHtml+=pRow(t.nome,t.preco,bObr));
+    TAXAS_OPC.filter(t=>(qtds[t.id]||0)>0&&scopes[t.id]==='apartamento').forEach(t=>{
+      priceHtml+=pRow(t.nome+(qtds[t.id]>1?` ×${qtds[t.id]}`:''),t.preco*(qtds[t.id]||0),bOpc);
+    });
+    if(TAXAS_OPC.filter(t=>(qtds[t.id]||0)>0&&scopes[t.id]==='hospede').length>0)
+      priceHtml+=`<div class="price-row" style="font-style:italic"><span>Extras de grupo incluídos no ${apt.nome}</span><span></span></div>`;
+  }
+  priceHtml+=`<div class="price-total-row"><span>Total${apt2?' combinado':''}</span><span>${R(totalC)}</span></div>`;
+  priceHtml+=`<div class="price-sinal"><span>Sinal (50%)</span><span>${R(sinal)}</span></div>`;
+  if(apt2) priceHtml+=`<div class="price-note">Uma reserva por apartamento, mesmo hóspede e datas.</div>`;
+
+  // guest fields
+  const guestFields = apt2
+    ? `<div style="margin-bottom:14px">
+        <div class="field-lbl" style="margin-bottom:10px">Hóspedes por apartamento</div>
+        <div class="guests-split">
+          <div>
+            <div class="guest-apt-lbl">${apt.nome}</div>
+            <input type="number" class="f-input" id="g1" min="1" max="${apt.cap}" value="${Math.min(guestCount||2,apt.cap)}">
+            <div class="guest-max">Máx. ${apt.cap} pessoas</div>
+          </div>
+          <div>
+            <div class="guest-apt-lbl">${apt2.nome}</div>
+            <input type="number" class="f-input" id="g2" min="1" max="${apt2.cap}" value="${Math.min(guestCount||2,apt2.cap)}">
+            <div class="guest-max">Máx. ${apt2.cap} pessoas</div>
+          </div>
+        </div>
+        <div class="guest-total" id="guest-total-row">
+          <span>Total de hóspedes</span>
+          <strong id="guest-total-val">${Math.min(guestCount||2,apt.cap)+Math.min(guestCount||2,apt2.cap)} pessoas</strong>
+        </div>
+      </div>`
+    : `<div class="field"><div class="field-lbl">Hóspedes</div>
+        <input type="number" class="f-input" id="g1" min="1" max="${apt.cap}" value="${Math.min(guestCount||2,apt.cap)}">
+        <div class="field-hint">Máx. ${apt.cap} pessoas</div></div>`;
+
+  document.getElementById('modal-title').textContent=apt2?`Reservar ${apt.nome} + ${apt2.nome}`:`Reservar ${apt.nome}`;
+  document.getElementById('modal-sub').textContent=apt2?`Reserva conjunta · ${apt.piso} + ${apt2.piso}`:`${apt.piso} · ${apt.vista}`;
+  document.getElementById('modal-body').innerHTML=`
+    <div class="book-grid">
+      <div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div><div class="field-lbl">Check-in</div><div class="read-box">${ci?fmtD(ci):'—'}</div></div>
+          <div><div class="field-lbl">Check-out</div><div class="read-box">${co?fmtD(co):'—'}</div></div>
+        </div>
+        <div class="field"><div class="field-lbl">Nome completo <span class="req">*</span></div><input type="text" class="f-input" id="b-nome" placeholder="Como no documento"></div>
+        <div class="field"><div class="field-lbl">Email <span class="req">*</span></div><input type="email" class="f-input" id="b-email" placeholder="email@exemplo.com"></div>
+        <div class="field"><div class="field-lbl">Telefone</div><input type="tel" class="f-input" id="b-tel" placeholder="(00) 00000-0000"></div>
+        ${guestFields}
+        ${apt2?`<div class="combo-note"><b>Reserva conjunta:</b> serão criadas duas reservas com o mesmo hóspede — ${apt.nome} e ${apt2.nome}.</div>`:''}
+      </div>
+      <div class="price-box">${priceHtml}</div>
+    </div>`;
+  if(apt2){
+    ['g1','g2'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.addEventListener('input',()=>{
+        const v1=parseInt(document.getElementById('g1')?.value)||0;
+        const v2=parseInt(document.getElementById('g2')?.value)||0;
+        const tot=document.getElementById('guest-total-val');
+        if(tot) tot.textContent=`${v1+v2} pessoa${v1+v2!==1?'s':''}`;
+      });
+    });
+  }
+  document.getElementById('modal-ftr').innerHTML=`
+    <button class="btn btn-back" onclick="renderExtrasStep()">← Extras</button>
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-confirm" style="width:auto;padding:10px 28px" id="confirm-btn" onclick="confirmReservation()">Confirmar reserva</button>`;
+}
+
+function confirmReservation(){
+  const nome=document.getElementById('b-nome')?.value.trim();
+  const email=document.getElementById('b-email')?.value.trim();
+  if(!nome||!email){alert('Por favor preencha nome e email.');return;}
+  const code='PM'+Math.random().toString(36).toUpperCase().slice(2,8);
+  document.getElementById('success-code').textContent=
+    currentApt2?`${code} · ${code}-B`:code;
+  closeModal();
+  document.getElementById('success-backdrop').classList.add('open');
+}
+
+// ── TABS ──
+function showTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

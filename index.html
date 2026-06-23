@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Residencial PinheiraMar — apartamentos à beira mar na Praia da Pinheira, SC." />
+    <title>PinheiraMar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; background: #fff; }
+      input, select, textarea, button { font-family: inherit; }
+
+      /* Global form field style */
+      .pmf { transition: border-color .18s; }
+      .pmf:focus { border-color: #2E7E8C !important; box-shadow: 0 0 0 3px rgba(46,126,140,.13); }
+
+      /* Animations */
+      @keyframes pm-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+      @keyframes pm-pop  { from { opacity: 0; transform: scale(.93); } to { opacity: 1; transform: scale(1); } }
+      .pm-fade { animation: pm-fade .3s ease both; }
+      .pm-pop  { animation: pm-pop  .22s cubic-bezier(.34,1.56,.64,1) both; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
