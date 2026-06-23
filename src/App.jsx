@@ -20,7 +20,8 @@ export default function App() {
     })();
     return () => { alive = false; };
   }, []);
-
+ 
+  // update data and persist to localStorage
   const update = (arg) => setData(prev => { const next = typeof arg === 'function' ? arg(prev) : { ...prev, ...arg }; saveData(next); return next; });
   const createReservation = (r) => update(prev => ({ ...prev, reservas: [...prev.reservas, r] }));
 
