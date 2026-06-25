@@ -1,15 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Waves, MapPin, Phone, Mail, Search, CalendarDays, ChevronDown,
-  Heart, ArrowRight } from 'lucide-react';
+  Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Wifi, Car, Users,
+  BedDouble } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
-  stayBreakdown, nights } from '../../lib/helpers';
+  stayBreakdown, nights, fmtShort } from '../../lib/helpers';
 import { useT } from '../../lib/translations';
 import { Btn, PhotoTile, Field } from '../../components/ui';
 import { AptDetailPage } from './AptDetailPage';
 import { AptCard } from './AptCard';
 import { Section } from './Section';
 import { DestinoSection } from './DestinoSection';
+import { BookingModal } from '../../components/BookingModal';
+import { ConfirmationModal } from '../../components/ConfirmationModal';
 
 export function PublicSite({ data, onCreate }) {
   const td = today();

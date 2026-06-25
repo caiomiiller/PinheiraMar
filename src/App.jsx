@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Home, Settings, Waves } from 'lucide-react';
 import { C, F } from './lib/constants';
-import { loadData, saveData, STORE_KEY } from './lib/seed';
+import { loadData, saveData, STORE_KEY, seedData } from './lib/seed';
 import { PublicSite } from './views/public/PublicSite';
 import { Admin } from './views/admin/Admin';
 import { LoginScreen } from './views/admin/Admin';

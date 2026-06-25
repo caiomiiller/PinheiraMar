@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Car, Users,
-  AlertCircle, CalendarDays, Check, Info, Waves } from 'lucide-react';
+  AlertCircle, CalendarDays, Check, Info, Waves, Star, MapPin, Home, Phone,
+  Mail, X } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, addDays, fmtShort, fmtLong, WD,
   isAvailable, stayBreakdown, nightlyRate, seasonForDate } from '../../lib/helpers';

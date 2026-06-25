@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertCircle } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, uid } from '../../lib/helpers';
-import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select } from '../../components/ui';
+import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, DragGrip, MoneyInput } from '../../components/ui';
+import { useReorder } from '../../hooks/useReorder';
+import { iconBtn } from './Reservations';
 
 export function TaxasView({ data, update }) {
   const taxas = data.taxasAdicionais || [];

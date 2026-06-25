@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Check } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { Card, PageHead, Btn } from '../../components/ui';
 import { PolicyBlock } from '../../components/PolicyBlock';
@@ -110,8 +110,8 @@ export function PoliticasView({ data, update }) {
         action={
           <div style={{ display: 'flex', gap: 10 }}>
             <Btn variant="ghost" onClick={() => {
-              setReservas(saved0.reservas || defaultPoliticas.reservas);
-              setCancelamento(saved0.cancelamento || defaultPoliticas.cancelamento);
+              setReservas(merge('reservas'));
+              setCancelamento(merge('cancelamento'));
               setSaved(false);
             }}>Cancelar</Btn>
             <Btn variant="primary" icon={saved ? Check : undefined} onClick={onSave}>

@@ -3,6 +3,8 @@ import { Check, X, ChevronLeft, ChevronRight, Waves, MapPin, GripVertical,
   AlertCircle, BedDouble, Wifi, Car, Minus, Plus, Info } from 'lucide-react';
 import { C, F } from '../lib/constants';
 
+const inputStyle = { width: '100%', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontSize: '14px', outline: 'none', fontFamily: F.sans };
+
 export const TextInput = (p) => <input {...p} className="pmf" style={{ ...inputStyle, ...(p.style || {}) }} />;
 export const DateInput = (p) => <input type="date" {...p} className="pmf" style={{ ...inputStyle, ...(p.style || {}) }} />;
 export const NumberInput = (p) => <input type="number" {...p} className="pmf" style={{ ...inputStyle, ...(p.style || {}) }} />;

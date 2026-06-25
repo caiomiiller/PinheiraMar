@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Pencil, Trash2, AlertCircle, Plus } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { Card, PageHead, Btn } from '../../components/ui';
+import { Card, PageHead, Btn, Modal, Field, TextInput } from '../../components/ui';
+import { TRANSLATIONS } from '../../lib/translations';
+import { iconBtn } from './Reservations';
 
 export const IDIOMAS_DISPONIVEIS = [
   { codigo: 'pt', nome: 'Português', nativo: 'Português', bandeira: '🇧🇷' },

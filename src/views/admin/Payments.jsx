@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { CreditCard, Check, X, ExternalLink } from 'lucide-react';
+import { CreditCard, Check, X, ExternalLink, Star, Copy, Trash2, Database } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { Card, PageHead, Btn } from '../../components/ui';
+import { uid } from '../../lib/helpers';
+import { Card, PageHead, Btn, DragGrip, duplicateInList } from '../../components/ui';
+import { useReorder } from '../../hooks/useReorder';
+import { iconBtn } from './Reservations';
 
 export function PaymentsView({ data, update }) {
   const toggle = (id) => update(prev => ({ ...prev, pagamentos: prev.pagamentos.map(p => p.id === id ? { ...p, conectado: !p.conectado } : p) }));

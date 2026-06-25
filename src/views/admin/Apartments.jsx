@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Upload, X, Check, BedDouble } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X, Check, BedDouble, Copy } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { uid } from '../../lib/helpers';
+import { uid, money } from '../../lib/helpers';
 import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput,
-  Select, Textarea, PhotoTile } from '../../components/ui';
+  Select, Textarea, PhotoTile, DragGrip, MoneyInput, duplicateInList } from '../../components/ui';
+import { useReorder } from '../../hooks/useReorder';
+import { iconBtn } from './Reservations';
 
 export function Apartments({ data, update }) {
   const [editing, setEditing] = useState(null);

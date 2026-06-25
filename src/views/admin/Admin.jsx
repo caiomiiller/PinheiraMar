@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Building2, Tag, CreditCard,
-  Users, Settings, Waves } from 'lucide-react';
+  Users, Settings, Waves, Home, Plus, Minus, AlertCircle, Sun } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { Btn } from '../../components/ui';
 import { Dashboard } from './Dashboard';

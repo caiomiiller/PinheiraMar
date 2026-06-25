@@ -1,8 +1,8 @@
 import React from 'react';
-import { CalendarDays, Users, Wallet, BedDouble, ArrowRight } from 'lucide-react';
+import { CalendarDays, Users, Wallet, BedDouble, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { money, nights, parseYMD, ymd, today } from '../../lib/helpers';
-import { Card, PageHead } from '../../components/ui';
+import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong } from '../../lib/helpers';
+import { Card, PageHead, Badge, Btn } from '../../components/ui';
 
 export function Dashboard({ data, go }) {
   const t = today();

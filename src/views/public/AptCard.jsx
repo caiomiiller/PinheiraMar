@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, BedDouble, Users, Check } from 'lucide-react';
+import { Heart, BedDouble, Users, Check, Star } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money } from '../../lib/helpers';
 import { Badge, PhotoTile } from '../../components/ui';

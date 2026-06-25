@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { Card, PageHead, Btn, Field, TextInput, Select } from '../../components/ui';
+import { Card, PageHead, Btn, Field, TextInput, Select, NumberInput } from '../../components/ui';
 
 export function SettingsView({ data, update }) {
   const [s, setS] = useState(data.settings);
