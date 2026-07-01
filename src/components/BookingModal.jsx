@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Info, ChevronDown, Minus, Plus } from 'lucide-react';
 import { C, F } from '../lib/constants';
-import { money, nights, ymd, uid } from '../lib/helpers';
-import { Btn, Modal, Field } from './ui';
+import { mkExtrasObrigatorios } from '../lib/csvUtils';
+import { money, nights, ymd, uid, stayBreakdown, code, today, fmtShort } from '../lib/helpers';
+import { Btn, Modal, Field, TextInput, NumberInput, PhotoTile } from './ui';
 
 export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
   const { apt, apt2, g1: initG1, g2: initG2 } = sel;

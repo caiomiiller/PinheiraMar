@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { C, F } from '../../lib/constants';
+import { money } from '../../lib/helpers';
+import { PhotoTile } from '../../components/ui';
 import { AptCard } from './AptCard';
 
 export function Section({ icon, title, sub, apts, liked, setLiked, onCard, tr, highlight = false, grid = false }) {

@@ -1,8 +1,8 @@
 import React from 'react';
 import { X, Check } from 'lucide-react';
 import { C, F } from '../lib/constants';
-import { money, fmtLong } from '../lib/helpers';
-import { Btn, Modal } from './ui';
+import { money, fmtLong, fmtShort, nights } from '../lib/helpers';
+import { Btn, Modal, Row } from './ui';
 
 export function ConfirmationModal({ info, settings, onClose }) {
   const { reserva, apt } = info;

@@ -1,5 +1,5 @@
-import React from 'react';
-import { MapPin, Sun, Waves } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Sun, Waves, Phone } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 
 export function DestinoSection() {
