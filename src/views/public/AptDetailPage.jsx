@@ -81,7 +81,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14, color: '#222', padding: '6px 0' }}>
           <ChevronLeft size={20} /> Voltar
         </button>
-        <div style={{ fontWeight: 700, fontSize: 16, flex: 1 }}>{apt.nome}</div>
+        <div style={{ fontWeight: 700, fontSize: 16, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apt.nome}</div>
         <button onClick={e => { e.stopPropagation(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600, color: liked[apt.id] ? C.coralDeep : '#555' }}>
           <Heart size={18} fill={liked[apt.id] ? C.coral : 'none'} color={liked[apt.id] ? C.coral : '#555'} /> Guardar
@@ -106,7 +106,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
         {/* photo gallery */}
         <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 28 }}>
           {fotos.length >= 3 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '240px 180px', gap: 4 }}>
+            <div className="pm-detail-gallery" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '240px 180px', gap: 4 }}>
               <div style={{ gridRow: '1 / 3', position: 'relative' }}>
                 <img src={fotos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
               </div>
@@ -123,7 +123,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
         </div>
 
         {/* main two-column layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 48, alignItems: 'start' }}>
+        <div className="pm-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 48, alignItems: 'start' }}>
 
           {/* LEFT column */}
           <div>
@@ -229,8 +229,8 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
 
           </div>
 
-          {/* RIGHT column — booking widget (sticky) */}
-          <div style={{ position: 'sticky', top: 60 }}>
+          {/* RIGHT column — booking widget (sticky no desktop, em fluxo normal no telemóvel) */}
+          <div className="pm-detail-side" style={{ position: 'sticky', top: 60 }}>
             <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 18, padding: 24, boxShadow: '0 8px 28px rgba(0,0,0,.12)' }}>
               <div style={{ marginBottom: 18 }}>
                 <span style={{ fontSize: 22, fontWeight: 800 }}>{money(apt.preco)}</span>

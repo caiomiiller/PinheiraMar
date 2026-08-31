@@ -293,14 +293,34 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
 // v5: introduz `residenciais` (multi-imóvel) e remove o antigo `settings`
 // único — por isso muda a chave de versão, para forçar reseed em vez de
 // carregar dados antigos com uma forma incompatível.
+//
+// Guarda em localStorage do browser (persiste entre recarregamentos e
+// fechos de separador, no MESMO browser/dispositivo). `window.storage`
+// era usado antes como camada de armazenamento, mas essa API só existe
+// dentro do preview de artefactos da Claude — num site publicado a sério
+// (Vercel, etc.) `window.storage` não existe, por isso os dados nunca
+// eram guardados de facto: cada acesso ao site recomeçava do zero. Isto
+// corrige isso, usando localStorage como armazenamento real.
+//
+// Nota importante: por não haver servidor/backend, os dados continuam a
+// viver apenas no browser de quem os grava — o que o Admin altera neste
+// computador/browser não aparece automaticamente para um hóspede a
+// reservar noutro telemóvel, nem vice-versa. Para um motor de reservas
+// verdadeiramente partilhado entre visitantes seria necessário um
+// backend (ex.: uma base de dados), o que fica fora do âmbito actual.
 export const STORE_KEY = 'pinheiramar:data:v5';
 export let memFallback = null;
 export async function loadData() {
+  try {
+    const raw = window.localStorage?.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* localStorage indisponível ou chave inválida → seed */ }
+  // compatibilidade com o antigo `window.storage`, caso ainda exista neste contexto
   try { if (window.storage) { const r = await window.storage.get(STORE_KEY); if (r && r.value) return JSON.parse(r.value); } }
-  catch (e) { /* key absent → seed */ }
+  catch (e) { /* ignore */ }
   return memFallback;
 }
 export async function saveData(d) {
   memFallback = d;
-  try { if (window.storage) await window.storage.set(STORE_KEY, JSON.stringify(d)); } catch (e) { /* ignore */ }
+  try { window.localStorage?.setItem(STORE_KEY, JSON.stringify(d)); } catch (e) { /* ex.: modo privado sem quota — mantém apenas em memória */ }
 }

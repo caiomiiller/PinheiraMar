@@ -59,6 +59,7 @@ export function PublicSite({ data, onCreate }) {
   const [detail, setDetail] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
   const [guestOpen, setGuestOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const resultsRef = useRef(null);
   const headerRef = useRef(null);
   const groupRefs = useRef({});
@@ -208,19 +209,19 @@ export function PublicSite({ data, onCreate }) {
 
     return (
       <div ref={el => { groupRefs.current[r.id] = el; }} style={{ marginBottom: 72, scrollMarginTop: 140 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
-          <div style={{ width: 96, height: 72, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: LIGHT }}>
+        <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
+          <div className="pm-pubsite-group-thumb" style={{ width: 96, height: 72, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: LIGHT }}>
             <img src={r.heroImage} alt={r.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', color: BLACK }}>{r.nome}</div>
+            <div className="pm-pubsite-group-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', color: BLACK }}>{r.nome}</div>
             <div style={{ fontSize: 13.5, color: GREY, marginTop: 3, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
           </div>
-          <div style={{ fontSize: 12.5, color: GREY, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
+          <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
         </div>
 
         {valid && needsCombo && combo && (
-          <div style={{ border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
+          <div className="pm-pubsite-combo" style={{ border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
             <Users size={18} color={GREY} style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ fontSize: 14, color: BLACK, lineHeight: 1.65 }}>
               <b>Para {hosp} hóspedes em {r.nome} é necessário combinar apartamentos.</b>
@@ -271,7 +272,7 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ HEADER ══ */}
       <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
+        <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
 
           {/* wordmark — marca de destino partilhada pelos dois residenciais.
               Ajusta aqui quando decidires o nome definitivo da plataforma. */}
@@ -280,8 +281,17 @@ export function PublicSite({ data, onCreate }) {
             <span style={{ fontSize: 19, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>HOSPEDAGENS</span>
           </a>
 
-          {/* centred search */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          {/* busca — versão compacta em telemóvel abre um ecrã cheio (ver abaixo) */}
+          <button className="pm-pubsite-search-mobile-btn" onClick={() => setMobileSearchOpen(true)}
+            style={{ display: 'none', alignItems: 'center', gap: 8, padding: '9px 14px', border: `1px solid ${BORDER}`, borderRadius: 20, background: WHITE, cursor: 'pointer', flex: 1, minWidth: 0 }}>
+            <Search size={15} color={GREY} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: valid ? BLACK : '#AAA', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {valid ? `${fmtShort(ci)} – ${fmtShort(co)}${hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}` : 'Quando? Quantos hóspedes?'}
+            </span>
+          </button>
+
+          {/* centred search (desktop) */}
+          <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'stretch', height: 44, border: `1px solid ${BORDER}`, background: WHITE, maxWidth: 680, width: '100%' }}>
               <Seg label={tr('search_checkin')}>
                 <input type="date" value={ci} min={ymd(td)} style={segInput}
@@ -317,9 +327,9 @@ export function PublicSite({ data, onCreate }) {
             </div>
           </div>
 
-          {/* right side */}
+          {/* right side (escondido no telemóvel — o idioma muda no ecrã de busca) */}
           {idiomasAtivos.length > 1 && (
-            <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+            <div className="pm-pubsite-lang" style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
               {idiomasAtivos.map(id => (
                 <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
                   style={{ width: 30, height: 30, border: lang === id.codigo ? `1px solid ${BLACK}` : `1px solid transparent`, background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
@@ -331,6 +341,57 @@ export function PublicSite({ data, onCreate }) {
         </div>
       </header>
 
+      {/* ══ BUSCA — ecrã cheio no telemóvel (aberto pelo botão compacto do cabeçalho) ══ */}
+      {mobileSearchOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: WHITE, zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+            <span style={{ fontWeight: 800, fontSize: 16 }}>Buscar</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {idiomasAtivos.length > 1 && (
+                <div style={{ display: 'flex', gap: 2 }}>
+                  {idiomasAtivos.map(id => (
+                    <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
+                      style={{ width: 28, height: 28, border: lang === id.codigo ? `1px solid ${BLACK}` : '1px solid transparent', background: 'transparent', cursor: 'pointer', fontSize: 15, display: 'grid', placeItems: 'center' }}>
+                      {id.bandeira}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button onClick={() => setMobileSearchOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, lineHeight: 1, cursor: 'pointer', color: GREY, padding: 4 }}>✕</button>
+            </div>
+          </div>
+          <div style={{ padding: 20, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 22 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_checkin')}</div>
+              <input type="date" value={ci} min={ymd(td)} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 16, fontFamily: F.sans, color: BLACK }}
+                onChange={e => { setCi(e.target.value); if (co && nights(e.target.value, co) < 1) setCo(''); }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_checkout')}</div>
+              <input type="date" value={co} min={ci ? ymd(addDays(parseYMD(ci), 1)) : ymd(addDays(td, 1))} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 16, fontFamily: F.sans, color: BLACK }}
+                onChange={e => setCo(e.target.value)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_who')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: `1px solid ${BORDER}`, borderRadius: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 600 }}>{hosp ? `${hosp} hóspede${hosp > 1 ? 's' : ''}` : 'Hóspedes'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <button onClick={() => setHosp(h => Math.max(0, h - 1))} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>−</button>
+                  <span style={{ fontWeight: 700, minWidth: 18, textAlign: 'center' }}>{hosp || 0}</span>
+                  <button onClick={() => setHosp(h => h + 1)} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: 20, borderTop: `1px solid ${BORDER}`, flexShrink: 0 }}>
+            <button onClick={() => { setMobileSearchOpen(false); setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+              style={{ width: '100%', padding: '16px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, letterSpacing: '.02em', cursor: 'pointer' }}>
+              {tr('search_btn')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ══ HERO ══ */}
       <section style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
         <img
@@ -340,7 +401,7 @@ export function PublicSite({ data, onCreate }) {
           onError={e => { e.target.style.display = 'none'; }}
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 40%, rgba(0,0,0,.72) 100%)' }} />
-        <div style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>
+        <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>
             Praia da Pinheira · Palhoça · Santa Catarina
           </div>
@@ -360,7 +421,7 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ CATEGORY FILTER STRIP ══ */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: WHITE, position: 'sticky', top: 64, zIndex: 40 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        <div className="pm-pubsite-catstrip" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {[
             { key: null,         icon: <Home size={16} />,       label: tr('cat2') },
             { key: 'frente_mar', icon: <Waves size={16} />,      label: tr('cat1') },
@@ -387,7 +448,7 @@ export function PublicSite({ data, onCreate }) {
       </div>
 
       {/* ══ RESULTADOS — um bloco por imóvel, como um motor de reservas de hotel ══ */}
-      <main ref={resultsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 80px', scrollMarginTop: 80 }}>
+      <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 80px', scrollMarginTop: 80 }}>
         {valid && (
           <div style={{ marginBottom: 44 }}>
             <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em' }}>
@@ -404,7 +465,7 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ FOOTER ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 40 }}>
+        <div className="pm-pubsite-footer-grid" style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 40 }}>
           {data.residenciais.map(r => (
             <div key={r.id}>
               <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', color: BLACK, marginBottom: 10 }}>{r.nome}</div>

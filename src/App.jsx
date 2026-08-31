@@ -59,6 +59,27 @@ export default function App() {
       .pm-searchbar{flex-direction:column!important;border-radius:18px!important;}
       .pm-seg{border-right:none!important;border-bottom:1px solid #ddd!important;}
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}
+
+      /* ── site público (booking-style) — telemóvel ── */
+      .pm-pubsite-header-row{padding:0 16px!important;gap:12px!important;}
+      .pm-pubsite-search-desktop{display:none!important;}
+      .pm-pubsite-search-mobile-btn{display:flex!important;}
+      .pm-pubsite-lang{display:none!important;}
+      .pm-pubsite-hero-inner{padding:0 16px 36px!important;}
+      .pm-pubsite-catstrip{padding:0 16px!important;}
+      .pm-pubsite-main{padding:32px 16px 56px!important;}
+      .pm-pubsite-group-head{gap:12px!important;}
+      .pm-pubsite-group-thumb{width:60px!important;height:46px!important;}
+      .pm-pubsite-group-name{font-size:18px!important;}
+      .pm-pubsite-group-count{width:100%!important;order:3;}
+      .pm-pubsite-combo{padding:16px!important;}
+      .pm-pubsite-footer-grid{padding:32px 16px!important;gap:28px!important;}
+
+      /* ── página de detalhe do apartamento — telemóvel ── */
+      .pm-detail-grid{grid-template-columns:minmax(0,1fr)!important;gap:32px!important;}
+      .pm-detail-side{position:static!important;}
+      .pm-detail-gallery{display:flex!important;overflow-x:auto!important;gap:6px!important;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+      .pm-detail-gallery>div{display:block!important;grid-row:auto!important;flex:0 0 86%!important;height:240px!important;scroll-snap-align:start;border-radius:10px;}
     }
     @media(prefers-reduced-motion:reduce){.pm-pop,.pm-card{animation:none!important;transition:none!important;}}
   `;
