@@ -41,7 +41,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const extrasTotal = extrasObrig.reduce((s, e) => s + e.preco, 0);
 
   // second apt computations
-  const apt2 = useApt2 && apt2Id ? (data.apts || []).find(a => a.id === apt2Id) : null;
+  const apt2 = useApt2 && apt2Id ? (data.apartamentos || []).find(a => a.id === apt2Id) : null;
   const isAvail2 = apt2 && localCi && localCo ? isAvailable(data.reservas, apt2.id, localCi, localCo) : false;
   const bd2 = apt2 && localNights > 0 ? stayBreakdown(apt2, data.seasons, localCi, localCo) : null;
   const total2 = apt2 && bd2 ? bd2.total + extrasTotal : 0;
@@ -53,7 +53,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const minN = activeSeason?.minNoites || 1;
   const meetsMin = localNights >= minN;
 
-  const otherApts = (data.apts || []).filter(a => a.id !== apt.id && a.ativo !== false);
+  const otherApts = (data.apartamentos || []).filter(a => a.id !== apt.id && a.ativo !== false);
 
   const highlights = HIGHLIGHTS.filter(h =>
     amenidades.some(a => h.match.test(a)) ||

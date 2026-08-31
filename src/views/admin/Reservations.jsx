@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy,
   ChevronDown, GripVertical, X, Check, AlertCircle, CalendarDays,
   ChevronLeft, ChevronRight, Minus, Tag, Clock, Info, Users, Wallet } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, THEMES } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
   isAvailable, stayBreakdown, nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS,
   WD, HOLIDAY_COLORS, MS, seasonForDate, aptRates, roomFullName } from '../../lib/helpers';
@@ -12,6 +12,34 @@ import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
   NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import * as XLSX from 'xlsx';
+
+// residencial de um apartamento — usado para a etiqueta de cor por imóvel
+// (este ambiente é partilhado pelos dois residenciais; a etiqueta é só
+// para identificação visual, ver pedido do gestor).
+const residencialOf = (data, apt) => (data.residenciais || []).find(r => r.id === apt?.residencialId) || (data.residenciais || [])[0];
+const residencialCor = (residencialId) => (THEMES[residencialId] || THEMES.pinheiramar).ocean;
+
+const residencialSigla = (nome = '') => nome.replace(/^Residencial\s+/i, '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '—';
+
+// monograma compacto (usado onde o espaço é apertado, ex.: calendário)
+function ResBadge({ residencial }) {
+  if (!residencial) return null;
+  return (
+    <span title={residencial.nome} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', fontSize: 9.5, fontWeight: 800, color: '#fff', background: residencialCor(residencial.id), flexShrink: 0 }}>
+      {residencialSigla(residencial.nome)}
+    </span>
+  );
+}
+
+// etiqueta com o nome completo (usada onde há mais espaço, ex.: tabela)
+function ResPill({ residencial }) {
+  if (!residencial) return null;
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', color: '#fff', background: residencialCor(residencial.id), borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap' }}>
+      {residencial.nome}
+    </span>
+  );
+}
 
 export function Reservations({ data, update }) {
   const [view, setView] = useState('calendario');
@@ -25,6 +53,7 @@ export function Reservations({ data, update }) {
   const DAYS = 21, COLW = 46, NAMEW = 188;
   const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => addDays(start, i)), [start]);
   const aptName = (id) => data.apartamentos.find(a => a.id === id)?.nome || '—';
+  const aptResidencial = (id) => residencialOf(data, data.apartamentos.find(a => a.id === id));
   const cap1 = (str) => str.charAt(0).toUpperCase() + str.slice(1);
   const monthLabel = useMemo(() => {
     const a = days[0], b = days[days.length - 1];
@@ -315,7 +344,10 @@ export function Reservations({ data, update }) {
                 return (
                   <div key={apt.id} style={{ display: 'flex', borderBottom: `1px solid ${C.line}` }}>
                     <div style={{ width: NAMEW, flexShrink: 0, padding: '10px 14px', borderRight: `1px solid ${C.line}`, background: '#fff' }}>
-                      <div style={{ fontWeight: 600, fontSize: 13.5 }}>{apt.nome}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, fontSize: 13.5 }}>{apt.nome}</span>
+                        <ResBadge residencial={residencialOf(data, apt)} />
+                      </div>
                       <div style={{ fontSize: 11.5, color: C.inkSoft }}>{apt.vista} · {apt.capacidade}p</div>
                     </div>
                     <div style={{ position: 'relative', width: DAYS * COLW, flexShrink: 0, height: 50 }}>
@@ -385,7 +417,7 @@ export function Reservations({ data, update }) {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 720 }}>
               <thead><tr style={{ background: C.espuma, textAlign: 'left', color: C.inkSoft }}>
-                {[manualOrder ? '⠿' : '', 'Código', 'Apartamento', 'Hóspede', 'Estadia', 'Origem', 'Total', 'Estado', ''].map((h, i) => <th key={i} style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{h}</th>)}
+                {[manualOrder ? '⠿' : '', 'Código', 'Residencial', 'Apartamento', 'Hóspede', 'Estadia', 'Origem', 'Total', 'Estado', ''].map((h, i) => <th key={i} style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{h}</th>)}
               </tr></thead>
               <tbody>
                 {listSorted.slice(0, listCap).map((r, idx) => (
@@ -395,6 +427,7 @@ export function Reservations({ data, update }) {
                     onDrop={manualOrder ? () => dndRes.onDrop() : undefined}>
                     <td style={{ padding: '11px 10px', color: C.inkSoft, cursor: manualOrder ? 'grab' : 'default', fontSize: 16 }}>{manualOrder ? '⠿' : ''}</td>
                     <td style={{ padding: '11px 14px', fontFamily: F.disp, color: C.ocean }}>{r.codigo}</td>
+                    <td style={{ padding: '11px 14px' }}><ResPill residencial={aptResidencial(r.apartamentoId)} /></td>
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{aptName(r.apartamentoId)}</td>
                     <td style={{ padding: '11px 14px' }}>{r.status === 'bloqueio' ? <span style={{ color: C.inkSoft }}>—</span> : r.hospede}</td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</td>
@@ -471,6 +504,9 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
   });
 
   const apt = data.apartamentos.find(a => a.id === aptId) || firstApt;
+  // este ambiente é partilhado pelos dois residenciais — os horários/sinal
+  // usados são sempre os do imóvel a que o apartamento escolhido pertence.
+  const residencial = residencialOf(data, apt);
   const validDates = nights(ci, co) >= 1;
   const n = Math.max(1, nights(ci, co));
   const bd = stayBreakdown(apt, data.seasons, ci, co);
@@ -504,7 +540,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
   const acomod = status === 'bloqueio' ? 0 : Math.round(precoNoite * n);
   const extrasVal = status === 'bloqueio' ? 0 : extras.reduce((s, e) => s + (Number(e.qtd) || 0) * (Number(e.preco) || 0), 0);
   const total = acomod + extrasVal;
-  const sinal = Math.round(total * (data.settings.sinalPct / 100));
+  const sinal = Math.round(total * (residencial.sinalPct / 100));
   const totalGuests = adultos + criancas;
   const free = isAvailable(data.reservas, aptId, ci, co, i.id);
   const overCap = status !== 'bloqueio' && totalGuests > apt.capacidade;
@@ -516,7 +552,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
   const ORIGENS = [...new Set([origem, 'Manual', 'Site', 'Telefone', 'WhatsApp', 'Booking', 'Airbnb'])];
 
   return (
-    <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${apt.nome} · ${apt.piso} · ${apt.vista}`} onClose={onClose} wide
+    <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${residencial.nome} · ${apt.nome} · ${apt.piso} · ${apt.vista}`} onClose={onClose} wide
       footer={<>
         {!isNew && <Btn variant="danger" icon={Trash2} onClick={() => onRemove(i.id)} style={{ marginRight: 'auto' }}>Eliminar</Btn>}
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
@@ -559,7 +595,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
             <Field label="Check-out" required><DateInput value={co} min={ymd(addDays(parseYMD(ci), 1))} onChange={e => setCo(e.target.value)} /></Field>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: C.inkSoft, margin: '8px 2px 0' }}>
-            <Clock size={14} color={C.brisa} /> Check-in a partir das <b style={{ color: C.ink }}>{data.settings.checkInHora}</b> · check-out até às <b style={{ color: C.ink }}>{data.settings.checkOutHora}</b>. Pode terminar e iniciar reservas no mesmo dia.
+            <Clock size={14} color={C.brisa} /> Check-in a partir das <b style={{ color: C.ink }}>{residencial.checkInHora}</b> · check-out até às <b style={{ color: C.ink }}>{residencial.checkOutHora}</b> ({residencial.nome}). Pode terminar e iniciar reservas no mesmo dia.
           </div>
           {status !== 'bloqueio' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
@@ -569,7 +605,15 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
           )}
           <div style={{ marginTop: 14 }}>
             <Field label="Apartamento (tipo / acomodação)" required>
-              <Select value={aptId} onChange={e => setAptId(e.target.value)}>{data.apartamentos.map(a => <option key={a.id} value={a.id}>{roomFullName(a)}</option>)}</Select>
+              <Select value={aptId} onChange={e => setAptId(e.target.value)}>
+                {(data.residenciais || [{ id: undefined, nome: '' }]).map(r => (
+                  <optgroup key={r.id || 'x'} label={r.nome}>
+                    {data.apartamentos.filter(a => a.residencialId === r.id).map(a => (
+                      <option key={a.id} value={a.id}>{roomFullName(a)}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </Select>
             </Field>
           </div>
           {!free && <div style={{ marginTop: 12 }}><Note color="#B23B3B" bg="#F7E9E9"><AlertCircle size={15} /> Conflito: já existe uma reserva neste apartamento nestas datas.</Note></div>}
@@ -674,7 +718,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
               ))}
             </div>
             <div style={{ background: C.oceanDeep, color: '#fff', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Sinal {data.settings.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Sinal {residencial.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Total:</span>
                 <span style={{ fontSize: 24, fontWeight: 700, fontFamily: F.disp }}>{money(total)}</span>

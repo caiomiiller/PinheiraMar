@@ -102,7 +102,11 @@ export function Admin({ data, update, initialResidencialId }) {
         </div>
         <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: 1180, margin: '0 auto' }}>
           {tab === 'painel' && <Dashboard data={scoped} go={setTab} />}
-          {tab === 'reservas' && <Reservations data={scoped} update={scopedUpdate} />}
+          {/* Reservas é partilhado pelos dois residenciais (não usa o "recorte" do
+              imóvel seleccionado) — o gestor regista/confirma reservas de qualquer
+              imóvel neste mesmo ambiente, com uma etiqueta de cor a identificar a
+              qual residencial cada apartamento pertence. Ver Reservations.jsx. */}
+          {tab === 'reservas' && <Reservations data={data} update={update} />}
           {tab === 'financeiro' && <Financeiro data={scoped} go={setTab} />}
           {tab === 'apartamentos' && <Apartments data={scoped} update={scopedUpdate} />}
           {tab === 'temporadas' && <Seasons data={scoped} update={scopedUpdate} />}
