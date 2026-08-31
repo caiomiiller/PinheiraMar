@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, Phone, Mail, Search, CalendarDays, ChevronDown,
   Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Wifi, Car, Users,
   BedDouble } from 'lucide-react';
@@ -7,34 +7,41 @@ import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
   stayBreakdown, nights, fmtShort } from '../../lib/helpers';
 import { useT } from '../../lib/translations';
 import { Btn, PhotoTile, Field } from '../../components/ui';
+import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
-import { AptCard } from './AptCard';
 import { Section } from './Section';
 import { DestinoSection } from './DestinoSection';
 import { BookingModal } from '../../components/BookingModal';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 
-// Divide o nome do imóvel em duas partes para o logótipo tipográfico
-// (ex.: "Residencial PinheiraMar" → "PINHEIRA" leve + "MAR" destacado, à
-// semelhança do logótipo original). Sem isto teríamos de manter um campo
-// de marca extra em cada residencial só para isto.
-function splitBrand(nome) {
-  const limpo = (nome || '').replace(/^residencial\s+/i, '').trim();
-  const partes = limpo.split(/\s+/).filter(Boolean);
-  if (partes.length > 1) return [partes.slice(0, -1).join(' ').toUpperCase(), partes[partes.length - 1].toUpperCase()];
-  // palavra única em camelCase (ex.: "PinheiraMar") — separa na 1ª maiúscula interna
-  const m = limpo.match(/^([A-ZÀ-Ý][a-zà-ÿ]*)([A-ZÀ-Ý].*)$/);
-  if (m) return [m[1].toUpperCase(), m[2].toUpperCase()];
-  return [limpo.toUpperCase(), ''];
+// Dentro de UM residencial, encontra a combinação de apartamentos disponíveis
+// que acomoda `hosp` pessoas com o menor excesso de capacidade. Não faz
+// sentido combinar apartamentos de dois imóveis diferentes (são edifícios
+// distintos), por isso isto corre sempre dentro de um único grupo.
+function findCombo(availableApts, hosp) {
+  let best = null;
+  for (let i = 0; i < availableApts.length; i++) {
+    for (let j = i + 1; j < availableApts.length; j++) {
+      const cap = availableApts[i].capacidade + availableApts[j].capacidade;
+      if (cap >= hosp && (!best || cap < best.cap)) best = { pick: [availableApts[i], availableApts[j]], cap };
+    }
+  }
+  if (!best) {
+    for (let i = 0; i < availableApts.length; i++)
+      for (let j = i + 1; j < availableApts.length; j++)
+        for (let k = j + 1; k < availableApts.length; k++) {
+          const cap = availableApts[i].capacidade + availableApts[j].capacidade + availableApts[k].capacidade;
+          if (cap >= hosp && (!best || cap < best.cap)) best = { pick: [availableApts[i], availableApts[j], availableApts[k]], cap };
+        }
+  }
+  return best ? { ...best, enough: true } : { pick: [], cap: 0, enough: false };
 }
 
 export function PublicSite({ data, onCreate }) {
   const td = today();
-  const residencial = data.settings;
-  const [brandMain, brandAccent] = splitBrand(residencial.nome);
 
-  /* ── language ── */
-  const idiomasAtivos = (data.settings.idiomas || []).filter(i => i.ativo);
+  /* ── language (partilhado entre imóveis) ── */
+  const idiomasAtivos = (data.residenciais[0]?.idiomas || []).filter(i => i.ativo);
   const [lang, setLang] = useState(() => {
     const browser = navigator.language?.slice(0, 2);
     const match = idiomasAtivos.find(i => i.codigo === browser);
@@ -54,24 +61,30 @@ export function PublicSite({ data, onCreate }) {
   const [guestOpen, setGuestOpen] = useState(false);
   const resultsRef = useRef(null);
   const headerRef = useRef(null);
+  const groupRefs = useRef({});
 
   const valid = ci && co && nights(ci, co) >= 1;
-  const active = data.apartamentos.filter(a => a.ativo);
-  const maxCap = active.length ? Math.max(...active.map(a => a.capacidade)) : 0;
 
-  const withInfo = useMemo(() => {
-    const arr = active.map(a => ({
+  // ── agrupa apartamentos, disponibilidade e sugestão de combinação por imóvel ──
+  const groups = useMemo(() => data.residenciais.map(r => {
+    const active = data.apartamentos.filter(a => a.ativo && a.residencialId === r.id);
+    const maxCap = active.length ? Math.max(...active.map(a => a.capacidade)) : 0;
+    const withInfo = active.map(a => ({
       apt: a,
       available: valid ? isAvailable(data.reservas, a.id, ci, co) : true,
       fits: !hosp || a.capacidade >= hosp,
       bd: valid ? stayBreakdown(a, data.seasons, ci, co) : null,
-    }));
-    arr.sort((x, y) =>
+    })).sort((x, y) =>
       (Number(y.available) - Number(x.available)) ||
       (Number(y.fits) - Number(x.fits)) ||
       (x.apt.preco - y.apt.preco));
-    return arr;
-  }, [data, ci, co, hosp, valid]); // eslint-disable-line
+    const availableApts = withInfo.filter(w => w.available).map(w => w.apt);
+    const needsCombo = valid && hosp > 0 && hosp > maxCap;
+    const combo = needsCombo ? findCombo(availableApts, hosp) : null;
+    return { residencial: r, active, withInfo, maxCap, availableApts, needsCombo, combo };
+  }), [data, ci, co, hosp, valid]);
+
+  const hasFrenteMar = data.apartamentos.some(a => a.ativo && a.vista === 'Frente Mar');
 
   const catFilter = (apt) => {
     if (!activeCategory) return true;
@@ -80,47 +93,27 @@ export function PublicSite({ data, onCreate }) {
     if (activeCategory === 'wifi') return am.includes('wi-fi') || am.includes('wifi');
     if (activeCategory === 'estacion') return am.includes('estacion');
     if (activeCategory === 'familia') return apt.capacidade >= 4;
-    if (activeCategory === 'praia') return true; // all beach apts
+    if (activeCategory === 'praia') return true;
     return true;
   };
-  const withInfoFiltered = withInfo.filter(w => catFilter(w.apt));
-  const availableApts = withInfo.filter(w => w.available).map(w => w.apt);
-  const needsCombo = valid && hosp > maxCap;
-  const combo = useMemo(() => {
-    if (!needsCombo) return null;
-    // min-excess: find pair with smallest total capacity >= hosp
-    let best = null;
-    for (let i = 0; i < availableApts.length; i++) {
-      for (let j = i + 1; j < availableApts.length; j++) {
-        const cap = availableApts[i].capacidade + availableApts[j].capacidade;
-        if (cap >= hosp && (!best || cap < best.cap))
-          best = { pick: [availableApts[i], availableApts[j]], cap };
-      }
+
+  // ?imovel=<id> na URL: assim que os grupos existem, desliza até essa secção
+  useEffect(() => {
+    let id;
+    try { id = new URLSearchParams(window.location.search).get('imovel'); } catch { id = null; }
+    if (id && groupRefs.current[id]) {
+      setTimeout(() => groupRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
     }
-    if (!best) {
-      for (let i = 0; i < availableApts.length; i++)
-        for (let j = i+1; j < availableApts.length; j++)
-          for (let k = j+1; k < availableApts.length; k++) {
-            const cap = availableApts[i].capacidade + availableApts[j].capacidade + availableApts[k].capacidade;
-            if (cap >= hosp && (!best || cap < best.cap))
-              best = { pick: [availableApts[i], availableApts[j], availableApts[k]], cap };
-          }
-    }
-    return best ? { ...best, enough: true } : { pick: [], cap: 0, enough: false };
-  }, [needsCombo, availableApts, hosp]); // eslint-disable-line
+  }, []); // eslint-disable-line
 
   const openDetail = (apt) => { setDetail(apt); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const openBooking = (apt) => {
-    if (!valid) { resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-    setBooking({ apt });
-  };
 
   /* ── tokens ── */
   const BLACK  = '#0D0D0D';
   const GREY   = '#6B6B6B';
   const LIGHT  = '#F5F4F0';
   const BORDER = '#E2E0DB';
-  const ACCENT = '#C8A96E'; // warm gold accent — refined, not coral
+  const ACCENT = '#C8A96E'; // dourado — marca partilhada dos dois residenciais
   const WHITE  = '#FFFFFF';
 
   /* ── search pill segments ── */
@@ -173,56 +166,105 @@ export function PublicSite({ data, onCreate }) {
     );
   };
 
-  /* ── row section ── */
-  const Row = ({ title, sub, items, scrollable }) => {
+  /* ── scrollable row ── */
+  const Row = ({ items, scrollable }) => {
     const ref = useRef(null);
     const shift = (d) => ref.current?.scrollBy({ left: d * 280, behavior: 'smooth' });
     if (!items.length) return null;
-    return (
-      <div style={{ marginBottom: 64 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 16, borderBottom: `1px solid ${BORDER}` }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', color: BLACK }}>{title}</div>
-            {sub && <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>{sub}</div>}
-          </div>
-          {scrollable && items.length > 3 && (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => shift(-1)} style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
-              <button onClick={() => shift(1)}  style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
+    return scrollable ? (
+      <div style={{ position: 'relative' }}>
+        <div ref={ref} style={{ display: 'flex', gap: 24, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
+          {items.map(({ apt, available, fits, bd }) => (
+            <div key={apt.id} style={{ minWidth: 260, flex: '0 0 260px' }}>
+              <PCard apt={apt} available={available} fits={fits} bd={bd} />
             </div>
-          )}
+          ))}
         </div>
-        {scrollable ? (
-          <div ref={ref} style={{ display: 'flex', gap: 24, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
-            {items.map(({ apt, available, fits, bd }) => (
-              <div key={apt.id} style={{ minWidth: 260, flex: '0 0 260px' }}>
-                <PCard apt={apt} available={available} fits={fits} bd={bd} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))', gap: '40px 28px' }}>
-            {items.map(({ apt, available, fits, bd }) => (
-              <PCard key={apt.id} apt={apt} available={available} fits={fits} bd={bd} />
-            ))}
+        {items.length > 4 && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button onClick={() => shift(-1)} style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
+            <button onClick={() => shift(1)}  style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
           </div>
         )}
+      </div>
+    ) : (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))', gap: '40px 28px' }}>
+        {items.map(({ apt, available, fits, bd }) => (
+          <PCard key={apt.id} apt={apt} available={available} fits={fits} bd={bd} />
+        ))}
       </div>
     );
   };
 
-  if (detail) return (
-    <>
-      <AptDetailPage apt={detail} data={data} ci={ci} co={co} hosp={hosp} valid={valid}
-        setCi={setCi} setCo={setCo} setHosp={setHosp}
-        liked={liked} setLiked={setLiked}
-        onBack={() => setDetail(null)} onBook={(apt, apt2, g1, g2) => setBooking({ apt, apt2, g1, g2 })} tr={tr} />
-      {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td, 2))} hosp={hosp || 2} data={data}
-        onClose={() => setBooking(null)}
-        onConfirm={r => { onCreate(r); setDone(d => d || { reserva: r, apt: booking.apt }); }} />}
-      {done && <ConfirmationModal info={done} settings={data.settings} onClose={() => { setDone(null); setBooking(null); }} />}
-    </>
-  );
+  /* ── bloco de um imóvel (à la Booking: banner do imóvel + as suas unidades) ── */
+  const PropertyGroup = ({ g }) => {
+    const { residencial: r, withInfo, availableApts, needsCombo, combo } = g;
+    const filtered = withInfo.filter(w => catFilter(w.apt));
+    const list = valid ? filtered : filtered.map(w => ({ ...w, available: true }));
+    if (!list.length) return null;
+    const countLabel = valid
+      ? `${availableApts.length} de ${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} disponível${availableApts.length !== 1 ? 'eis' : ''}`
+      : `${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} ${r.regiaoLabel}`;
+
+    return (
+      <div ref={el => { groupRefs.current[r.id] = el; }} style={{ marginBottom: 72, scrollMarginTop: 140 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
+          <div style={{ width: 96, height: 72, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: LIGHT }}>
+            <img src={r.heroImage} alt={r.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', color: BLACK }}>{r.nome}</div>
+            <div style={{ fontSize: 13.5, color: GREY, marginTop: 3, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
+          </div>
+          <div style={{ fontSize: 12.5, color: GREY, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
+        </div>
+
+        {valid && needsCombo && combo && (
+          <div style={{ border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
+            <Users size={18} color={GREY} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ fontSize: 14, color: BLACK, lineHeight: 1.65 }}>
+              <b>Para {hosp} hóspedes em {r.nome} é necessário combinar apartamentos.</b>
+              {combo.enough
+                ? <> Sugestão: <b>{combo.pick.map(a => `${a.nome} (${a.capacidade} pax)`).join(' + ')}</b> — capacidade total de {combo.cap} pessoas.</>
+                : <> Não há unidades disponíveis suficientes neste imóvel para estas datas.</>}
+              {combo.enough && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                  {combo.pick.map(a => (
+                    <button key={a.id} onClick={() => openDetail(a)}
+                      style={{ background: BLACK, color: WHITE, border: 'none', padding: '8px 16px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em' }}>
+                      VER {a.nome.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <Row items={list} scrollable={!valid && list.length > 4} />
+      </div>
+    );
+  };
+
+  if (detail) {
+    const scoped = buildScoped(data, detail.residencialId);
+    const bookingScoped = booking ? buildScoped(data, booking.apt.residencialId) : null;
+    const doneScoped = done ? buildScoped(data, done.apt.residencialId) : null;
+    return (
+      <>
+        <AptDetailPage apt={detail} data={scoped} ci={ci} co={co} hosp={hosp} valid={valid}
+          setCi={setCi} setCo={setCo} setHosp={setHosp}
+          liked={liked} setLiked={setLiked}
+          onBack={() => setDetail(null)} onBook={(apt, apt2, g1, g2) => setBooking({ apt, apt2, g1, g2 })} tr={tr} />
+        {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td, 2))} hosp={hosp || 2} data={bookingScoped}
+          onClose={() => setBooking(null)}
+          onConfirm={r => { onCreate(r); setDone(d => d || { reserva: r, apt: booking.apt }); }} />}
+        {done && <ConfirmationModal info={done} settings={doneScoped.settings} onClose={() => { setDone(null); setBooking(null); }} />}
+      </>
+    );
+  }
+
+  const r0 = data.residenciais[0] || {};
 
   return (
     <div style={{ background: WHITE, minHeight: '100vh', fontFamily: F.sans, color: BLACK }}>
@@ -231,10 +273,11 @@ export function PublicSite({ data, onCreate }) {
       <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
 
-          {/* wordmark */}
+          {/* wordmark — marca de destino partilhada pelos dois residenciais.
+              Ajusta aqui quando decidires o nome definitivo da plataforma. */}
           <a href="#" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 2 }}>
-            <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>{brandMain}</span>
-            {brandAccent && <span style={{ fontSize: 19, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>{brandAccent}</span>}
+            <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>PINHEIRA</span>
+            <span style={{ fontSize: 19, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>HOSPEDAGENS</span>
           </a>
 
           {/* centred search */}
@@ -275,52 +318,43 @@ export function PublicSite({ data, onCreate }) {
           </div>
 
           {/* right side */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0 }}>
-            {idiomasAtivos.length > 1 && (
-              <div style={{ display: 'flex', gap: 2 }}>
-                {idiomasAtivos.map(id => (
-                  <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
-                    style={{ width: 30, height: 30, border: lang === id.codigo ? `1px solid ${BLACK}` : `1px solid transparent`, background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
-                    {id.bandeira}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="pm-hide-sm" style={{ fontSize: 13, color: GREY }}>{data.settings.telefone}</div>
-          </div>
+          {idiomasAtivos.length > 1 && (
+            <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+              {idiomasAtivos.map(id => (
+                <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
+                  style={{ width: 30, height: 30, border: lang === id.codigo ? `1px solid ${BLACK}` : `1px solid transparent`, background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
+                  {id.bandeira}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
       {/* ══ HERO ══ */}
-      <section style={{ position: 'relative', height: 'clamp(520px,75vh,800px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
-        {/* foto de fundo do imóvel */}
+      <section style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
         <img
-          src={residencial.heroImage}
-          alt={residencial.nome}
+          src={r0.heroImage}
+          alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }}
           onError={e => { e.target.style.display = 'none'; }}
         />
-        {/* dark gradient overlay — heavier at bottom for text legibility */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.08) 0%, rgba(0,0,0,.18) 40%, rgba(0,0,0,.72) 100%)' }} />
-        {/* hero content */}
-        <div style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px', display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'flex-end', gap: 40 }}>
-          <div>
-            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>
-              {residencial.heroEyebrow}
-            </div>
-            <h1 style={{ fontSize: 'clamp(36px,4.5vw,62px)', fontWeight: 800, lineHeight: 1.02, margin: '0 0 20px', letterSpacing: '-.03em', color: '#fff' }}>
-              {residencial.heroLine1}<br />{residencial.heroLine2}<br />
-              <span style={{ color: ACCENT, fontWeight: 300, fontStyle: 'italic' }}>{residencial.heroAccent}</span>
-            </h1>
-            <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,.82)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 420 }}>
-              {residencial.heroSubtext}
-            </p>
-            <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              style={{ padding: '14px 32px', background: '#fff', color: BLACK, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-              Ver Apartamentos
-            </button>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 40%, rgba(0,0,0,.72) 100%)' }} />
+        <div style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>
+            Praia da Pinheira · Palhoça · Santa Catarina
           </div>
-          <div />
+          <h1 style={{ fontSize: 'clamp(32px,4.2vw,56px)', fontWeight: 800, lineHeight: 1.05, margin: '0 0 18px', letterSpacing: '-.03em', color: '#fff', maxWidth: 700 }}>
+            Apartamentos à beira-mar<br />
+            <span style={{ color: ACCENT, fontWeight: 300, fontStyle: 'italic' }}>ou a poucos passos dele.</span>
+          </h1>
+          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,.85)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 480 }}>
+            {data.residenciais.length} residenciais, um só motor de reservas — escolha as datas e o número de hóspedes e veja tudo o que está disponível.
+          </p>
+          <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            style={{ padding: '14px 32px', background: '#fff', color: BLACK, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+            Ver Apartamentos
+          </button>
         </div>
       </section>
 
@@ -334,12 +368,12 @@ export function PublicSite({ data, onCreate }) {
             { key: 'estacion',   icon: <Car size={16} />,        label: tr('cat3') },
             { key: 'familia',    icon: <Users size={16} />,      label: tr('cat5') },
             { key: 'praia',      icon: <BedDouble size={16} />,  label: tr('cat7') },
-          ].filter(cat => cat.key !== 'frente_mar' || active.some(a => a.vista === 'Frente Mar')).map(cat => {
-            const active = activeCategory === cat.key;
+          ].filter(cat => cat.key !== 'frente_mar' || hasFrenteMar).map(cat => {
+            const on = activeCategory === cat.key;
             return (
-              <button key={String(cat.key)} onClick={() => setActiveCategory(active ? null : cat.key)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 20px', border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 600, color: active ? BLACK : GREY, borderBottom: active ? `2px solid ${BLACK}` : '2px solid transparent', transition: 'all .15s' }}>
-                <span style={{ color: active ? BLACK : GREY }}>{cat.icon}</span>
+              <button key={String(cat.key)} onClick={() => setActiveCategory(on ? null : cat.key)}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 20px', border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 600, color: on ? BLACK : GREY, borderBottom: on ? `2px solid ${BLACK}` : '2px solid transparent', transition: 'all .15s' }}>
+                <span style={{ color: on ? BLACK : GREY }}>{cat.icon}</span>
                 {cat.label}
               </button>
             );
@@ -352,152 +386,41 @@ export function PublicSite({ data, onCreate }) {
         </div>
       </div>
 
-      {/* ══ RESULTS / SECTIONS ══ */}
-      <main ref={resultsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '64px 32px 80px', scrollMarginTop: 80 }}>
-
-        {valid ? (<>
-          {/* search results mode */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.02em' }}>
-              {availableApts.length > 0 ? `${availableApts.length} apartamento${availableApts.length > 1 ? 's' : ''} disponível${availableApts.length > 1 ? 'veis' : ''}` : 'Sem disponibilidade'}
+      {/* ══ RESULTADOS — um bloco por imóvel, como um motor de reservas de hotel ══ */}
+      <main ref={resultsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 80px', scrollMarginTop: 80 }}>
+        {valid && (
+          <div style={{ marginBottom: 44 }}>
+            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em' }}>
+              {fmtShort(ci)} — {fmtShort(co)} · {nights(ci, co)} noite{nights(ci,co) > 1 ? 's' : ''}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}
             </div>
-            <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>{fmtShort(ci)} — {fmtShort(co)}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''} · {nights(ci,co)} noite{nights(ci,co) > 1 ? 's' : ''}</div>
+            <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>Disponibilidade nos dois residenciais para estas datas.</div>
           </div>
-
-          {needsCombo && combo && (
-            <div style={{ border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 36, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
-              <Users size={18} color={GREY} style={{ flexShrink: 0, marginTop: 2 }} />
-              <div style={{ fontSize: 14, color: BLACK, lineHeight: 1.65 }}>
-                <b>Para {hosp} hóspedes é necessário combinar apartamentos.</b> Temos unidades que acomodam 2, 4, 6 e até 8 pessoas.
-                {combo.enough && <> Sugestão: <b>{combo.pick.map(a => `${a.nome} (${a.capacidade} pax)`).join(' + ')}</b> — capacidade total de {combo.cap} pessoas.</>}
-                {combo.enough && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                    {combo.pick.map(a => (
-                      <button key={a.id} onClick={() => openDetail(a)}
-                        style={{ background: BLACK, color: WHITE, border: 'none', padding: '8px 16px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em' }}>
-                        VER {a.nome.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))', gap: '48px 28px' }}>
-            {withInfoFiltered.map(({ apt, available, fits, bd }) => (
-              <PCard key={apt.id} apt={apt} available={available} fits={fits} bd={bd} />
-            ))}
-          </div>
-        </>) : (<>
-
-          {/* editorial home mode */}
-
-          {/* Frente Mar — featured editorial */}
-          {(() => {
-            const fm = active.filter(a => a.vista === 'Frente Mar');
-            if (!fm.length) return null;
-            return (
-              <div style={{ marginBottom: 80 }}>
-                <div style={{ paddingBottom: 16, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.02em' }}>Frente Mar</div>
-                    <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>Vista privilegiada directamente para o mar</div>
-                  </div>
-                  <div style={{ fontSize: 12, color: GREY, letterSpacing: '.08em', textTransform: 'uppercase' }}>{fm.length} unidades</div>
-                </div>
-                {fm.length >= 2 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gridTemplateRows: 'auto auto', gap: 6 }}>
-                    {/* big */}
-                    <div onClick={() => openDetail(fm[0])} style={{ cursor: 'pointer', overflow: 'hidden', gridRow: '1 / 3', background: LIGHT, position: 'relative' }}>
-                      <PhotoTile apt={fm[0]} h={520} radius={0} />
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '48px 24px 22px', background: 'linear-gradient(transparent,rgba(0,0,0,.62))', color: WHITE }}>
-                        <div style={{ fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', opacity: .8, marginBottom: 6 }}>Destaque</div>
-                        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.01em' }}>{fm[0].nome}</div>
-                        <div style={{ fontSize: 14, opacity: .82, marginTop: 4 }}>{fm[0].piso} · até {fm[0].capacidade} pessoas · {money(fm[0].preco)}/noite</div>
-                      </div>
-                    </div>
-                    {/* smaller right */}
-                    {fm.slice(1, 3).map(apt => (
-                      <div key={apt.id} onClick={() => openDetail(apt)} style={{ cursor: 'pointer', overflow: 'hidden', background: LIGHT, position: 'relative', height: 256 }}>
-                        <PhotoTile apt={apt} h={256} radius={0} />
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '28px 18px 14px', background: 'linear-gradient(transparent,rgba(0,0,0,.58))', color: WHITE }}>
-                          <div style={{ fontSize: 15, fontWeight: 700 }}>{apt.nome}</div>
-                          <div style={{ fontSize: 12.5, opacity: .82 }}>{apt.piso} · {money(apt.preco)}/noite</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '40px 28px' }}>
-                    {fm.map(apt => <PCard key={apt.id} apt={apt} />)}
-                  </div>
-                )}
-                {/* extra Frente Mar if > 3 */}
-                {fm.length > 3 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '40px 28px', marginTop: 28 }}>
-                    {fm.slice(3).map(apt => <PCard key={apt.id} apt={apt} />)}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* By capacity */}
-          {[2, 4, 6, 8].map(cap => {
-            const grupo = active.filter(a => a.capacidade === cap);
-            if (!grupo.length) return null;
-            const labels = { 2: 'Para dois — casais e escapadinhas', 4: 'Para famílias — até 4 pessoas', 6: 'Grupos — até 6 pessoas', 8: 'Grandes grupos — até 8 pessoas' };
-            return (
-              <Row key={cap} title={`Até ${cap} pessoas`} sub={labels[cap]}
-                items={grupo.map(apt => ({ apt, available: true, fits: true, bd: null }))}
-                scrollable={grupo.length > 4} />
-            );
-          })}
-
-          {/* Churrasqueira */}
-          {(() => {
-            const ch = active.filter(a => Array.isArray(a.amenidades) && a.amenidades.some(am => /churrasco/i.test(am)));
-            if (!ch.length) return null;
-            return <Row title="Com churrasqueira exclusiva" sub="Área de churrasco privativa, sem partilha"
-              items={ch.map(apt => ({ apt, available: true, fits: true, bd: null }))} scrollable={false} />;
-          })()}
-
-          {/* All */}
-          <Row title="Todos os apartamentos"
-            sub={`${active.length} unidades ${residencial.regiaoLabel}`}
-            items={active.map(apt => ({ apt, available: true, fits: true, bd: null }))}
-            scrollable={false} />
-
-        </>)}
+        )}
+        {groups.map(g => <PropertyGroup key={g.residencial.id} g={g} />)}
       </main>
 
-      {/* ══ DESTINATION ══ */}
-      <DestinoSection residencial={residencial} />
+      {/* ══ DESTINATION (partilhado — mesma zona/praia para os dois imóveis) ══ */}
+      <DestinoSection />
 
       {/* ══ FOOTER ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 40 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 14 }}>
-              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>{brandMain}</span>
-              {brandAccent && <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>{brandAccent}</span>}
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 40 }}>
+          {data.residenciais.map(r => (
+            <div key={r.id}>
+              <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', color: BLACK, marginBottom: 10 }}>{r.nome}</div>
+              <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
+                <div>{r.endereco}</div>
+                <div>{r.cidade}</div>
+                <div style={{ marginTop: 6 }}>{r.telefone}</div>
+                <div>{r.email}</div>
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: GREY, lineHeight: 1.8 }}>{data.settings.endereco}<br />{data.settings.cidade}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Contacto</div>
-            <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
-              <div>{data.settings.telefone}</div>
-              <div>{data.settings.email}</div>
-              {residencial.site && <div>{residencial.site}</div>}
-            </div>
-          </div>
+          ))}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Horários</div>
             <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
-              <div>Check-in — a partir das {data.settings.checkInHora || '13:00'}</div>
-              <div>Check-out — até às {data.settings.checkOutHora || '10:00'}</div>
+              <div>Check-in — a partir das {r0.checkInHora || '13:00'}</div>
+              <div>Check-out — até às {r0.checkOutHora || '10:00'}</div>
             </div>
           </div>
           <div>
@@ -510,15 +433,9 @@ export function PublicSite({ data, onCreate }) {
           </div>
         </div>
         <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 12, color: GREY, letterSpacing: '.04em' }}>
-          © {new Date().getFullYear()} {residencial.nome.toUpperCase()} — TODOS OS DIREITOS RESERVADOS
+          © {new Date().getFullYear()} PINHEIRA HOSPEDAGENS — TODOS OS DIREITOS RESERVADOS
         </div>
       </footer>
-
-      {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td,2))} hosp={hosp || 2} data={data}
-        onClose={() => setBooking(null)}
-        onConfirm={r => { onCreate(r); setBooking(null); setDone({ reserva: r, apt: booking.apt }); }} />}
-      {done && <ConfirmationModal info={done} settings={data.settings} onClose={() => setDone(null)} />}
     </div>
   );
 }
-

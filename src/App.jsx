@@ -1,24 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Home, Settings, Waves, ArrowRight, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, Settings, Waves } from 'lucide-react';
 import { C, F, applyTheme } from './lib/constants';
 import { loadData, saveData, STORE_KEY, seedData } from './lib/seed';
-import { buildScoped } from './lib/multiProperty';
 import { PublicSite } from './views/public/PublicSite';
 import { Admin } from './views/admin/Admin';
 import { LoginScreen } from './views/admin/Admin';
 
-// Lê ?imovel=<id> da URL, para se poder divulgar um link directo a cada
-// residencial (ex.: pinheiramar.com.br/?imovel=novoimovel) sem passar pela
-// página de escolha.
-function residencialFromURL() {
+// Lê ?imovel=<id> da URL — o site já mostra sempre os dois residenciais
+// juntos, mas isto permite um link directo que leva logo à secção de um
+// imóvel específico (ex.: pinheiramar.com.br/?imovel=novoimovel), útil
+// para divulgar cada imóvel separadamente nas redes sociais.
+export function residencialFromURL() {
   try { return new URLSearchParams(window.location.search).get('imovel'); }
   catch { return null; }
 }
 
 export default function App() {
   const [data, setData] = useState(null);
-  const [mode, setMode] = useState('landing');   // 'landing' | 'site' | 'admin'
-  const [residencialId, setResidencialId] = useState(null);
+  const [mode, setMode] = useState('site');   // 'site' | 'admin'
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
@@ -26,31 +25,19 @@ export default function App() {
     (async () => {
       let d = await loadData();
       if (!d) { d = seedData(); await saveData(d); }
-      if (alive) {
-        setData(d);
-        const fromURL = residencialFromURL();
-        if (fromURL && d.residenciais.some(r => r.id === fromURL)) {
-          setResidencialId(fromURL);
-          setMode('site');
-        } else if (d.residenciais.length === 1) {
-          setResidencialId(d.residenciais[0].id);
-          setMode('site');
-        }
-      }
+      if (alive) setData(d);
     })();
     return () => { alive = false; };
   }, []);
 
-  // aplica a paleta de cores do imóvel seleccionado (C é mutado in-place —
-  // ver src/lib/constants.js — por isso todos os componentes que já
-  // importaram { C } vêem a mudança no próximo render)
-  useEffect(() => { if (residencialId) applyTheme(residencialId); }, [residencialId]);
+  // o site público mostra sempre os dois residenciais lado a lado, por
+  // isso usa sempre a paleta "de base" — só o admin troca de tema
+  // consoante o imóvel que estiver a gerir (ver Admin.jsx).
+  useEffect(() => { if (mode === 'site') applyTheme('pinheiramar'); }, [mode]);
 
   // update data (globalmente) e persiste
   const update = (arg) => setData(prev => { const next = typeof arg === 'function' ? arg(prev) : { ...prev, ...arg }; saveData(next); return next; });
   const createReservation = (r) => update(prev => ({ ...prev, reservas: [...prev.reservas, r] }));
-
-  const scopedData = useMemo(() => (data && residencialId ? buildScoped(data, residencialId) : null), [data, residencialId]);
 
   const css = `
     .pmf:focus{border-color:${C.brisa}!important;box-shadow:0 0 0 3px rgba(46,126,140,.16)!important;}
@@ -82,20 +69,6 @@ export default function App() {
     </div>
   );
 
-  /* ── página inicial: escolher o imóvel ── */
-  if (mode === 'landing') {
-    return (
-      <>
-        <style>{css}</style>
-        <LandingPicker
-          residenciais={data.residenciais}
-          onPick={(id) => { setResidencialId(id); setMode('site'); }}
-          onAdmin={() => { setResidencialId(data.residenciais[0].id); setMode('admin'); }}
-        />
-      </>
-    );
-  }
-
   /* ── admin mode: login gate ── */
   if (mode === 'admin' && !authed) {
     return (
@@ -118,77 +91,30 @@ export default function App() {
             <span style={{ fontWeight: 600, color: '#fff' }}>Painel de Gestão</span>
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => setMode('landing')} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button onClick={() => setMode('site')} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Home size={13} /> Ver site
             </button>
-            <button onClick={() => { setAuthed(false); setMode('landing'); }} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
+            <button onClick={() => { setAuthed(false); setMode('site'); }} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
               Sair
             </button>
           </div>
         </div>
       )}
 
-      {/* site: botão discreto para trocar de imóvel / aceder ao painel */}
+      {/* site: botão discreto para aceder ao painel */}
       {mode === 'site' && (
-        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 999, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
-          {data.residenciais.length > 1 && (
-            <button onClick={() => setMode('landing')}
-              title="Ver o outro imóvel"
-              style={{ width: 44, height: 44, borderRadius: '50%', background: '#fff', border: `1px solid ${C.line}`, cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: '0 4px 16px rgba(0,0,0,.18)' }}>
-              <Home size={18} color={C.ink} />
-            </button>
-          )}
-          <button onClick={() => setMode('admin')}
-            title="Acesso ao painel de gestão"
-            style={{ width: 44, height: 44, borderRadius: '50%', background: C.oceanDeep, border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: '0 4px 16px rgba(0,0,0,.28)', opacity: .72, transition: 'opacity .2s' }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '.72'}>
-            <Settings size={20} color="#fff" />
-          </button>
-        </div>
+        <button onClick={() => setMode('admin')}
+          title="Acesso ao painel de gestão"
+          style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 999, width: 44, height: 44, borderRadius: '50%', background: C.oceanDeep, border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: '0 4px 16px rgba(0,0,0,.28)', opacity: .72, transition: 'opacity .2s' }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '.72'}>
+          <Settings size={20} color="#fff" />
+        </button>
       )}
 
-      {mode === 'site' && scopedData
-        ? <PublicSite data={scopedData} onCreate={createReservation} />
-        : mode === 'admin'
-          ? <Admin data={data} update={update} initialResidencialId={residencialId} />
-          : null}
-    </div>
-  );
-}
-
-/* ── Página inicial: escolher entre os residenciais ── */
-function LandingPicker({ residenciais, onPick, onAdmin }) {
-  return (
-    <div style={{ minHeight: '100vh', background: '#15302E', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: F.sans, padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff', marginBottom: 8 }}>
-        <Waves size={22} />
-        <span style={{ fontFamily: F.disp, fontSize: 22 }}>Os nossos residenciais</span>
-      </div>
-      <p style={{ color: 'rgba(255,255,255,.65)', fontSize: 14, marginBottom: 36, textAlign: 'center', maxWidth: 460 }}>
-        Escolha o imóvel para ver os apartamentos, disponibilidade e reservar.
-      </p>
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(residenciais.length, 2)}, minmax(260px, 340px))`, gap: 24 }}>
-        {residenciais.map(r => (
-          <button key={r.id} onClick={() => onPick(r.id)}
-            className="pm-card"
-            style={{ textAlign: 'left', cursor: 'pointer', border: 'none', borderRadius: 18, overflow: 'hidden', background: '#fff', padding: 0 }}>
-            <div style={{ height: 120, backgroundImage: `url(${r.heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            <div style={{ padding: '18px 20px' }}>
-              <div style={{ fontFamily: F.disp, fontSize: 19, marginBottom: 6, color: '#15302E' }}>{r.nome}</div>
-              <div style={{ fontSize: 13, color: '#666', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                <MapPin size={13} /> {r.regiaoLabel}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#0E4A58' }}>
-                Ver apartamentos <ArrowRight size={14} />
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-      <button onClick={onAdmin} style={{ marginTop: 44, background: 'none', border: 'none', color: 'rgba(255,255,255,.5)', fontSize: 12.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Settings size={13} /> Acesso ao painel de gestão
-      </button>
+      {mode === 'site'
+        ? <PublicSite data={data} onCreate={createReservation} />
+        : <Admin data={data} update={update} />}
     </div>
   );
 }
