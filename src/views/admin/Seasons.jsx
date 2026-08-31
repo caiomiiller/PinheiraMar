@@ -83,10 +83,16 @@ export function SeasonForm({ initial, isNew, apartamentos, onSave, onClose }) {
           onClick={() => onSave({
             id: i.id || ('s' + uid()), nome: nome.trim(), inicio, fim, ativa,
             minNoites: Number(minN) || 1, maxNoites: maxN === '' ? null : Number(maxN),
-            precos: Object.fromEntries(apartamentos.map(a => [a.id, {
-              diaSemana: Number(precos[a.id]?.diaSemana) || 0, fimSemana: Number(precos[a.id]?.fimSemana) || 0,
-              semanal: Number(precos[a.id]?.semanal) || 0, mensal: Number(precos[a.id]?.mensal) || 0, adultoExtra: Number(precos[a.id]?.adultoExtra) || 0,
-            }])),
+            // Preserva os preços de apartamentos de OUTROS imóveis (não listados aqui,
+            // porque este formulário só mostra o imóvel selecionado no admin) — sem isto,
+            // guardar uma temporada a partir de um imóvel apagaria os preços do outro.
+            precos: {
+              ...(i.precos || {}),
+              ...Object.fromEntries(apartamentos.map(a => [a.id, {
+                diaSemana: Number(precos[a.id]?.diaSemana) || 0, fimSemana: Number(precos[a.id]?.fimSemana) || 0,
+                semanal: Number(precos[a.id]?.semanal) || 0, mensal: Number(precos[a.id]?.mensal) || 0, adultoExtra: Number(precos[a.id]?.adultoExtra) || 0,
+              }])),
+            },
           })}>{isNew ? 'Salvar' : 'Guardar alterações'}</Btn></>}>
       <div style={{ display: 'grid', gap: 16 }}>
         <Field label="Nomeie sua temporada" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Alta 2027-2028" /></Field>

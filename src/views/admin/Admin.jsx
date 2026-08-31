@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Building2, Tag, CreditCard,
-  Users, Settings, Waves, Home, Plus, Minus, AlertCircle, Sun } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+  Users, Settings, Waves, Home, Plus, Minus, AlertCircle, Sun, ChevronDown } from 'lucide-react';
+import { C, F, applyTheme } from '../../lib/constants';
+import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 import { Btn } from '../../components/ui';
 import { Dashboard } from './Dashboard';
 import { Financeiro } from './Financeiro';
@@ -29,16 +30,57 @@ export const TABS = [
   { id: 'pagamentos', label: 'Pagamentos', icon: CreditCard },
 ];
 
-export function Admin({ data, update }) {
+export function Admin({ data, update, initialResidencialId }) {
   const [tab, setTab] = useState('painel');
+  const [residencialId, setResidencialId] = useState(initialResidencialId || data.residenciais[0].id);
+  const residencial = data.residenciais.find(r => r.id === residencialId) || data.residenciais[0];
+  const [picker, setPicker] = useState(false);
+
+  useEffect(() => { applyTheme(residencialId); }, [residencialId]);
+
+  // `scoped` tem a mesma forma que o antigo `data` de um único imóvel
+  // (settings/apartamentos/reservas já filtrados); `scopedUpdate` traduz
+  // as alterações de volta para o store completo — ver src/lib/multiProperty.js
+  const scoped = useMemo(() => buildScoped(data, residencialId), [data, residencialId]);
+  const scopedUpdate = (arg) => update(prev => {
+    const prevScoped = buildScoped(prev, residencialId);
+    const nextScoped = typeof arg === 'function' ? arg(prevScoped) : { ...prevScoped, ...arg };
+    return mergeScopedBack(prev, residencialId, nextScoped);
+  });
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: F.sans, color: C.ink, background: C.espuma }}>
       {/* sidebar (md+) */}
       <aside className="pm-sidebar" style={{ width: 240, background: C.ocean, color: 'rgba(255,255,255,.78)', flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 22px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 18px' }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: '#fff' }}><Waves size={19} /></div>
-          <div><div style={{ fontFamily: F.disp, fontSize: 17, color: '#fff', lineHeight: 1 }}>PinheiraMar</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>GESTÃO</div></div>
+          <div><div style={{ fontFamily: F.disp, fontSize: 17, color: '#fff', lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>
         </div>
+
+        {/* seletor de imóvel */}
+        {data.residenciais.length > 1 && (
+          <div style={{ position: 'relative', margin: '0 8px 18px' }}>
+            <button onClick={() => setPicker(p => !p)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+              padding: '9px 11px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.16)',
+              borderRadius: 10, color: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, textAlign: 'left',
+            }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{residencial.nome}</span>
+              <ChevronDown size={14} style={{ flexShrink: 0 }} />
+            </button>
+            {picker && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
+                {data.residenciais.map(r => (
+                  <button key={r.id} onClick={() => { setResidencialId(r.id); setPicker(false); }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: r.id === residencialId ? C.espuma : '#fff', color: C.ink, cursor: 'pointer', fontSize: 13, fontWeight: r.id === residencialId ? 700 : 500 }}>
+                    {r.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {TABS.map(t => {
           const on = tab === t.id;
           return (
@@ -59,17 +101,17 @@ export function Admin({ data, update }) {
           ))}
         </div>
         <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: 1180, margin: '0 auto' }}>
-          {tab === 'painel' && <Dashboard data={data} go={setTab} />}
-          {tab === 'reservas' && <Reservations data={data} update={update} />}
-          {tab === 'financeiro' && <Financeiro data={data} go={setTab} />}
-          {tab === 'apartamentos' && <Apartments data={data} update={update} />}
-          {tab === 'temporadas' && <Seasons data={data} update={update} />}
-          {tab === 'taxas' && <TaxasView data={data} update={update} />}
-          {tab === 'cupons' && <CuponsView data={data} update={update} />}
-          {tab === 'politicas' && <PoliticasView data={data} update={update} />}
-          {tab === 'idiomas' && <IdiomasView data={data} update={update} />}
-          {tab === 'configuracoes' && <SettingsView data={data} update={update} />}
-          {tab === 'pagamentos' && <PaymentsView data={data} update={update} />}
+          {tab === 'painel' && <Dashboard data={scoped} go={setTab} />}
+          {tab === 'reservas' && <Reservations data={scoped} update={scopedUpdate} />}
+          {tab === 'financeiro' && <Financeiro data={scoped} go={setTab} />}
+          {tab === 'apartamentos' && <Apartments data={scoped} update={scopedUpdate} />}
+          {tab === 'temporadas' && <Seasons data={scoped} update={scopedUpdate} />}
+          {tab === 'taxas' && <TaxasView data={scoped} update={scopedUpdate} />}
+          {tab === 'cupons' && <CuponsView data={scoped} update={scopedUpdate} />}
+          {tab === 'politicas' && <PoliticasView data={scoped} update={scopedUpdate} />}
+          {tab === 'idiomas' && <IdiomasView data={scoped} update={scopedUpdate} />}
+          {tab === 'configuracoes' && <SettingsView data={scoped} update={scopedUpdate} />}
+          {tab === 'pagamentos' && <PaymentsView data={scoped} update={scopedUpdate} />}
         </main>
       </div>
     </div>
@@ -97,8 +139,8 @@ export function LoginScreen({ onLogin }) {
           <div style={{ width: 56, height: 56, borderRadius: '50%', background: C.coral, display: 'grid', placeItems: 'center', marginBottom: 14 }}>
             <Waves size={28} color="#fff" />
           </div>
-          <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 600, color: C.ink }}>PinheiraMar</div>
-          <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Painel de Gestão</div>
+          <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 600, color: C.ink }}>Gestão de Residenciais</div>
+          <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Acesso ao painel</div>
         </div>
 
         {/* PIN field */}

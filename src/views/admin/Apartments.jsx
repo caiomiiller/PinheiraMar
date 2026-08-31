@@ -19,10 +19,11 @@ export function Apartments({ data, update }) {
   const remove = (id) => { update(prev => ({ ...prev, apartamentos: prev.apartamentos.filter(x => x.id !== id) })); setEditing(null); };
   const duplicate = (id) => update(prev => ({ ...prev, apartamentos: duplicateInList(prev.apartamentos, id, a => ({ ...a, id: 'a' + uid(), nome: a.nome + ' (cópia)' })) }));
   const dnd = useReorder(data.apartamentos, (arr) => update(prev => ({ ...prev, apartamentos: arr })));
+  const residencial = data.settings;
 
   return (
     <div>
-      <PageHead title="Apartamentos" sub={`${data.apartamentos.length} unidades · arraste para ordenar`}
+      <PageHead title="Apartamentos" sub={`${data.apartamentos.length} unidades de ${residencial.nome} · arraste para ordenar`}
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Adicionar</Btn>} />
       <div style={{ display: 'grid', gap: 12 }}>
         {data.apartamentos.map((a, idx) => (
@@ -42,7 +43,7 @@ export function Apartments({ data, update }) {
           </Card>
         ))}
       </div>
-      {editing && <ApartmentForm initial={editing === 'new' ? null : editing} isNew={editing === 'new'} onSave={save} onClose={() => setEditing(null)} />}
+      {editing && <ApartmentForm initial={editing === 'new' ? null : editing} isNew={editing === 'new'} residencial={residencial} onSave={save} onClose={() => setEditing(null)} />}
     </div>
   );
 }
@@ -55,7 +56,7 @@ export const AMENIDADES_LIST = [
 ];
 export const CAMA_TIPOS = ['Casal', 'Solteiro', 'Queen', 'King', 'Beliche', 'Sofá Cama', 'Colchão Extra'];
 
-export function ApartmentForm({ initial, isNew, onSave, onClose }) {
+export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) {
   const i = initial || {};
 
   /* ── Visão geral ── */
@@ -90,9 +91,9 @@ export function ApartmentForm({ initial, isNew, onSave, onClose }) {
   const [descricao, setDescricao] = useState(i.descricao || '');
 
   /* ── Endereço ── */
-  const [cidade, setCidade] = useState(i.cidade || 'Palhoça - State of Santa Catarina, Brazil');
-  const [endereco, setEndereco] = useState(i.endereco || 'Rua Dom Patrício n.92 - Praia da Pinheira');
-  const [cep, setCep] = useState(i.cep || '88135-427');
+  const [cidade, setCidade] = useState(i.cidade || residencial?.cidade || '');
+  const [endereco, setEndereco] = useState(i.endereco || residencial?.endereco || '');
+  const [cep, setCep] = useState(i.cep || residencial?.cep || '');
   const [mostrarMapa, setMostrarMapa] = useState(i.mostrarMapa !== false);
 
   /* ── Preço ── */
@@ -138,6 +139,7 @@ export function ApartmentForm({ initial, isNew, onSave, onClose }) {
           <Btn variant="primary" disabled={!ok} style={{ opacity: ok ? 1 : .5 }}
             onClick={() => onSave({
               id: i.id || ('a' + uid()),
+              residencialId: i.residencialId || residencial?.id,
               nome,
               tipo: titulo.trim(),
               piso, vista, ativo,

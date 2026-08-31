@@ -2,7 +2,11 @@ import { C } from './constants';
 import { uid, code, nights, today, ymd, MS } from './helpers';
 
 /* ───────────────────────── Apartamentos · serviços · países ───────────────────────── */
-export const vistaLabel = (v) => (v === 'Frente Mar' ? 'Frente Mar' : 'à beira mar');
+export const vistaLabel = (v) => {
+  if (v === 'Frente Mar') return 'Frente Mar';
+  if (v === 'Beira-mar') return 'à beira mar';
+  return v || '';
+};
 // Nome completo do tipo no formato usado na base de dados (ex.: "Apto 102 - Térreo Frente Mar, 4 pessoas")
 export const roomFullName = (apt) => apt.tipo || `${apt.nome} - ${apt.piso} ${vistaLabel(apt.vista)}, ${apt.capacidade} pessoas`;
 

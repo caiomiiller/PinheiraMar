@@ -92,7 +92,11 @@ export const HOLIDAY_COLORS = { Nacional: '#3E7CB1', SC: '#1C7A5B', RS: '#B26A2E
 export const HOLIDAY_LABELS = { Nacional: 'Nacional', SC: 'Santa Catarina', RS: 'Rio Grande do Sul' };
 
 /* ───────────────────────── Apartamentos · serviços · países ───────────────────────── */
-export const vistaLabel = (v) => (v === 'Frente Mar' ? 'Frente Mar' : 'à beira mar');
+export const vistaLabel = (v) => {
+  if (v === 'Frente Mar') return 'Frente Mar';
+  if (v === 'Beira-mar') return 'à beira mar';
+  return v || '';
+};
 // Nome completo do tipo no formato usado na base de dados (ex.: "Apto 102 - Térreo Frente Mar, 4 pessoas")
 export const roomFullName = (apt) => apt.tipo || `${apt.nome} - ${apt.piso} ${vistaLabel(apt.vista)}, ${apt.capacidade} pessoas`;
 

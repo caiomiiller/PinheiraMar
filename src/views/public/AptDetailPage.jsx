@@ -98,7 +98,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             <span style={{ color: '#717171' }}>·</span>
             <span style={{ color: '#717171' }}>{apt.piso}</span>
             <span style={{ color: '#717171' }}>·</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} color="#717171" /> Praia da Pinheira, Palhoça — SC</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} color="#717171" /> {apt.cidade || data.settings.cidade}</span>
             {apt.vista === 'Frente Mar' && <span style={{ background: '#E1F0EC', color: '#1C7A5B', borderRadius: 999, padding: '3px 10px', fontWeight: 700, fontSize: 12 }}>🌊 Frente Mar</span>}
           </div>
         </div>

@@ -14,8 +14,24 @@ import { DestinoSection } from './DestinoSection';
 import { BookingModal } from '../../components/BookingModal';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 
+// Divide o nome do imóvel em duas partes para o logótipo tipográfico
+// (ex.: "Residencial PinheiraMar" → "PINHEIRA" leve + "MAR" destacado, à
+// semelhança do logótipo original). Sem isto teríamos de manter um campo
+// de marca extra em cada residencial só para isto.
+function splitBrand(nome) {
+  const limpo = (nome || '').replace(/^residencial\s+/i, '').trim();
+  const partes = limpo.split(/\s+/).filter(Boolean);
+  if (partes.length > 1) return [partes.slice(0, -1).join(' ').toUpperCase(), partes[partes.length - 1].toUpperCase()];
+  // palavra única em camelCase (ex.: "PinheiraMar") — separa na 1ª maiúscula interna
+  const m = limpo.match(/^([A-ZÀ-Ý][a-zà-ÿ]*)([A-ZÀ-Ý].*)$/);
+  if (m) return [m[1].toUpperCase(), m[2].toUpperCase()];
+  return [limpo.toUpperCase(), ''];
+}
+
 export function PublicSite({ data, onCreate }) {
   const td = today();
+  const residencial = data.settings;
+  const [brandMain, brandAccent] = splitBrand(residencial.nome);
 
   /* ── language ── */
   const idiomasAtivos = (data.settings.idiomas || []).filter(i => i.ativo);
@@ -217,8 +233,8 @@ export function PublicSite({ data, onCreate }) {
 
           {/* wordmark */}
           <a href="#" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 2 }}>
-            <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>PINHEIRA</span>
-            <span style={{ fontSize: 19, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>MAR</span>
+            <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>{brandMain}</span>
+            {brandAccent && <span style={{ fontSize: 19, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>{brandAccent}</span>}
           </a>
 
           {/* centred search */}
@@ -277,18 +293,12 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ HERO ══ */}
       <section style={{ position: 'relative', height: 'clamp(520px,75vh,800px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
-        {/* full-bleed beach photo */}
+        {/* foto de fundo do imóvel */}
         <img
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1800&q=85&auto=format&fit=crop"
-          alt="Praia da Pinheira"
+          src={residencial.heroImage}
+          alt={residencial.nome}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }}
           onError={e => { e.target.style.display = 'none'; }}
-        />
-        {/* The user's uploaded aerial beach image — use as data URI via the upload path */}
-        <img
-          src="/mnt/user-data/uploads/1781559242420_image.png"
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%' }}
         />
         {/* dark gradient overlay — heavier at bottom for text legibility */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.08) 0%, rgba(0,0,0,.18) 40%, rgba(0,0,0,.72) 100%)' }} />
@@ -296,14 +306,14 @@ export function PublicSite({ data, onCreate }) {
         <div style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px', display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'flex-end', gap: 40 }}>
           <div>
             <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>
-              Praia da Pinheira · Palhoça · Santa Catarina
+              {residencial.heroEyebrow}
             </div>
             <h1 style={{ fontSize: 'clamp(36px,4.5vw,62px)', fontWeight: 800, lineHeight: 1.02, margin: '0 0 20px', letterSpacing: '-.03em', color: '#fff' }}>
-              Apartamentos<br />à beira-mar,<br />
-              <span style={{ color: ACCENT, fontWeight: 300, fontStyle: 'italic' }}>do jeito certo.</span>
+              {residencial.heroLine1}<br />{residencial.heroLine2}<br />
+              <span style={{ color: ACCENT, fontWeight: 300, fontStyle: 'italic' }}>{residencial.heroAccent}</span>
             </h1>
             <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,.82)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 420 }}>
-              Apartamentos residenciais completos frente ao mar.
+              {residencial.heroSubtext}
             </p>
             <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               style={{ padding: '14px 32px', background: '#fff', color: BLACK, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
@@ -324,7 +334,7 @@ export function PublicSite({ data, onCreate }) {
             { key: 'estacion',   icon: <Car size={16} />,        label: tr('cat3') },
             { key: 'familia',    icon: <Users size={16} />,      label: tr('cat5') },
             { key: 'praia',      icon: <BedDouble size={16} />,  label: tr('cat7') },
-          ].map(cat => {
+          ].filter(cat => cat.key !== 'frente_mar' || active.some(a => a.vista === 'Frente Mar')).map(cat => {
             const active = activeCategory === cat.key;
             return (
               <button key={String(cat.key)} onClick={() => setActiveCategory(active ? null : cat.key)}
@@ -455,7 +465,7 @@ export function PublicSite({ data, onCreate }) {
 
           {/* All */}
           <Row title="Todos os apartamentos"
-            sub={`${active.length} unidades na Praia da Pinheira`}
+            sub={`${active.length} unidades ${residencial.regiaoLabel}`}
             items={active.map(apt => ({ apt, available: true, fits: true, bd: null }))}
             scrollable={false} />
 
@@ -463,15 +473,15 @@ export function PublicSite({ data, onCreate }) {
       </main>
 
       {/* ══ DESTINATION ══ */}
-      <DestinoSection />
+      <DestinoSection residencial={residencial} />
 
       {/* ══ FOOTER ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 40 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 14 }}>
-              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>PINHEIRA</span>
-              <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>MAR</span>
+              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>{brandMain}</span>
+              {brandAccent && <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>{brandAccent}</span>}
             </div>
             <div style={{ fontSize: 13, color: GREY, lineHeight: 1.8 }}>{data.settings.endereco}<br />{data.settings.cidade}</div>
           </div>
@@ -480,7 +490,7 @@ export function PublicSite({ data, onCreate }) {
             <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
               <div>{data.settings.telefone}</div>
               <div>{data.settings.email}</div>
-              <div>www.pinheiramar.com.br</div>
+              {residencial.site && <div>{residencial.site}</div>}
             </div>
           </div>
           <div>
@@ -500,7 +510,7 @@ export function PublicSite({ data, onCreate }) {
           </div>
         </div>
         <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 12, color: GREY, letterSpacing: '.04em' }}>
-          © {new Date().getFullYear()} RESIDENCIAL PINHEIRAMAR — TODOS OS DIREITOS RESERVADOS
+          © {new Date().getFullYear()} {residencial.nome.toUpperCase()} — TODOS OS DIREITOS RESERVADOS
         </div>
       </footer>
 

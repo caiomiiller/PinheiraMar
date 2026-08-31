@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { MapPin, Sun, Waves, Phone } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 
-export function DestinoSection() {
+export function DestinoSection({ residencial }) {
   const [tab, setTab] = useState('destino');
+  const endereco = residencial?.endereco || 'Rua Dom Patrício, 82 — Praia da Pinheira';
+  const cidade = residencial?.cidade || 'Palhoça - Santa Catarina, Brasil';
+  const cep = residencial?.cep || '';
+  const telefone = residencial?.telefone || '';
+  const enderecoCompleto = `${endereco}, ${cidade}`;
 
   const TABS_DEST = [
     { id: 'destino',   label: '🌊 A Pinheira' },
@@ -175,7 +180,7 @@ export function DestinoSection() {
               <div style={{ display: 'grid', gap: 18 }}>
                 {[
                   { ic: '✈️', titulo: 'De avião', texto: 'Aeroporto Internacional Hercílio Luz (Florianópolis) — 48 km do Residencial. Aluguer de carro recomendado ou transfer privado.' },
-                  { ic: '🚗', titulo: 'De carro', texto: 'BR-101 Sul → SC-282 em direcção a Palhoça → seguir para Praia da Pinheira. GPS: "Residencial PinheiraMar, Praia da Pinheira". Estacionamento gratuito (1 vaga por apartamento).' },
+                  { ic: '🚗', titulo: 'De carro', texto: `BR-101 Sul → SC-282 em direcção a Palhoça → seguir para Praia da Pinheira. GPS: "${residencial?.nome || 'Residencial PinheiraMar'}, Praia da Pinheira". Estacionamento gratuito (1 vaga por apartamento).` },
                   { ic: '🚌', titulo: 'De ônibus', texto: 'Terminal Rodoviário de Florianópolis → linha para Palhoça → van/mototáxi para a Pinheira. Tempo total aprox. 1h30.' },
                   { ic: '📍', titulo: 'Distâncias úteis', texto: 'Centro de Florianópolis: 35 km · Palhoça (centro): 22 km · Guarda do Embaú: 2 km · Garopaba: 28 km · Imbituba: 45 km.' },
                 ].map((it, i) => (
@@ -192,15 +197,15 @@ export function DestinoSection() {
             <div>
               <div style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid ${C.line}`, marginBottom: 16 }}>
                 <iframe title="mapa-como-chegar"
-                  src="https://maps.google.com/maps?q=Rua+Dom+Patrício+82+Praia+da+Pinheira+Palhoça+SC&output=embed&zoom=14"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(enderecoCompleto)}&output=embed&zoom=14`}
                   width="100%" height="380" style={{ border: 0, display: 'block' }}
                   loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
               </div>
               <div style={{ padding: '16px 18px', background: C.espuma, borderRadius: 12, fontSize: 14, color: C.ink, lineHeight: 1.7 }}>
                 <div style={{ fontWeight: 700, marginBottom: 6 }}>📍 Endereço completo</div>
-                Rua Dom Patrício, 82 — Praia da Pinheira<br />
-                Palhoça · Santa Catarina · Brasil · CEP 88.139-427<br />
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={14} color={C.ocean} /> (48) 98476-1800</div>
+                {endereco}<br />
+                {cidade}{cep ? ` · CEP ${cep}` : ''}<br />
+                {telefone && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={14} color={C.ocean} /> {telefone}</div>}
               </div>
             </div>
           </div>

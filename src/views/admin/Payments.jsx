@@ -24,7 +24,7 @@ export function PaymentsView({ data, update }) {
           <Star size={18} color="#fff" fill="#fff" />
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: '#1A3A6B', marginBottom: 4 }}>Recomendação para o PinheiraMar</div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#1A3A6B', marginBottom: 4 }}>Recomendação para o {data.settings.nome}</div>
           <div style={{ fontSize: 13.5, color: '#1e3a5f', lineHeight: 1.6 }}>
             <b>Mercado Pago + Pix</b> é a combinação mais vantajosa para aluguel de temporada no Brasil. O Pix cobre o sinal de 50% (taxa zero, confirmação imediata) e o Mercado Pago oferece parcelamento em até 12x sem juros para o hóspede — aumentando a conversão em alta temporada. O saldo de 50% no check-in fica com <b>Pagamento presencial</b> (maquininha ou Pix directo).
           </div>
@@ -104,7 +104,7 @@ export function PaymentsView({ data, update }) {
           ))}
         </div>
         <div style={{ marginTop: 14, padding: '12px 14px', background: '#FFF8E1', border: '1px solid #FFD54F', borderRadius: 10, fontSize: 13, color: '#7B5600', lineHeight: 1.55 }}>
-          <b>Nota:</b> A integração automática de pagamentos requer um servidor backend (Node.js / PHP) com acesso à internet para receber os webhooks do gateway. O motor actual funciona em modo offline — para produção em <b>pinheiramar.com.br</b> será necessário configurar o servidor e as credenciais da API.
+          <b>Nota:</b> A integração automática de pagamentos requer um servidor backend (Node.js / PHP) com acesso à internet para receber os webhooks do gateway. O motor actual funciona em modo offline — para produção em <b>{data.settings.site || 'produção'}</b> será necessário configurar o servidor e as credenciais da API.
         </div>
       </Card>
 
