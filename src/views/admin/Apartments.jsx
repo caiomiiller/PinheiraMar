@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Upload, X, Check, BedDouble, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X, Check, BedDouble, Copy, Star, GripVertical } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { uid, money } from '../../lib/helpers';
 import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput,
@@ -86,6 +86,8 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
   const [fotoInput, setFotoInput] = useState('');
   const addFoto = () => { const u = fotoInput.trim(); if (u) { setFotos(f => [...f, u]); setFotoInput(''); } };
   const delFoto = (idx) => setFotos(f => f.filter((_, j) => j !== idx));
+  const setCapa = (idx) => setFotos(f => { if (idx === 0) return f; const a = [...f]; const [m] = a.splice(idx, 1); a.unshift(m); return a; });
+  const dndFotos = useReorder(fotos, setFotos);
 
   /* ── Descrição ── */
   const [descricao, setDescricao] = useState(i.descricao || '');
@@ -264,14 +266,32 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           <div>
             {fotos.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6, marginBottom: 12 }}>
-                {fotos.map((f, idx) => (
-                  <div key={idx} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3', background: C.espuma }}>
-                    <img src={f} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={e => { e.target.style.display = 'none'; }} />
-                    <button type="button" onClick={() => delFoto(idx)}
-                      style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: 12, display: 'grid', placeItems: 'center', lineHeight: 1 }}>×</button>
-                  </div>
-                ))}
+                {fotos.map((f, idx) => {
+                  const grip = dndFotos.grip(idx);
+                  return (
+                    <div key={idx} {...dndFotos.zone(idx)}
+                      draggable={grip.draggable} onDragStart={grip.onDragStart} onDragEnd={grip.onDragEnd} title={grip.title}
+                      style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3', background: C.espuma, cursor: 'grab', ...dndFotos.deco(idx) }}>
+                      <img src={f} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                        onError={e => { e.target.style.display = 'none'; }} />
+                      <span style={{ position: 'absolute', bottom: 3, left: 3, width: 18, height: 18, borderRadius: 5, background: 'rgba(0,0,0,.4)', display: 'grid', placeItems: 'center', color: '#fff', pointerEvents: 'none' }}>
+                        <GripVertical size={12} />
+                      </span>
+                      {idx === 0 ? (
+                        <span style={{ position: 'absolute', top: 3, left: 3, display: 'flex', alignItems: 'center', gap: 3, background: C.brisa, color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '3px 7px 3px 5px', borderRadius: 999, lineHeight: 1 }}>
+                          <Star size={10} fill="#fff" /> Capa
+                        </span>
+                      ) : (
+                        <button type="button" onClick={() => setCapa(idx)} title="Tornar foto de capa"
+                          style={{ position: 'absolute', top: 3, left: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', color: '#fff', display: 'grid', placeItems: 'center' }}>
+                          <Star size={11} />
+                        </button>
+                      )}
+                      <button type="button" onClick={() => delFoto(idx)}
+                        style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: 12, display: 'grid', placeItems: 'center', lineHeight: 1 }}>×</button>
+                    </div>
+                  );
+                })}
               </div>
             )}
             <div style={{ display: 'flex', gap: 8 }}>
@@ -281,7 +301,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
               <Btn variant="soft" onClick={addFoto} icon={Plus}>Adicionar</Btn>
             </div>
             <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 6 }}>
-              {fotos.length}/10 fotos · A primeira foto é a imagem principal do apartamento.
+              {fotos.length}/10 fotos · arraste para reordenar · clique na estrela para definir a foto de capa.
             </div>
           </div>
         </div>
