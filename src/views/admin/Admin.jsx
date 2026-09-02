@@ -140,9 +140,7 @@ export function LoginScreen({ onLogin }) {
       <div className="pm-pop" style={{ background: '#fff', borderRadius: 24, padding: '40px 36px', width: '100%', maxWidth: 380, boxShadow: '0 32px 80px rgba(0,0,0,.36)' }}>
         {/* logo */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: C.coral, display: 'grid', placeItems: 'center', marginBottom: 14 }}>
-            <Waves size={28} color="#fff" />
-          </div>
+          <img src="/icons/icon-192.png" alt="Pinheira" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', marginBottom: 14, boxShadow: '0 2px 10px rgba(0,0,0,.12)' }} />
           <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 600, color: C.ink }}>Gestão de Residenciais</div>
           <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Acesso ao painel</div>
         </div>

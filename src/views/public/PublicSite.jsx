@@ -309,11 +309,10 @@ export function PublicSite({ data, onCreate }) {
       <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
         <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
 
-          {/* wordmark — marca de destino partilhada pelos dois residenciais.
-              Ajusta aqui quando decidires o nome definitivo da plataforma. */}
-          <a href="#" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 2 }}>
-            <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-.04em', color: BLACK }}>PINHEIRA</span>
-            <span style={{ fontSize: 19, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>HOSPEDAGENS</span>
+          {/* wordmark — logótipo oficial (public/logo-horizontal.png), marca
+              de destino partilhada pelos dois residenciais. */}
+          <a href="#" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+            <img src="/logo-horizontal.png" alt="Pinheira Mar Residencial" style={{ height: 52, width: 'auto', display: 'block' }} />
           </a>
 
           {/* centred search (desktop) */}
