@@ -79,7 +79,7 @@ export function DestinoSection({ residencial }) {
         </svg>
       </div>
 
-      <div style={{ maxWidth: 1160, margin: '0 auto', padding: '0 24px 64px' }}>
+      <div className="pm-destino-wrap" style={{ maxWidth: 1160, margin: '0 auto', padding: '0 24px 64px' }}>
 
         {/* tab nav */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #eee', marginBottom: 36, marginTop: -8, overflowX: 'auto', scrollbarWidth: 'none' }}>
@@ -93,7 +93,7 @@ export function DestinoSection({ residencial }) {
 
         {/* ── tab: A Pinheira ── */}
         {tab === 'destino' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 56, alignItems: 'start' }}>
+          <div className="pm-destino-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 56, alignItems: 'start' }}>
             <div>
               <h3 style={{ fontFamily: F.disp, fontSize: 32, lineHeight: 1.15, margin: '0 0 16px', color: C.ink }}>
                 Viva o Melhor da Vida
@@ -137,7 +137,7 @@ export function DestinoSection({ residencial }) {
         {/* ── tab: Atrativos ── */}
         {tab === 'atrativos' && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginBottom: 40, alignItems: 'start' }}>
+            <div className="pm-destino-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginBottom: 40, alignItems: 'start' }}>
               <div>
                 <h3 style={{ fontFamily: F.disp, fontSize: 28, margin: '0 0 8px', color: C.ink }}>Atrativos e Passeios</h3>
                 <p style={{ fontSize: 15, color: '#717171', margin: '0 0 24px', lineHeight: 1.6 }}>
@@ -161,7 +161,7 @@ export function DestinoSection({ residencial }) {
                 ))}
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: 18 }}>
+            <div className="pm-destino-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: 18 }}>
               {ATRATIVOS.filter(a => !a.destaque).map((a, i) => (
                 <div key={i} style={{ padding: '16px 18px', background: '#fafafa', border: '1px solid #eee', borderRadius: 12 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: C.ocean }}>{a.nome}</div>
@@ -174,7 +174,7 @@ export function DestinoSection({ residencial }) {
 
         {/* ── tab: Como chegar ── */}
         {tab === 'chegar' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 48, alignItems: 'start' }}>
+          <div className="pm-destino-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 48, alignItems: 'start' }}>
             <div>
               <h3 style={{ fontFamily: F.disp, fontSize: 28, margin: '0 0 22px', color: C.ink }}>Como chegar à Pinheira</h3>
               <div style={{ display: 'grid', gap: 18 }}>

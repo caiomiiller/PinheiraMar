@@ -63,7 +63,7 @@ export default function App() {
       /* ── site público (booking-style) — telemóvel ── */
       .pm-pubsite-header-row{padding:0 16px!important;gap:12px!important;}
       .pm-pubsite-search-desktop{display:none!important;}
-      .pm-pubsite-search-mobile-btn{display:flex!important;}
+      .pm-pubsite-search-inline{display:block!important;}
       .pm-pubsite-lang{display:none!important;}
       .pm-pubsite-hero-inner{padding:0 16px 36px!important;}
       .pm-pubsite-catstrip{padding:0 16px!important;}
@@ -80,6 +80,37 @@ export default function App() {
       .pm-detail-side{position:static!important;}
       .pm-detail-gallery{display:flex!important;overflow-x:auto!important;gap:6px!important;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
       .pm-detail-gallery>div{display:block!important;grid-row:auto!important;flex:0 0 86%!important;height:240px!important;scroll-snap-align:start;border-radius:10px;}
+
+      /* ── modais (reserva, confirmação, admin) — ecrã cheio no telemóvel ── */
+      .pm-modal-overlay{padding:0!important;align-items:stretch!important;}
+      .pm-modal-card{max-width:none!important;width:100%!important;min-height:100vh!important;min-height:100dvh!important;border-radius:0!important;margin:0!important;display:flex!important;flex-direction:column!important;box-shadow:none!important;}
+      .pm-modal-body{flex:1 1 auto!important;overflow-y:auto!important;}
+      .pm-modal-header{flex-shrink:0!important;}
+      .pm-modal-progress{flex-shrink:0!important;}
+      .pm-modal-footer{flex-shrink:0!important;padding-bottom:max(16px, env(safe-area-inset-bottom))!important;}
+
+      /* ── página de detalhe — fotos primeiro, ícones flutuantes, barra de preço fixa ── */
+      .pm-detail-wrap{padding-bottom:96px!important;}
+      .pm-detail-topbar{display:none!important;}
+      .pm-detail-reorder{display:flex!important;flex-direction:column!important;}
+      .pm-detail-gallery-block{order:1!important;margin-bottom:20px!important;}
+      .pm-detail-title-block{order:2!important;}
+      .pm-detail-maingrid{order:3!important;}
+      .pm-detail-float-nav{display:flex!important;}
+      .pm-detail-counter{display:block!important;}
+      .pm-detail-stickybar{display:flex!important;}
+
+      /* ── cartões de apartamento — mais 'app', um por linha, carrossel a espiar o próximo ── */
+      .pm-card-photo{border-radius:16px!important;}
+      .pm-card-tag{top:12px!important;left:12px!important;bottom:auto!important;right:auto!important;border-radius:999px!important;}
+      .pm-results-grid{grid-template-columns:1fr!important;gap:28px!important;}
+      .pm-row-scroll{scroll-snap-type:x mandatory!important;-webkit-overflow-scrolling:touch;}
+      .pm-row-item{flex:0 0 84%!important;min-width:0!important;scroll-snap-align:start;}
+
+      /* ── secção Destino (A Pinheira / Atrativos / Como chegar) — telemóvel: blocos empilhados, não colunas apertadas ── */
+      .pm-destino-wrap{padding:0 16px 48px!important;}
+      .pm-destino-2col{grid-template-columns:1fr!important;gap:28px!important;}
+      .pm-destino-cards-grid{grid-template-columns:1fr!important;}
     }
     @media(prefers-reduced-motion:reduce){.pm-pop,.pm-card{animation:none!important;transition:none!important;}}
   `;

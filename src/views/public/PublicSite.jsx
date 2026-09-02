@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Waves, MapPin, Phone, Mail, Search, CalendarDays, ChevronDown,
+import { Waves, MapPin, Phone, Mail, CalendarDays, ChevronDown,
   Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Wifi, Car, Users,
   BedDouble } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
-  stayBreakdown, nights, fmtShort } from '../../lib/helpers';
+  stayBreakdown, nights, fmtShort, pad, WD } from '../../lib/helpers';
 import { useT } from '../../lib/translations';
 import { Btn, PhotoTile, Field } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
@@ -13,6 +13,14 @@ import { Section } from './Section';
 import { DestinoSection } from './DestinoSection';
 import { BookingModal } from '../../components/BookingModal';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
+
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+// Extrai {dia, mês, dia da semana} de uma data 'yyyy-mm-dd' para o cartão de data grande da busca mobile.
+function bigDateParts(s) {
+  if (!s) return null;
+  const d = parseYMD(s);
+  return { day: pad(d.getDate()), month: MONTHS_PT[d.getMonth()], wd: WD[d.getDay()] };
+}
 
 // Dentro de UM residencial, encontra a combinação de apartamentos disponíveis
 // que acomoda `hosp` pessoas com o menor excesso de capacidade. Não faz
@@ -59,7 +67,6 @@ export function PublicSite({ data, onCreate }) {
   const [detail, setDetail] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
   const [guestOpen, setGuestOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const resultsRef = useRef(null);
   const headerRef = useRef(null);
   const groupRefs = useRef({});
@@ -126,6 +133,34 @@ export function PublicSite({ data, onCreate }) {
   );
   const segInput = { border: 'none', outline: 'none', background: 'transparent', fontFamily: F.sans, fontSize: 14.5, color: BLACK, width: '100%' };
 
+  /* ── cartão de data grande (busca mobile em ecrã cheio) — input nativo invisível por cima para abrir o calendário do telemóvel ── */
+  const DateCard = ({ label, value, min, onChange, compact }) => {
+    const parts = bigDateParts(value);
+    return (
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{label}</div>
+        <div style={{ position: 'relative', border: `1px solid ${BORDER}`, borderRadius: 14, padding: compact ? '12px' : '14px 16px', background: WHITE }}>
+          <input type="date" value={value} min={min} onChange={onChange}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, border: 'none', cursor: 'pointer' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pointerEvents: 'none' }}>
+            {parts ? (
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: compact ? 8 : 12 }}>
+                <span style={{ fontSize: compact ? 26 : 34, fontWeight: 800, color: BLACK, lineHeight: 1 }}>{parts.day}</span>
+                <div>
+                  <div style={{ fontSize: compact ? 13 : 14.5, fontWeight: 700, color: BLACK }}>{parts.month}</div>
+                  <div style={{ fontSize: compact ? 11.5 : 12.5, color: GREY }}>{parts.wd}</div>
+                </div>
+              </div>
+            ) : (
+              <span style={{ fontSize: compact ? 13 : 15, color: '#AAA' }}>Selecionar {label === tr('search_checkin') ? 'entrada' : 'saída'}</span>
+            )}
+            <CalendarDays size={compact ? 15 : 18} color={GREY} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   /* ── reusable card ── */
   const PCard = ({ apt, available = true, fits = true, bd = null }) => {
     const rate = valid && bd ? Math.round(bd.total / bd.n) : apt.preco;
@@ -133,7 +168,7 @@ export function PublicSite({ data, onCreate }) {
       <div onClick={() => available && openDetail(apt)}
         style={{ cursor: available ? 'pointer' : 'default', display: 'flex', flexDirection: 'column' }}
         className="pm-unit-card">
-        <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 4, aspectRatio: '4/3', background: LIGHT }}>
+        <div className="pm-card-photo" style={{ position: 'relative', overflow: 'hidden', borderRadius: 4, aspectRatio: '4/3', background: LIGHT }}>
           <PhotoTile apt={apt} h={240} radius={0} />
           <button onClick={e => { e.stopPropagation(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); }}
             style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,.82)', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', backdropFilter: 'blur(4px)' }}>
@@ -145,7 +180,7 @@ export function PublicSite({ data, onCreate }) {
             </div>
           )}
           {apt.vista === 'Frente Mar' && (
-            <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(10,30,40,.72)', color: WHITE, fontSize: 10, fontWeight: 700, letterSpacing: '.1em', padding: '4px 10px' }}>
+            <div className="pm-card-tag" style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(10,30,40,.72)', color: WHITE, fontSize: 10, fontWeight: 700, letterSpacing: '.1em', padding: '4px 10px' }}>
               FRENTE MAR
             </div>
           )}
@@ -174,9 +209,9 @@ export function PublicSite({ data, onCreate }) {
     if (!items.length) return null;
     return scrollable ? (
       <div style={{ position: 'relative' }}>
-        <div ref={ref} style={{ display: 'flex', gap: 24, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
+        <div ref={ref} className="pm-row-scroll" style={{ display: 'flex', gap: 24, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
           {items.map(({ apt, available, fits, bd }) => (
-            <div key={apt.id} style={{ minWidth: 260, flex: '0 0 260px' }}>
+            <div key={apt.id} className="pm-row-item" style={{ minWidth: 260, flex: '0 0 260px' }}>
               <PCard apt={apt} available={available} fits={fits} bd={bd} />
             </div>
           ))}
@@ -189,7 +224,7 @@ export function PublicSite({ data, onCreate }) {
         )}
       </div>
     ) : (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))', gap: '40px 28px' }}>
+      <div className="pm-results-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))', gap: '40px 28px' }}>
         {items.map(({ apt, available, fits, bd }) => (
           <PCard key={apt.id} apt={apt} available={available} fits={fits} bd={bd} />
         ))}
@@ -281,15 +316,6 @@ export function PublicSite({ data, onCreate }) {
             <span style={{ fontSize: 19, fontWeight: 300, letterSpacing: '.06em', color: ACCENT }}>HOSPEDAGENS</span>
           </a>
 
-          {/* busca — versão compacta em telemóvel abre um ecrã cheio (ver abaixo) */}
-          <button className="pm-pubsite-search-mobile-btn" onClick={() => setMobileSearchOpen(true)}
-            style={{ display: 'none', alignItems: 'center', gap: 8, padding: '9px 14px', border: `1px solid ${BORDER}`, borderRadius: 20, background: WHITE, cursor: 'pointer', flex: 1, minWidth: 0 }}>
-            <Search size={15} color={GREY} style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: valid ? BLACK : '#AAA', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {valid ? `${fmtShort(ci)} – ${fmtShort(co)}${hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}` : 'Quando? Quantos hóspedes?'}
-            </span>
-          </button>
-
           {/* centred search (desktop) */}
           <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'stretch', height: 44, border: `1px solid ${BORDER}`, background: WHITE, maxWidth: 680, width: '100%' }}>
@@ -341,56 +367,45 @@ export function PublicSite({ data, onCreate }) {
         </div>
       </header>
 
-      {/* ══ BUSCA — ecrã cheio no telemóvel (aberto pelo botão compacto do cabeçalho) ══ */}
-      {mobileSearchOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: WHITE, zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-            <span style={{ fontWeight: 800, fontSize: 16 }}>Buscar</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              {idiomasAtivos.length > 1 && (
-                <div style={{ display: 'flex', gap: 2 }}>
-                  {idiomasAtivos.map(id => (
-                    <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
-                      style={{ width: 28, height: 28, border: lang === id.codigo ? `1px solid ${BLACK}` : '1px solid transparent', background: 'transparent', cursor: 'pointer', fontSize: 15, display: 'grid', placeItems: 'center' }}>
-                      {id.bandeira}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <button onClick={() => setMobileSearchOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, lineHeight: 1, cursor: 'pointer', color: GREY, padding: 4 }}>✕</button>
-            </div>
+      {/* ══ BUSCA — sempre visível no telemóvel, sem esconder atrás de um botão. Público-alvo 50+:
+             mais direto ver os campos logo de cara do que ter de descobrir onde tocar. ══ */}
+      <div className="pm-pubsite-search-inline" style={{ display: 'none', padding: '20px 20px 26px', borderBottom: `1px solid ${BORDER}`, background: WHITE }}>
+        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>Pesquisar disponibilidade</div>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <DateCard label={tr('search_checkin')} value={ci} min={ymd(td)} compact
+              onChange={e => { setCi(e.target.value); if (co && nights(e.target.value, co) < 1) setCo(''); }} />
+            <DateCard label={tr('search_checkout')} value={co} min={ci ? ymd(addDays(parseYMD(ci), 1)) : ymd(addDays(td, 1))} compact
+              onChange={e => setCo(e.target.value)} />
           </div>
-          <div style={{ padding: 20, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 22 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_checkin')}</div>
-              <input type="date" value={ci} min={ymd(td)} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 16, fontFamily: F.sans, color: BLACK }}
-                onChange={e => { setCi(e.target.value); if (co && nights(e.target.value, co) < 1) setCo(''); }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_checkout')}</div>
-              <input type="date" value={co} min={ci ? ymd(addDays(parseYMD(ci), 1)) : ymd(addDays(td, 1))} style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 16, fontFamily: F.sans, color: BLACK }}
-                onChange={e => setCo(e.target.value)} />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_who')}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: `1px solid ${BORDER}`, borderRadius: 10 }}>
-                <span style={{ fontSize: 15, fontWeight: 600 }}>{hosp ? `${hosp} hóspede${hosp > 1 ? 's' : ''}` : 'Hóspedes'}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <button onClick={() => setHosp(h => Math.max(0, h - 1))} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>−</button>
-                  <span style={{ fontWeight: 700, minWidth: 18, textAlign: 'center' }}>{hosp || 0}</span>
-                  <button onClick={() => setHosp(h => h + 1)} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>+</button>
-                </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_who')}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: `1px solid ${BORDER}`, borderRadius: 10 }}>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>{hosp ? `${hosp} hóspede${hosp > 1 ? 's' : ''}` : 'Hóspedes'}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <button onClick={() => setHosp(h => Math.max(0, h - 1))} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>−</button>
+                <span style={{ fontWeight: 700, minWidth: 18, textAlign: 'center' }}>{hosp || 0}</span>
+                <button onClick={() => setHosp(h => h + 1)} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>+</button>
               </div>
             </div>
           </div>
-          <div style={{ padding: 20, borderTop: `1px solid ${BORDER}`, flexShrink: 0 }}>
-            <button onClick={() => { setMobileSearchOpen(false); setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
-              style={{ width: '100%', padding: '16px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, letterSpacing: '.02em', cursor: 'pointer' }}>
-              {tr('search_btn')}
-            </button>
-          </div>
+          <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            style={{ width: '100%', padding: '16px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, letterSpacing: '.02em', cursor: 'pointer' }}>
+            {tr('search_btn')}
+          </button>
+          {idiomasAtivos.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 2 }}>
+              <span style={{ fontSize: 12, color: GREY }}>Idioma:</span>
+              {idiomasAtivos.map(id => (
+                <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
+                  style={{ width: 28, height: 28, border: lang === id.codigo ? `1px solid ${BLACK}` : '1px solid transparent', background: 'transparent', cursor: 'pointer', fontSize: 15, display: 'grid', placeItems: 'center' }}>
+                  {id.bandeira}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* ══ HERO ══ */}
       <section style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>

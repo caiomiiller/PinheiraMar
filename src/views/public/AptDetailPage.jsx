@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Car, Users,
   AlertCircle, CalendarDays, Check, Info, Waves, Star, MapPin, Home, Phone,
-  Mail, X } from 'lucide-react';
+  Mail, X, Share2 } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, addDays, fmtShort, fmtLong, WD,
   isAvailable, stayBreakdown, nightlyRate, seasonForDate } from '../../lib/helpers';
@@ -17,6 +17,9 @@ export const HIGHLIGHTS = [
   { match: /piscina/i,              icon: '🏊',  label: 'Piscina' },
   { match: /varanda/i,              icon: '🌅', label: 'Varanda' },
 ];
+
+// botões circulares flutuantes sobre a foto (voltar/partilhar/guardar) — só no telemóvel
+const floatBtn = { width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,.92)', border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center', color: '#333', boxShadow: '0 2px 8px rgba(0,0,0,.18)' };
 
 export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, setHosp, liked, setLiked, onBack, onBook, tr }) {
   const td = today();
@@ -34,6 +37,17 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const camas = Array.isArray(apt.camas) ? apt.camas : [{ tipo: 'Casal', qtd: 1 }];
   const fotos = Array.isArray(apt.fotos) && apt.fotos.length > 0 ? apt.fotos : [];
   const isAvail = isAvailable(data.reservas, apt.id, localCi || ymd(td), localCo || ymd(addDays(td, 2)));
+
+  // ── galeria (telemóvel): índice da foto visível, para o contador '1/N' ──
+  const galleryRef = useRef(null);
+  const [photoIdx, setPhotoIdx] = useState(0);
+  const onGalleryScroll = () => {
+    const el = galleryRef.current;
+    if (!el || !el.firstElementChild) return;
+    const w = el.firstElementChild.getBoundingClientRect().width + 6;
+    if (!w) return;
+    setPhotoIdx(Math.max(0, Math.min(fotos.length - 1, Math.round(el.scrollLeft / w))));
+  };
 
   const localNights = localCi && localCo && nights(localCi, localCo) >= 1 ? nights(localCi, localCo) : 0;
   const bd = localNights > 0 ? stayBreakdown(apt, data.seasons, localCi, localCo) : null;
@@ -76,8 +90,8 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   return (
     <div style={{ background: '#fff', minHeight: '100vh', fontFamily: F.sans, color: '#222' }}>
 
-      {/* sticky back bar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 60, background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 16, height: 52 }}>
+      {/* sticky back bar (desktop) — no telemóvel dá lugar aos ícones flutuantes sobre a foto */}
+      <div className="pm-detail-topbar" style={{ position: 'sticky', top: 0, zIndex: 60, background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 16, height: 52 }}>
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14, color: '#222', padding: '6px 0' }}>
           <ChevronLeft size={20} /> Voltar
         </button>
@@ -88,10 +102,10 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
         </button>
       </div>
 
-      <div style={{ maxWidth: 1160, margin: '0 auto', padding: '28px 24px 80px' }}>
+      <div className="pm-detail-wrap pm-detail-reorder" style={{ maxWidth: 1160, margin: '0 auto', padding: '28px 24px 80px' }}>
 
         {/* title + badges */}
-        <div style={{ marginBottom: 18 }}>
+        <div className="pm-detail-title-block" style={{ marginBottom: 18 }}>
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-.01em' }}>{apt.tipo || apt.nome}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 13.5 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Star size={14} fill="#222" color="#222" /><b>4,9</b></span>
@@ -104,9 +118,19 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
         </div>
 
         {/* photo gallery */}
-        <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 28 }}>
+        <div className="pm-detail-gallery-block" style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 28, position: 'relative' }}>
+          {/* ícones flutuantes sobre a foto — só no telemóvel (ver CSS); no desktop usa-se a barra sticky acima */}
+          <div className="pm-detail-float-nav" style={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 5, display: 'none', justifyContent: 'space-between', pointerEvents: 'none' }}>
+            <button onClick={onBack} title="Voltar" style={{ ...floatBtn, pointerEvents: 'auto' }}><ChevronLeft size={20} /></button>
+            <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
+              <button onClick={() => { if (navigator.share) { navigator.share({ title: apt.nome, url: window.location.href }).catch(() => {}); } else { navigator.clipboard?.writeText(window.location.href); } }}
+                title="Partilhar" style={floatBtn}><Share2 size={17} /></button>
+              <button onClick={e => { e.stopPropagation(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); }}
+                title="Guardar" style={floatBtn}><Heart size={17} fill={liked[apt.id] ? C.coral : 'none'} color={liked[apt.id] ? C.coral : '#333'} /></button>
+            </div>
+          </div>
           {fotos.length >= 3 ? (
-            <div className="pm-detail-gallery" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '240px 180px', gap: 4 }}>
+            <div ref={galleryRef} onScroll={onGalleryScroll} className="pm-detail-gallery" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '240px 180px', gap: 4 }}>
               <div style={{ gridRow: '1 / 3', position: 'relative' }}>
                 <img src={fotos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
               </div>
@@ -120,10 +144,15 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           ) : (
             <div style={{ height: 380 }}><PhotoTile apt={apt} h={380} radius={0} /></div>
           )}
+          {fotos.length >= 3 && (
+            <span className="pm-detail-counter" style={{ display: 'none', position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.65)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 999, zIndex: 4 }}>
+              {photoIdx + 1}/{fotos.length}
+            </span>
+          )}
         </div>
 
         {/* main two-column layout */}
-        <div className="pm-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 48, alignItems: 'start' }}>
+        <div className="pm-detail-grid pm-detail-maingrid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 48, alignItems: 'start' }}>
 
           {/* LEFT column */}
           <div>
@@ -230,7 +259,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           </div>
 
           {/* RIGHT column — booking widget (sticky no desktop, em fluxo normal no telemóvel) */}
-          <div className="pm-detail-side" style={{ position: 'sticky', top: 60 }}>
+          <div className="pm-detail-side" id="booking-widget" style={{ position: 'sticky', top: 60 }}>
             <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 18, padding: 24, boxShadow: '0 8px 28px rgba(0,0,0,.12)' }}>
               <div style={{ marginBottom: 18 }}>
                 <span style={{ fontSize: 22, fontWeight: 800 }}>{money(apt.preco)}</span>
@@ -385,6 +414,27 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             </div>
           </div>
         </div>
+      </div>
+
+      {/* barra fixa de preço + reservar — só no telemóvel (ver CSS); leva ao widget de reserva acima */}
+      <div className="pm-detail-stickybar" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 70, background: '#fff', borderTop: '1px solid #e8e8e8', padding: '12px 20px', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 -6px 20px rgba(0,0,0,.08)' }}>
+        <div>
+          {localNights > 0 && isAvail && bd ? (
+            <>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>{money(totalComExtras)}</div>
+              <div style={{ fontSize: 11.5, color: '#717171' }}>{fmtShort(localCi)} – {fmtShort(localCo)} · {localNights} noite{localNights > 1 ? 's' : ''}</div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>{money(apt.preco)} <span style={{ fontSize: 12.5, fontWeight: 500, color: '#717171' }}>/noite</span></div>
+              <div style={{ fontSize: 11.5, color: '#717171' }}>Selecione as datas</div>
+            </>
+          )}
+        </div>
+        <button onClick={() => document.getElementById('booking-widget')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          style={{ padding: '13px 26px', background: C.coral, color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 14.5, cursor: 'pointer', fontFamily: F.sans, flexShrink: 0 }}>
+          Reservar
+        </button>
       </div>
     </div>
   );

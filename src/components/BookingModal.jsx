@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Check, Info, ChevronDown, Minus, Plus } from 'lucide-react';
 import { C, F } from '../lib/constants';
 import { mkExtrasObrigatorios } from '../lib/csvUtils';
@@ -8,9 +8,17 @@ import { Btn, Modal, Field, TextInput, NumberInput, PhotoTile } from './ui';
 export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
   const { apt, apt2, g1: initG1, g2: initG2 } = sel;
   const hasApt2 = !!apt2;
-  const [step, setStep] = useState('extras');
 
   const taxasOpc = (data.taxasAdicionais || []).filter(tx => tx.tipo === 'opcional');
+  const hasExtras = taxasOpc.length > 0;
+
+  // ── passos do fluxo: extras (se houver) → dados do hóspede → revisão e confirmação ──
+  const steps = hasExtras ? ['extras', 'dados', 'revisao'] : ['dados', 'revisao'];
+  const [step, setStep] = useState(steps[0]);
+  const stepIdx = steps.indexOf(step);
+  const goBack = () => { if (stepIdx > 0) setStep(steps[stepIdx - 1]); };
+  const goNext = () => { if (stepIdx < steps.length - 1) setStep(steps[stepIdx + 1]); };
+
   const [extrasQty, setExtrasQty] = useState(() => Object.fromEntries(taxasOpc.map(t => [t.id, 0])));
   const [extrasScope, setExtrasScope] = useState(() => Object.fromEntries(taxasOpc.map(t => [t.id, t.por === 'noite' ? 'per_apt' : 'group'])));
 
@@ -35,6 +43,10 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
   const [gB, setGB] = useState(Math.min(initG2 || 1, apt2 ? apt2.capacidade : 8));
   const ok = nome.trim() && email.trim();
 
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showPolicy, setShowPolicy] = useState(false);
+  const cancelPol = data.settings.politicas?.cancelamento;
+
   const getIcon = (n) => { const s = n.toLowerCase(); if (s.includes('pet') || s.includes('animal')) return '🐾'; if (s.includes('praia') || s.includes('cadeira') || s.includes('guarda')) return '🏖️'; if (s.includes('estacion') || s.includes('vaga')) return '🚗'; return '✨'; };
 
   const buildR = (aptX, bdX, guests, allExtras, totalVal, isB) => ({
@@ -55,16 +67,18 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
     if (apt2 && bd2) onConfirm(buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true));
   };
 
-  const hasExtras = taxasOpc.length > 0;
+  // ── props partilhadas do Modal: seta de voltar (exceto no 1º passo) + barra de progresso ──
+  const modalNav = {
+    onClose,
+    onBack: stepIdx > 0 ? goBack : undefined,
+    progress: { step: stepIdx + 1, total: steps.length },
+    wide: true,
+  };
 
-  // ── Step 1: Extras opcionais ──────────────────────────────────────────────
-  if (step === 'extras' && hasExtras) return (
-    <Modal title="Serviços extras opcionais" subtitle="Adicione serviços à sua estadia (pode pular)"
-      onClose={onClose} wide
-      footer={<>
-        <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="primary" onClick={() => setStep('dados')}>Continuar →</Btn>
-      </>}>
+  // ── Passo: Extras opcionais ──────────────────────────────────────────────
+  if (step === 'extras') return (
+    <Modal {...modalNav} title="Serviços extras" subtitle="Adicione serviços à sua estadia (opcional)"
+      footer={<Btn variant="primary" style={{ width: '100%' }} onClick={goNext}>Continuar</Btn>}>
       <div style={{ display: 'grid', gap: 12 }}>
         {taxasOpc.map(taxa => {
           const qty = extrasQty[taxa.id] || 0;
@@ -98,16 +112,12 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
     </Modal>
   );
 
-  // ── Step 2: Dados do hóspede + resumo ─────────────────────────────────────
-  return (
-    <Modal title={hasApt2 ? `Reservar ${apt.nome} + ${apt2.nome}` : `Reservar ${apt.nome}`}
-      subtitle={`${apt.piso} · ${apt.vista}`} onClose={onClose} wide
-      footer={<>
-        {hasExtras && <Btn variant="ghost" onClick={() => setStep('extras')}>← Extras</Btn>}
-        <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="accent" disabled={!ok} style={{ opacity: ok ? 1 : .5 }} onClick={handleConfirm}>Confirmar reserva</Btn>
-      </>}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 24 }} className="pm-book-grid">
+  // ── Passo: Dados do hóspede ────────────────────────────────────────────────
+  if (step === 'dados') {
+    const canNext = ok && (!hasApt2 || (g > 0 && gB > 0));
+    return (
+      <Modal {...modalNav} title="Seus dados" subtitle={hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}
+        footer={<Btn variant="primary" disabled={!canNext} style={{ width: '100%', opacity: canNext ? 1 : .5 }} onClick={() => canNext && goNext()}>Continuar</Btn>}>
         <div style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="Check-in"><div style={readBox}>{fmtShort(ci)}</div></Field>
@@ -137,49 +147,105 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
             </div>
           )}
         </div>
-        <div style={{ background: C.espuma, borderRadius: 14, padding: 18, alignSelf: 'start' }}>
-          <PhotoTile apt={apt} h={100} />
-          <div style={{ marginTop: 14, fontSize: 13.5 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Resumo de preços</div>
-            {hasApt2 && <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', color: '#555', marginBottom: 5 }}>{apt.nome}</div>}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: C.inkSoft }}>
-              <span>Acomodação ({bd.n} noites)</span><span>{money(bd.total)}</span>
-            </div>
-            {extrasObrig.map(e => <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 13, color: C.inkSoft }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OBR</span>{e.nome}</span>
-              <span>{money(e.preco)}</span>
-            </div>)}
-            {extrasOpc1.map(e => <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 13, color: C.inkSoft }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: C.ocean, color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OPC</span>{e.nome}{e.qtd > 1 ? ` ×${e.qtd}` : ''}{hasApt2 && extrasScope[e.id] === 'group' ? ' (grupo)' : ''}</span>
-              <span>{money(e.subtotal)}</span>
-            </div>)}
-            {hasApt2 && bd2 && <>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', color: '#555', margin: '10px 0 5px' }}>{apt2.nome}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: C.inkSoft }}>
-                <span>Acomodação ({bd2.n} noites)</span><span>{money(bd2.total)}</span>
-              </div>
-              {extrasObrig.map(e => <div key={e.id+'_2'} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 13, color: C.inkSoft }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OBR</span>{e.nome}</span>
-                <span>{money(e.preco)}</span>
-              </div>)}
-              {extrasOpc2.map(e => <div key={e.id+'_o2'} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 13, color: C.inkSoft }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: C.ocean, color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OPC</span>{e.nome}{e.qtd > 1 ? ` ×${e.qtd}` : ''}</span>
-                <span>{money(e.subtotal)}</span>
-              </div>)}
-            </>}
-            <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 10, paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 16 }}>
-              <span>Total{hasApt2 ? ' combinado' : ''}</span><span>{money(totalComExtras)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, color: C.coralDeep, fontWeight: 600 }}>
-              <span>Sinal ({data.settings.sinalPct}%)</span><span>{money(sinal)}</span>
-            </div>
-            {hasApt2 && <p style={{ fontSize: 11.5, color: C.inkSoft, marginTop: 8, marginBottom: 0, background: '#e8f4ff', borderRadius: 8, padding: '6px 10px' }}>Serão geradas 2 reservas vinculadas ao mesmo hóspede.</p>}
-            <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 8, marginBottom: 0 }}>O pagamento do sinal confirma a reserva.</p>
+      </Modal>
+    );
+  }
+
+  // ── Passo: Revisão e confirmação ───────────────────────────────────────────
+  return (
+    <Modal {...modalNav} title="Revisar e confirmar" subtitle={hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}
+      footer={<Btn variant="accent" disabled={!ok} style={{ width: '100%', opacity: ok ? 1 : .5 }} onClick={handleConfirm}>Confirmar reserva</Btn>}>
+      <div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}`, marginBottom: 4 }}>
+          <div style={{ width: 64, height: 64, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={64} radius={12} /></div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}</div>
+            <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 2 }}>{apt.piso} · {apt.vista}</div>
           </div>
         </div>
+
+        <RevRow label="Datas" value={`${fmtShort(ci)} – ${fmtShort(co)} · ${bd.n} noite${bd.n > 1 ? 's' : ''}`} />
+        <RevRow label="Hóspedes" value={hasApt2 ? `${g} + ${gB} pessoas` : `${g} pessoa${g > 1 ? 's' : ''}`} />
+        <RevRow label="Nome" value={nome.trim() || '—'} />
+        <RevRow label="Email" value={email.trim() || '—'} />
+
+        <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 600 }}>Preço total{hasApt2 ? ' combinado' : ''}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, marginTop: 2 }}>{money(totalComExtras)}</div>
+            </div>
+            <button onClick={() => setShowBreakdown(s => !s)} style={linkBtnStyle}>
+              {showBreakdown ? 'Ocultar' : 'Detalhes'} <ChevronDown size={14} style={{ transform: showBreakdown ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+            </button>
+          </div>
+          {showBreakdown && (
+            <div style={{ marginTop: 12, fontSize: 13.5, color: C.inkSoft, display: 'grid', gap: 5 }}>
+              {hasApt2 && <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#555' }}>{apt.nome}</div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Acomodação ({bd.n} noites)</span><span>{money(bd.total)}</span></div>
+              {extrasObrig.map(e => (
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OBR</span>{e.nome}</span>
+                  <span>{money(e.preco)}</span>
+                </div>
+              ))}
+              {extrasOpc1.map(e => (
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: C.ocean, color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OPC</span>{e.nome}{e.qtd > 1 ? ` ×${e.qtd}` : ''}</span>
+                  <span>{money(e.subtotal)}</span>
+                </div>
+              ))}
+              {hasApt2 && bd2 && <>
+                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#555', marginTop: 6 }}>{apt2.nome}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Acomodação ({bd2.n} noites)</span><span>{money(bd2.total)}</span></div>
+                {extrasObrig.map(e => (
+                  <div key={e.id + '2'} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OBR</span>{e.nome}</span>
+                    <span>{money(e.preco)}</span>
+                  </div>
+                ))}
+                {extrasOpc2.map(e => (
+                  <div key={e.id + 'o2'} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: C.ocean, color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OPC</span>{e.nome}{e.qtd > 1 ? ` ×${e.qtd}` : ''}</span>
+                    <span>{money(e.subtotal)}</span>
+                  </div>
+                ))}
+              </>}
+            </div>
+          )}
+        </div>
+
+        <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700, color: C.coralDeep }}>Sinal a pagar agora ({data.settings.sinalPct}%)</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: C.coralDeep }}>{money(sinal)}</span>
+        </div>
+
+        {cancelPol && (
+          <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
+            <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>{cancelPol.titulo}</div>
+            <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.5 }}>
+              As condições variam com a antecedência do check-in.{' '}
+              <button onClick={() => setShowPolicy(s => !s)} style={linkBtnStyle}>{showPolicy ? 'Ocultar' : 'Ver política completa'}</button>
+            </div>
+            {showPolicy && <div style={{ marginTop: 10, fontSize: 12.5, color: C.inkSoft, whiteSpace: 'pre-wrap', background: C.espuma, borderRadius: 10, padding: 12, lineHeight: 1.6 }}>{cancelPol.texto}</div>}
+          </div>
+        )}
+
+        {hasApt2 && <p style={{ fontSize: 11.5, color: C.inkSoft, marginTop: 10, marginBottom: 0, background: '#e8f4ff', borderRadius: 8, padding: '8px 10px' }}>Serão geradas 2 reservas vinculadas ao mesmo hóspede.</p>}
+        <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 10, marginBottom: 0 }}>O pagamento do sinal confirma a reserva.</p>
       </div>
     </Modal>
   );
 }
-export const readBox = { padding: '10px 12px', borderRadius: 10, background: C.areiaSoft, border: `1px solid ${C.areia}`, fontSize: 14, fontWeight: 600 };
 
+function RevRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.line}` }}>
+      <span style={{ fontSize: 13, color: C.inkSoft }}>{label}</span>
+      <span style={{ fontSize: 13.5, fontWeight: 700, textAlign: 'right' }}>{value}</span>
+    </div>
+  );
+}
+
+export const readBox = { padding: '10px 12px', borderRadius: 10, background: C.areiaSoft, border: `1px solid ${C.areia}`, fontSize: 14, fontWeight: 600 };
+const linkBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', color: C.ocean, fontWeight: 700, fontSize: 12.5, display: 'inline-flex', alignItems: 'center', gap: 3, padding: 0 };
