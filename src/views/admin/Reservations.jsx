@@ -545,7 +545,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
   const totalGuests = adultos + criancas;
   const free = isAvailable(data.reservas, aptId, ci, co, i.id);
   const overCap = status !== 'bloqueio' && totalGuests > apt.capacidade;
-  const canSave = validDates && free && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
+  const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
 
   const addExtra = (preset) => setExtras(x => [...x, { id: uid(), nome: preset?.nome || '', qtd: 1, preco: preset?.preco ?? 0 }]);
   const updExtra = (id, patch) => setExtras(x => x.map(e => e.id === id ? { ...e, ...patch } : e));
