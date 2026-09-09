@@ -221,7 +221,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       // — muda em Admin → Configurações quando tiveres contactos próprios.
       id: 'novoimovel',
       tema: 'novoimovel',
-      nome: 'Caminho do Mar', tipo: 'Apartamento',
+      nome: 'Residencial Caminho do Mar', tipo: 'Apartamento',
       email: 'contato@pinheiramar.com.br', telefone: '48 98476-1800',
       cidade: 'Palhoça - Santa Catarina, Brasil',
       endereco: 'Rua Hortêncio Pedro Antunes, 124 - Enseada da Pinheira', cep: '',
@@ -324,7 +324,10 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
 // n06 ainda sem fotos — aguarda envio) e actualiza os logótipos no
 // cabeçalho do site (ambos os residenciais); muda a versão para que
 // quem já tinha a v8 guardada também receba as novas fotos.
-export const STORE_KEY = 'pinheiramar:data:v9';
+// v10: acrescenta o prefixo "Residencial" ao nome do Caminho do Mar
+// (fica "Residencial Caminho do Mar", tal como "Residencial PinheiraMar");
+// muda a versão para que quem já tinha a v9 guardada também receba o nome novo.
+export const STORE_KEY = 'pinheiramar:data:v10';
 export let memFallback = null;
 export async function loadData() {
   try {
