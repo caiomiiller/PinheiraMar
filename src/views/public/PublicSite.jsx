@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Waves, MapPin, Phone, Mail, CalendarDays, ChevronDown,
+import { Waves, MapPin, MessageCircle, CalendarDays, ChevronDown,
   Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Wifi, Car, Users,
   BedDouble } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, WHATSAPP_URL } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
   stayBreakdown, nights, fmtShort, pad, WD } from '../../lib/helpers';
 import { useT } from '../../lib/translations';
@@ -486,8 +486,9 @@ export function PublicSite({ data, onCreate }) {
               <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
                 <div>{r.endereco}</div>
                 <div>{r.cidade}</div>
-                <div style={{ marginTop: 6 }}>{r.telefone}</div>
-                <div>{r.email}</div>
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: '#25D366', fontWeight: 700, textDecoration: 'none' }}>
+                  <MessageCircle size={14} /> WhatsApp
+                </a>
               </div>
             </div>
           ))}

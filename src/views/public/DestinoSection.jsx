@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { MapPin, Sun, Waves, Phone } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { MapPin, Sun, Waves, MessageCircle } from 'lucide-react';
+import { C, F, WHATSAPP_URL } from '../../lib/constants';
 
 export function DestinoSection({ residencial }) {
   const [tab, setTab] = useState('destino');
@@ -205,7 +205,9 @@ export function DestinoSection({ residencial }) {
                 <div style={{ fontWeight: 700, marginBottom: 6 }}>📍 Endereço completo</div>
                 {endereco}<br />
                 {cidade}{cep ? ` · CEP ${cep}` : ''}<br />
-                {telefone && <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={14} color={C.ocean} /> {telefone}</div>}
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, color: '#25D366', fontWeight: 700, textDecoration: 'none' }}>
+                  <MessageCircle size={14} /> Fale conosco no WhatsApp
+                </a>
               </div>
             </div>
           </div>

@@ -12,6 +12,10 @@ export const F = {
   sans: "'Inter','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
 };
 
+// WhatsApp é o canal principal de contacto do site (substitui e-mail/telefone
+// nas páginas públicas) — link fixo do titular do WhatsApp Business.
+export const WHATSAPP_URL = 'https://api.whatsapp.com/send/?phone=%2B5548984761800&text&type=phone_number&app_absent=0';
+
 /* ───────────────────────── Temas por imóvel ─────────────────────────
    Cada residencial tem a sua paleta. "pinheiramar" reproduz a paleta
    original (tons de mar/areia). "novo imóvel" usa tons de bairro/verde,

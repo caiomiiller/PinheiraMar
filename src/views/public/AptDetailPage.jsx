@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Car, Users,
-  AlertCircle, CalendarDays, Check, Info, Waves, Star, MapPin, Home, Phone,
-  Mail, X, Share2 } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+  AlertCircle, CalendarDays, Check, Info, Waves, Star, MapPin, Home,
+  MessageCircle, X, Share2 } from 'lucide-react';
+import { C, F, WHATSAPP_URL } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, addDays, fmtShort, fmtLong, WD,
   isAvailable, stayBreakdown, nightlyRate, seasonForDate } from '../../lib/helpers';
 import { Btn, Badge, PhotoTile, Field } from '../../components/ui';
@@ -445,8 +445,9 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             {/* need help */}
             <div style={{ marginTop: 16, padding: '14px 16px', background: '#f8f8f8', borderRadius: 12, fontSize: 13.5, color: '#555', lineHeight: 1.55 }}>
               <div style={{ fontWeight: 700, marginBottom: 4 }}>Precisa de ajuda?</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={14} /> {data.settings.telefone}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}><Mail size={14} /> {data.settings.email}</div>
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#25D366', fontWeight: 700, textDecoration: 'none' }}>
+                <MessageCircle size={16} /> Fale conosco no WhatsApp
+              </a>
             </div>
           </div>
         </div>
