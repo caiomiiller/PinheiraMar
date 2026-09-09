@@ -11,6 +11,7 @@ import { mkExtrasObrigatorios, buildCSV, downloadBlob, rowToReserva,
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
   NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
+import { sendConfirmationEmail } from '../../lib/email';
 import * as XLSX from 'xlsx';
 
 // residencial de um apartamento — usado para a etiqueta de cor por imóvel
@@ -557,19 +558,25 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
         {!isNew && <Btn variant="danger" icon={Trash2} onClick={() => onRemove(i.id)} style={{ marginRight: 'auto' }}>Eliminar</Btn>}
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
         <Btn variant="primary" disabled={!canSave} style={{ opacity: canSave ? 1 : .5 }}
-          onClick={() => onSave({
-            id: i.id || uid(), codigo: i.codigo || code(), apartamentoId: aptId, checkIn: ci, checkOut: co,
-            status, origem,
-            nome: status === 'bloqueio' ? '' : nome.trim(), sobrenome: status === 'bloqueio' ? '' : sobrenome.trim(),
-            hospede: status === 'bloqueio' ? '' : `${nome.trim()} ${sobrenome.trim()}`.trim(),
-            email: email.trim(), telefone: tel.trim(), pais,
-            adultos: status === 'bloqueio' ? 0 : adultos, criancas: status === 'bloqueio' ? 0 : criancas,
-            hospedes: status === 'bloqueio' ? 0 : totalGuests,
-            precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
-            precoTabela: status === 'bloqueio' ? 0 : bd.total,
-            extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
-            total, sinal, enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
-          })}>{isNew ? 'Salvar reserva' : 'Guardar alterações'}</Btn>
+          onClick={() => {
+            const r = {
+              id: i.id || uid(), codigo: i.codigo || code(), apartamentoId: aptId, checkIn: ci, checkOut: co,
+              status, origem,
+              nome: status === 'bloqueio' ? '' : nome.trim(), sobrenome: status === 'bloqueio' ? '' : sobrenome.trim(),
+              hospede: status === 'bloqueio' ? '' : `${nome.trim()} ${sobrenome.trim()}`.trim(),
+              email: email.trim(), telefone: tel.trim(), pais,
+              adultos: status === 'bloqueio' ? 0 : adultos, criancas: status === 'bloqueio' ? 0 : criancas,
+              hospedes: status === 'bloqueio' ? 0 : totalGuests,
+              precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
+              precoTabela: status === 'bloqueio' ? 0 : bd.total,
+              extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
+              total, sinal, enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
+            };
+            onSave(r);
+            // só envia ao CRIAR a reserva — reeditar uma reserva existente com a
+            // caixa ainda marcada não reenvia o e-mail.
+            if (isNew && enviarEmail) sendConfirmationEmail(r, apt, data.settings);
+          }}>{isNew ? 'Salvar reserva' : 'Guardar alterações'}</Btn>
       </>}>
       <div style={{ display: 'grid', gap: 20 }}>
 

@@ -3,6 +3,7 @@ import { X, Check, Info, ChevronDown, Minus, Plus } from 'lucide-react';
 import { C, F } from '../lib/constants';
 import { mkExtrasObrigatorios } from '../lib/csvUtils';
 import { money, nights, ymd, uid, stayBreakdown, code, today, fmtShort } from '../lib/helpers';
+import { sendConfirmationEmail } from '../lib/email';
 import { Btn, Modal, Field, TextInput, NumberInput, PhotoTile } from './ui';
 
 export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
@@ -63,8 +64,14 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
   });
 
   const handleConfirm = () => {
-    onConfirm(buildR(apt, bd, g, [...extrasObrig, ...extrasOpc1], total1, false));
-    if (apt2 && bd2) onConfirm(buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true));
+    const r1 = buildR(apt, bd, g, [...extrasObrig, ...extrasOpc1], total1, false);
+    onConfirm(r1);
+    sendConfirmationEmail(r1, apt, data.settings);
+    if (apt2 && bd2) {
+      const r2 = buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true);
+      onConfirm(r2);
+      sendConfirmationEmail(r2, apt2, data.settings);
+    }
   };
 
   // ── props partilhadas do Modal: seta de voltar (exceto no 1º passo) + barra de progresso ──

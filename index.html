@@ -36,6 +36,9 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- EmailJS: envia o e-mail de confirmação de reserva direto do navegador,
+         sem precisar de servidor próprio. Ver .env.example / src/lib/email.js. -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
