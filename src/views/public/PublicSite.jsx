@@ -186,9 +186,9 @@ export function PublicSite({ data, onCreate }) {
           )}
         </div>
         <div style={{ paddingTop: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div className="pm-card-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
             <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK }}>{apt.nome}</div>
-            <div style={{ fontSize: 13, color: GREY }}>até {apt.capacidade} hóspedes</div>
+            <div style={{ fontSize: 13, color: GREY, whiteSpace: 'nowrap' }}>até {apt.capacidade} hóspedes</div>
           </div>
           <div style={{ fontSize: 13, color: GREY, marginTop: 3 }}>{apt.piso} · {apt.vista}</div>
           {valid && !fits && <div style={{ fontSize: 12, color: ACCENT, fontWeight: 600, marginTop: 5, letterSpacing: '.02em' }}>Combinar com outro apartamento</div>}
@@ -446,7 +446,7 @@ export function PublicSite({ data, onCreate }) {
           ].filter(cat => cat.key !== 'frente_mar' || hasFrenteMar).map(cat => {
             const on = activeCategory === cat.key;
             return (
-              <button key={String(cat.key)} onClick={() => setActiveCategory(on ? null : cat.key)}
+              <button key={String(cat.key)} className="pm-cat-btn" data-active={on ? 'true' : 'false'} onClick={() => setActiveCategory(on ? null : cat.key)}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 20px', border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 600, color: on ? BLACK : GREY, borderBottom: on ? `2px solid ${BLACK}` : '2px solid transparent', transition: 'all .15s' }}>
                 <span style={{ color: on ? BLACK : GREY }}>{cat.icon}</span>
                 {cat.label}

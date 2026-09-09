@@ -40,7 +40,7 @@ CHECK-IN: 13h00 | CHECK-OUT: 10h00
 3. POLÍTICA DE PETS
 
 • Aceitos cães e gatos com mais de 6 meses e até 10 kg (máximo 2 pets por apartamento).
-• Taxa única de R$ 150,00 por pet.
+• Taxa única de R$ 200,00 por pet.
 • O proprietário é responsável pela limpeza, silêncio e uso de tapete higiênico dentro do apartamento.
 
 ---
