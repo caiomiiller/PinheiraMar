@@ -118,14 +118,14 @@ CHECK-IN: 13h00 | CHECK-OUT: 10h00
 1. PAGAMENTO
 
 • Para pagamento via cartão de crédito ou Pix/transferência bancária: 50% do valor total antecipado para confirmar a reserva; os 50% restantes + taxas devem ser pagos no check-in.
-• Tarifas Promocionais: pagamento de 100% no acto da reserva. Não reembolsável.
-• A confirmação da reserva é efectuada somente após a recepção do sinal de 50% (ou 100% em tarifas promocionais).
+• Tarifas Promocionais: pagamento de 100% no ato da reserva. Não reembolsável.
+• A confirmação da reserva é efetuada somente após o recebimento do sinal de 50% (ou 100% em tarifas promocionais).
 
 ---
 
 2. COMO RESERVAR
 
-Entre em contacto via WhatsApp/redes sociais ou pelo site.
+Entre em contato via WhatsApp/redes sociais ou pelo site.
 
 ---
 
@@ -199,7 +199,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       nome: 'Residencial PinheiraMar', tipo: 'Apartamento',
       email: 'contato@pinheiramar.com.br', telefone: '48 98476-1800',
       cidade: 'Palhoça - Santa Catarina, Brasil',
-      endereco: 'Rua Dom Patrício 82 - Praia da Pinheira', cep: '88.139-427',
+      endereco: 'Rua Dom Patrício, 82 - Enseada da Pinheira', cep: '88.139-427',
       fuso: '(GMT-03:00) América/São Paulo', moeda: 'Real Brasileiro (R$)',
       sinalPct: 50, checkInHora: '13:00', checkOutHora: '10:00',
       politicas: {
@@ -216,17 +216,15 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       heroImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1800&q=85&auto=format&fit=crop',
     },
     {
-      // NOTA para o Caio: nome provisório — muda em Admin → Configurações
-      // assim que decidires o nome comercial deste imóvel. O resto
-      // (morada exacta, CEP, e-mail próprio, se for o caso) também está
-      // por confirmar — os campos ficaram com os mesmos contactos do
-      // PinheiraMar como ponto de partida.
+      // Nome e morada confirmados pelo Caio: Caminho do Mar. E-mail e
+      // telefone ainda partilhados com o PinheiraMar como ponto de partida
+      // — muda em Admin → Configurações quando tiveres contactos próprios.
       id: 'novoimovel',
       tema: 'novoimovel',
-      nome: 'Novo Residencial', tipo: 'Apartamento',
+      nome: 'Caminho do Mar', tipo: 'Apartamento',
       email: 'contato@pinheiramar.com.br', telefone: '48 98476-1800',
       cidade: 'Palhoça - Santa Catarina, Brasil',
-      endereco: '[morada a confirmar] - a 150m da Praia da Pinheira', cep: '',
+      endereco: 'Rua Hortêncio Pedro Antunes, 124 - Enseada da Pinheira', cep: '',
       fuso: '(GMT-03:00) América/São Paulo', moeda: 'Real Brasileiro (R$)',
       sinalPct: 50, checkInHora: '13:00', checkOutHora: '10:00',
       politicas: {
@@ -266,7 +264,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
     {
       id: 'pix', nome: 'Pix Manual', cor: '#32BCAD', conectado: true,
       taxa: '0% — sem nenhuma taxa',
-      desc: ['Hóspede transfere directamente para a sua chave Pix', 'Confirme o pagamento manualmente e actualize a reserva', 'Ideal para o sinal de 50% por WhatsApp', 'Chave recomendada: CNPJ ou telefone do residencial'],
+      desc: ['Hóspede transfere diretamente para a sua chave Pix', 'Confirme o pagamento manualmente e atualize a reserva', 'Ideal para o sinal de 50% por WhatsApp', 'Chave recomendada: CNPJ ou telefone do residencial'],
       link: '',
     },
     {
@@ -301,6 +299,12 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
 // que melhor mostra o ambiente (quarto/sala/cozinha) em vez de corredores,
 // escadas ou close-ups de casa de banho; muda a versão para que quem já
 // tinha a v6 guardada também receba a nova ordem.
+// v8: corrige textos para português do Brasil (contato, ato, atualize,
+// diretamente, etc.), corrige "daí" e o item da Praia de Baixo na secção
+// Destino, e define nome/morada definitivos do segundo residencial —
+// Caminho do Mar, Rua Hortêncio Pedro Antunes 124, Enseada da Pinheira
+// (antes "Novo Residencial" com morada por confirmar); muda a versão para
+// que quem já tinha a v7 guardada também receba estes dados.
 //
 // Guarda em localStorage do browser (persiste entre recarregamentos e
 // fechos de separador, no MESMO browser/dispositivo). `window.storage`
@@ -316,7 +320,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
 // reservar noutro telemóvel, nem vice-versa. Para um motor de reservas
 // verdadeiramente partilhado entre visitantes seria necessário um
 // backend (ex.: uma base de dados), o que fica fora do âmbito actual.
-export const STORE_KEY = 'pinheiramar:data:v7';
+export const STORE_KEY = 'pinheiramar:data:v8';
 export let memFallback = null;
 export async function loadData() {
   try {

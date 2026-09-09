@@ -49,6 +49,8 @@ export default function App() {
     .pm-unit-card:hover{transform:translateY(-3px);}
     *::-webkit-scrollbar{height:10px;width:10px;}
     *::-webkit-scrollbar-thumb{background:#C4D3D1;border-radius:8px;}
+    .pm-detail-gallery>div:nth-child(n+6){display:none;}
+    .pm-detail-counter-mobile{display:none;}
     @media(max-width:760px){
       .pm-sidebar{display:none!important;}
       .pm-tabbar{display:flex!important;}
@@ -101,6 +103,8 @@ export default function App() {
       .pm-detail-maingrid{order:3!important;}
       .pm-detail-float-nav{display:flex!important;}
       .pm-detail-counter{display:block!important;}
+      .pm-detail-counter-mobile{display:inline!important;}
+      .pm-detail-counter-desktop{display:none!important;}
       .pm-detail-stickybar{display:flex!important;}
 
       /* ── cartões de apartamento — mais 'app', um por linha, carrossel a espiar o próximo ── */

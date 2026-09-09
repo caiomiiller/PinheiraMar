@@ -239,7 +239,7 @@ export function PublicSite({ data, onCreate }) {
     const list = valid ? filtered : filtered.map(w => ({ ...w, available: true }));
     if (!list.length) return null;
     const countLabel = valid
-      ? `${availableApts.length} de ${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} disponível${availableApts.length !== 1 ? 'eis' : ''}`
+      ? `${availableApts.length} de ${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} ${availableApts.length === 1 ? 'disponível' : 'disponíveis'}`
       : `${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} ${r.regiaoLabel}`;
 
     return (

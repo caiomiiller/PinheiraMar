@@ -22,7 +22,7 @@ export function ConfirmationModal({ info, settings, onClose }) {
         <Row k={`Sinal a pagar (${settings.sinalPct}%)`} v={money(reserva.sinal)} accent />
       </div>
       <p style={{ fontSize: 13, color: C.inkSoft, marginTop: 16, marginBottom: 0 }}>
-        Enviámos os detalhes para <b>{reserva.email}</b>. Para confirmar, efetue o pagamento do sinal — entraremos em contacto com as instruções. A reserva fica como <b>pendente</b> no painel de gestão até à confirmação.
+        Enviámos os detalhes para <b>{reserva.email}</b>. Para confirmar, efetue o pagamento do sinal — entraremos em contato com as instruções. A reserva fica como <b>pendente</b> no painel de gestão até à confirmação.
       </p>
     </Modal>
   );

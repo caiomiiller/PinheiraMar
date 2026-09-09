@@ -22,8 +22,8 @@ CHECK-IN: 13h00 | CHECK-OUT: 10h00
 1. PAGAMENTO
 
 • Para pagamento via cartão de crédito ou Pix/transferência bancária: 50% do valor total antecipado para confirmar a reserva; os 50% restantes + taxas devem ser pagos no check-in.
-• Tarifas Promocionais: pagamento de 100% no acto da reserva. Não reembolsável.
-• A confirmação da reserva é efectuada somente após a recepção do sinal de 50%.
+• Tarifas Promocionais: pagamento de 100% no ato da reserva. Não reembolsável.
+• A confirmação da reserva é efetuada somente após o recebimento do sinal de 50%.
 
 ---
 

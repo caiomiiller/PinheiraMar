@@ -49,6 +49,23 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
     setPhotoIdx(Math.max(0, Math.min(fotos.length - 1, Math.round(el.scrollLeft / w))));
   };
 
+  // ── lightbox: visualizador de fotos em ecrã inteiro (todas as fotos, não só as 5 da grelha) ──
+  const [lightboxIdx, setLightboxIdx] = useState(null);
+  const openLightbox = (i) => setLightboxIdx(i);
+  const closeLightbox = () => setLightboxIdx(null);
+  const lightboxPrev = () => setLightboxIdx(i => (i - 1 + fotos.length) % fotos.length);
+  const lightboxNext = () => setLightboxIdx(i => (i + 1) % fotos.length);
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') lightboxPrev();
+      else if (e.key === 'ArrowRight') lightboxNext();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxIdx, fotos.length]);
+
   const localNights = localCi && localCo && nights(localCi, localCo) >= 1 ? nights(localCi, localCo) : 0;
   const bd = localNights > 0 ? stayBreakdown(apt, data.seasons, localCi, localCo) : null;
   const extrasObrig = (data.taxasAdicionais || []).filter(tx => tx.tipo === 'obrigatoria');
@@ -131,11 +148,11 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           </div>
           {fotos.length >= 3 ? (
             <div ref={galleryRef} onScroll={onGalleryScroll} className="pm-detail-gallery" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '240px 180px', gap: 4 }}>
-              <div style={{ gridRow: '1 / 3', position: 'relative' }}>
+              <div style={{ gridRow: '1 / 3', position: 'relative', cursor: 'pointer' }} onClick={() => openLightbox(0)}>
                 <img src={fotos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
               </div>
-              {fotos.slice(1, 5).map((f, i) => (
-                <div key={i} style={{ position: 'relative', overflow: 'hidden' }}>
+              {fotos.slice(1).map((f, i) => (
+                <div key={i} style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }} onClick={() => openLightbox(i + 1)}>
                   <img src={f} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
                 </div>
               ))}
@@ -145,11 +162,30 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             <div style={{ height: 380 }}><PhotoTile apt={apt} h={380} radius={0} /></div>
           )}
           {fotos.length >= 3 && (
-            <span className="pm-detail-counter" style={{ display: 'none', position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.65)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 999, zIndex: 4 }}>
-              {photoIdx + 1}/{fotos.length}
-            </span>
+            <button onClick={() => openLightbox(photoIdx)} className="pm-detail-counter" style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.65)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999, zIndex: 4, border: 'none', cursor: 'pointer' }}>
+              <span className="pm-detail-counter-mobile">{photoIdx + 1}/{fotos.length}</span>
+              <span className="pm-detail-counter-desktop">Ver todas as {fotos.length} fotos</span>
+            </button>
           )}
         </div>
+
+        {/* lightbox — visualizador de ecrã inteiro com todas as fotos do apartamento */}
+        {lightboxIdx !== null && fotos.length > 0 && (
+          <div onClick={closeLightbox} style={{ position: 'fixed', inset: 0, background: 'rgba(10,14,16,.94)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button onClick={closeLightbox} title="Fechar" style={{ position: 'absolute', top: 16, right: 16, ...floatBtn, zIndex: 202 }}><X size={20} /></button>
+            <span style={{ position: 'absolute', top: 20, left: 20, color: '#fff', fontSize: 13.5, fontWeight: 700, background: 'rgba(255,255,255,.14)', padding: '5px 12px', borderRadius: 999, zIndex: 202 }}>
+              {lightboxIdx + 1}/{fotos.length}
+            </span>
+            {fotos.length > 1 && (
+              <button onClick={e => { e.stopPropagation(); lightboxPrev(); }} title="Foto anterior" style={{ position: 'absolute', left: 16, ...floatBtn, width: 44, height: 44, zIndex: 202 }}><ChevronLeft size={24} /></button>
+            )}
+            <img src={fotos[lightboxIdx]} alt="" onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '92vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 6 }} />
+            {fotos.length > 1 && (
+              <button onClick={e => { e.stopPropagation(); lightboxNext(); }} title="Próxima foto" style={{ position: 'absolute', right: 16, ...floatBtn, width: 44, height: 44, zIndex: 202 }}><ChevronRight size={24} /></button>
+            )}
+          </div>
+        )}
 
         {/* main two-column layout */}
         <div className="pm-detail-grid pm-detail-maingrid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 48, alignItems: 'start' }}>

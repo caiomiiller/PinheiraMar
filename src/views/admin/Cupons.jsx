@@ -22,10 +22,10 @@ export function CuponsView({ data, update }) {
   const remove = (id) => update(prev => ({ ...prev, cupons: (prev.cupons || []).filter(x => x.id !== id) }));
 
   const statusCupon = (c) => {
-    if (!c.ativo) return { label: 'Inactivo', cor: C.inkSoft, bg: C.espuma };
+    if (!c.ativo) return { label: 'Inativo', cor: C.inkSoft, bg: C.espuma };
     if (parseYMD(c.fim) < t) return { label: 'Expirado', cor: '#B23B3B', bg: '#FFF5F5' };
     if (c.maxUsos > 0 && c.usos >= c.maxUsos) return { label: 'Esgotado', cor: '#B26A2E', bg: '#FBF1E6' };
-    return { label: 'Activo', cor: '#1C7A5B', bg: '#D1FAE5' };
+    return { label: 'Ativo', cor: '#1C7A5B', bg: '#D1FAE5' };
   };
 
   return (
@@ -147,7 +147,7 @@ export function CuponForm({ initial, isNew, onSave, onClose }) {
           <Field label="Válido até" required><DateInput value={fim} min={inicio} onChange={e => setFim(e.target.value)} /></Field>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, cursor: 'pointer' }}>
-          <input type="checkbox" checked={ativo} onChange={e => setAtivo(e.target.checked)} /> Cupão activo
+          <input type="checkbox" checked={ativo} onChange={e => setAtivo(e.target.checked)} /> Cupão ativo
         </label>
         {codigo && (
           <div style={{ padding: '12px 16px', background: C.espuma, borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12 }}>

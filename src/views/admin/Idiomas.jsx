@@ -72,7 +72,7 @@ export function IdiomasView({ data, update }) {
               )}
             </div>
 
-            {/* toggle activo/inactivo */}
+            {/* toggle ativo/inativo */}
             <div onClick={() => toggle(lang.codigo)}
               style={{ width: 46, height: 26, borderRadius: 13, background: lang.ativo ? C.brisa : C.line, cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: 3, left: lang.ativo ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
@@ -93,7 +93,7 @@ export function IdiomasView({ data, update }) {
       {/* info note */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 16px', background: '#EEF6FF', border: '1px solid #BDD9F8', borderRadius: 12, marginTop: 18, fontSize: 13.5, color: '#1A4A7A', maxWidth: 760 }}>
         <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
-        <span>Os idiomas activos aparecem como selector de bandeira no canto do site público. O hóspede escolhe o idioma e todas as etiquetas, botões e textos do site são apresentados na língua seleccionada. Português é sempre o idioma principal e não pode ser removido.</span>
+        <span>Os idiomas ativos aparecem como seletor de bandeira no canto do site público. O hóspede escolhe o idioma e todas as etiquetas, botões e textos do site são apresentados na língua selecionada. Português é sempre o idioma principal e não pode ser removido.</span>
       </div>
 
       {/* Add language modal */}

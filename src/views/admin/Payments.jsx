@@ -26,7 +26,7 @@ export function PaymentsView({ data, update }) {
         <div>
           <div style={{ fontWeight: 700, fontSize: 15, color: '#1A3A6B', marginBottom: 4 }}>Recomendação para o {data.settings.nome}</div>
           <div style={{ fontSize: 13.5, color: '#1e3a5f', lineHeight: 1.6 }}>
-            <b>Mercado Pago + Pix</b> é a combinação mais vantajosa para aluguel de temporada no Brasil. O Pix cobre o sinal de 50% (taxa zero, confirmação imediata) e o Mercado Pago oferece parcelamento em até 12x sem juros para o hóspede — aumentando a conversão em alta temporada. O saldo de 50% no check-in fica com <b>Pagamento presencial</b> (maquininha ou Pix directo).
+            <b>Mercado Pago + Pix</b> é a combinação mais vantajosa para aluguel de temporada no Brasil. O Pix cobre o sinal de 50% (taxa zero, confirmação imediata) e o Mercado Pago oferece parcelamento em até 12x sem juros para o hóspede — aumentando a conversão em alta temporada. O saldo de 50% no check-in fica com <b>Pagamento presencial</b> (maquininha ou Pix direto).
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function PaymentsView({ data, update }) {
                     <span style={{ fontSize: 11, fontWeight: 700, background: '#FFF3CD', color: '#7B5600', border: '1px solid #F5C542', borderRadius: 999, padding: '2px 8px' }}>★ Recomendado</span>
                   )}
                   {p.conectado && (
-                    <span style={{ fontSize: 11, fontWeight: 700, background: '#D1FAE5', color: '#065F46', border: '1px solid #6EE7B7', borderRadius: 999, padding: '2px 8px' }}>● Activo</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, background: '#D1FAE5', color: '#065F46', border: '1px solid #6EE7B7', borderRadius: 999, padding: '2px 8px' }}>● Ativo</span>
                   )}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: p.cor, marginBottom: 6 }}>{p.taxa}</div>
@@ -64,7 +64,7 @@ export function PaymentsView({ data, update }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end', flexShrink: 0 }}>
                 <Btn variant={p.conectado ? 'accent' : 'soft'} size="sm" icon={p.conectado ? Check : undefined} onClick={() => toggle(p.id)}>
-                  {p.conectado ? 'Activo' : 'Activar'}
+                  {p.conectado ? 'Ativo' : 'Ativar'}
                 </Btn>
                 {p.link && (
                   <a href={p.link} target="_blank" rel="noopener noreferrer"
@@ -91,7 +91,7 @@ export function PaymentsView({ data, update }) {
           {[
             { step: '1', title: 'Crie uma conta Business', desc: 'Abra uma conta no Mercado Pago em mercadopago.com.br. Use CNPJ para ter acesso à API completa e melhores taxas.', cor: C.brisa },
             { step: '2', title: 'Obtenha o Access Token', desc: 'Em "Credenciais" no painel Mercado Pago, copie o Access Token de produção. Este código liga o motor de reservas à sua conta.', cor: C.ocean },
-            { step: '3', title: 'Configure o webhook', desc: 'Registe o URL do seu servidor para receber confirmações automáticas de pagamento e actualizar o estado da reserva em tempo real.', cor: C.coral },
+            { step: '3', title: 'Configure o webhook', desc: 'Registre o URL do seu servidor para receber confirmações automáticas de pagamento e atualizar o estado da reserva em tempo real.', cor: C.coral },
             { step: '4', title: 'Fluxo no motor de reservas', desc: 'Reserva criada → Mercado Pago gera link de pagamento (50%) → Hóspede paga → Webhook confirma → Reserva muda para "Confirmada".', cor: '#7C3AED' },
           ].map(s => (
             <div key={s.step} style={{ padding: '14px 16px', background: C.espuma, borderRadius: 12, borderLeft: `4px solid ${s.cor}` }}>
@@ -104,7 +104,7 @@ export function PaymentsView({ data, update }) {
           ))}
         </div>
         <div style={{ marginTop: 14, padding: '12px 14px', background: '#FFF8E1', border: '1px solid #FFD54F', borderRadius: 10, fontSize: 13, color: '#7B5600', lineHeight: 1.55 }}>
-          <b>Nota:</b> A integração automática de pagamentos requer um servidor backend (Node.js / PHP) com acesso à internet para receber os webhooks do gateway. O motor actual funciona em modo offline — para produção em <b>{data.settings.site || 'produção'}</b> será necessário configurar o servidor e as credenciais da API.
+          <b>Nota:</b> A integração automática de pagamentos requer um servidor backend (Node.js / PHP) com acesso à internet para receber os webhooks do gateway. O motor atual funciona em modo offline — para produção em <b>{data.settings.site || 'produção'}</b> será necessário configurar o servidor e as credenciais da API.
         </div>
       </Card>
 

@@ -369,7 +369,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
             </div>
             <div style={{ fontSize: 12, color: C.brisa, cursor: 'pointer', fontWeight: 600 }}>+ Mais opções de preço</div>
             <p style={{ fontSize: 12, color: C.inkSoft, margin: '4px 0 0' }}>
-              O preço base é usado como referência quando não há temporada activa. Para tarifas diferenciadas por período use <b>Opções de preços</b>.
+              O preço base é usado como referência quando não há temporada ativa. Para tarifas diferenciadas por período use <b>Opções de preços</b>.
             </p>
           </div>
         </div>

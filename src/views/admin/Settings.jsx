@@ -17,7 +17,7 @@ export function SettingsView({ data, update }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <Field label="Nome da propriedade" required><TextInput value={s.nome} onChange={e => set('nome', e.target.value)} /></Field>
           <Field label="Tipo"><Select value={s.tipo} onChange={e => set('tipo', e.target.value)}>{['Apartamento', 'Pousada', 'Hotel', 'Casa'].map(o => <option key={o}>{o}</option>)}</Select></Field>
-          <Field label="Email de contacto" required><TextInput value={s.email} onChange={e => set('email', e.target.value)} /></Field>
+          <Field label="Email de contato" required><TextInput value={s.email} onChange={e => set('email', e.target.value)} /></Field>
           <Field label="Telefone" required><TextInput value={s.telefone} onChange={e => set('telefone', e.target.value)} /></Field>
         </div>
       </Card>

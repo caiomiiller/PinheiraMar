@@ -112,12 +112,12 @@ export function DestinoSection({ residencial }) {
             <div>
               <h4 style={{ fontFamily: F.disp, fontSize: 20, margin: '0 0 14px', color: C.ink }}>A origem do nome</h4>
               <p style={{ fontSize: 15, color: '#555', lineHeight: 1.75, margin: '0 0 20px' }}>
-                Conta-se que havia uma enseada coberta por árvores de madeira leve e resistente, muito usada para fabricar boias para as redes dos pescadores. O fruto desta árvore parecia-se com uma pinha — e dai as árvores serem chamadas de <i>pinheira</i>. Como esta linda praia não tinha nome, os nativos chamaram-na de Pinheira.
+                Conta-se que havia uma enseada coberta por árvores de madeira leve e resistente, muito usada para fabricar boias para as redes dos pescadores. O fruto desta árvore parecia-se com uma pinha — e daí as árvores serem chamadas de <i>pinheira</i>. Como esta linda praia não tinha nome, os nativos chamaram-na de Pinheira.
               </p>
               <h4 style={{ fontFamily: F.disp, fontSize: 20, margin: '0 0 14px', color: C.ink }}>Por que escolher a Pinheira?</h4>
               <div style={{ display: 'grid', gap: 10 }}>
                 {[
-                  ['🌊', 'Praia de baixo agitação e excelente para famílias'],
+                  ['🌊', 'Praia de Baixo — águas calmas e excelente para famílias'],
                   ['🐟', 'Pesca artesanal e gastronomia fresca todos os dias'],
                   ['🌅', 'Pôr do sol deslumbrante sobre o Pontão e as rochas'],
                   ['🏄', 'Praias vizinhas para todos os perfis — surf, mergulho, trilhas'],
@@ -179,8 +179,8 @@ export function DestinoSection({ residencial }) {
               <h3 style={{ fontFamily: F.disp, fontSize: 28, margin: '0 0 22px', color: C.ink }}>Como chegar à Pinheira</h3>
               <div style={{ display: 'grid', gap: 18 }}>
                 {[
-                  { ic: '✈️', titulo: 'De avião', texto: 'Aeroporto Internacional Hercílio Luz (Florianópolis) — 48 km do Residencial. Aluguer de carro recomendado ou transfer privado.' },
-                  { ic: '🚗', titulo: 'De carro', texto: `BR-101 Sul → SC-282 em direcção a Palhoça → seguir para Praia da Pinheira. GPS: "${residencial?.nome || 'Residencial PinheiraMar'}, Praia da Pinheira". Estacionamento gratuito (1 vaga por apartamento).` },
+                  { ic: '✈️', titulo: 'De avião', texto: 'Aeroporto Internacional Hercílio Luz (Florianópolis) — 48 km do Residencial. Aluguel de carro recomendado ou transfer privado.' },
+                  { ic: '🚗', titulo: 'De carro', texto: `BR-101 Sul → SC-282 em direção a Palhoça → seguir para Praia da Pinheira. GPS: "${residencial?.nome || 'Residencial PinheiraMar'}, Praia da Pinheira". Estacionamento gratuito (1 vaga por apartamento).` },
                   { ic: '🚌', titulo: 'De ônibus', texto: 'Terminal Rodoviário de Florianópolis → linha para Palhoça → van/mototáxi para a Pinheira. Tempo total aprox. 1h30.' },
                   { ic: '📍', titulo: 'Distâncias úteis', texto: 'Centro de Florianópolis: 35 km · Palhoça (centro): 22 km · Guarda do Embaú: 2 km · Garopaba: 28 km · Imbituba: 45 km.' },
                 ].map((it, i) => (
