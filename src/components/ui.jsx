@@ -32,7 +32,7 @@ export function Btn({ variant = 'primary', size = 'md', children, style, icon: I
 
 export function Modal({ title, subtitle, onClose, onBack, children, footer, wide, progress }) {
   return (
-    <div onClick={onClose} className="pm-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(10,40,46,.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 14px', zIndex: 50, overflowY: 'auto', backdropFilter: 'blur(2px)' }}>
+    <div onClick={onClose} className="pm-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(10,40,46,.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 14px', zIndex: 100, overflowY: 'auto', backdropFilter: 'blur(2px)' }}>
       <div onClick={e => e.stopPropagation()} className="pm-pop pm-modal-card" style={{ background: '#fff', borderRadius: '18px', width: '100%', maxWidth: wide ? 760 : 520, boxShadow: '0 24px 70px rgba(10,40,46,.35)', overflow: 'hidden', marginTop: 12 }}>
         <div className="pm-modal-header" style={{ padding: '18px 22px', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
