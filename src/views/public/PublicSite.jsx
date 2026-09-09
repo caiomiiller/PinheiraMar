@@ -312,9 +312,9 @@ export function PublicSite({ data, onCreate }) {
           {/* wordmarks — logótipos oficiais dos dois residenciais
               (public/logo-horizontal.png e public/logo-caminho-horizontal.png). */}
           <a href="#" className="pm-pubsite-logos" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src="/logo-horizontal.png" alt="Residencial PinheiraMar" style={{ height: 48, width: 'auto', display: 'block' }} />
-            <span style={{ width: 1, alignSelf: 'stretch', margin: '10px 0', background: BORDER, flexShrink: 0 }} />
-            <img src="/logo-caminho-horizontal.png" alt="Residencial Caminho do Mar" style={{ height: 48, width: 'auto', display: 'block' }} />
+            <img src="/logo-horizontal.png" alt="Residencial PinheiraMar" style={{ height: 40, width: 'auto', display: 'block' }} />
+            <span style={{ width: 1, alignSelf: 'stretch', margin: '8px 0', background: BORDER, flexShrink: 0 }} />
+            <img src="/logo-caminho-horizontal.png" alt="Residencial Caminho do Mar" style={{ height: 40, width: 'auto', display: 'block' }} />
           </a>
 
           {/* centred search (desktop) */}
