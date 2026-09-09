@@ -14,6 +14,10 @@ import { DestinoSection } from './DestinoSection';
 import { BookingModal } from '../../components/BookingModal';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 
+// Ícone de cada residencial, usado junto ao nome no cabeçalho de grupo
+// (public/logo-icon-pinheiramar.png e public/logo-icon-caminho.png).
+const RESIDENCIAL_LOGOS = { pinheiramar: '/logo-icon-pinheiramar.png', novoimovel: '/logo-icon-caminho.png' };
+
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 // Extrai {dia, mês, dia da semana} de uma data 'yyyy-mm-dd' para o cartão de data grande da busca mobile.
 function bigDateParts(s) {
@@ -245,8 +249,8 @@ export function PublicSite({ data, onCreate }) {
     return (
       <div ref={el => { groupRefs.current[r.id] = el; }} style={{ marginBottom: 72, scrollMarginTop: 140 }}>
         <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
-          <div className="pm-pubsite-group-thumb" style={{ width: 96, height: 72, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: LIGHT }}>
-            <img src={r.heroImage} alt={r.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+          <div className="pm-pubsite-group-thumb" style={{ width: 96, height: 72, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} style={{ width: '72%', height: '72%', objectFit: 'contain', display: 'block' }} onError={e => { e.target.style.display = 'none'; }} />
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>
             <div className="pm-pubsite-group-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', color: BLACK }}>{r.nome}</div>
@@ -308,14 +312,6 @@ export function PublicSite({ data, onCreate }) {
       {/* ══ HEADER ══ */}
       <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
         <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
-
-          {/* wordmarks — logótipos oficiais dos dois residenciais
-              (public/logo-horizontal.png e public/logo-caminho-horizontal.png). */}
-          <a href="#" className="pm-pubsite-logos" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src="/logo-horizontal.png" alt="Residencial PinheiraMar" style={{ height: 40, width: 'auto', display: 'block' }} />
-            <span style={{ width: 1, alignSelf: 'stretch', margin: '8px 0', background: BORDER, flexShrink: 0 }} />
-            <img src="/logo-caminho-horizontal.png" alt="Residencial Caminho do Mar" style={{ height: 40, width: 'auto', display: 'block' }} />
-          </a>
 
           {/* centred search (desktop) */}
           <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
