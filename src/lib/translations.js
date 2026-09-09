@@ -36,6 +36,7 @@ export const TRANSLATIONS = {
     /* category pills */
     cat1: 'Frente Mar', cat2: 'Apartamento', cat3: 'Estacionamento',
     cat4: 'Wi-Fi', cat5: 'Famílias', cat6: 'Vista Mar', cat7: 'Praia', cat8: '2-8 pessoas',
+    cat_cap2: 'Até 2', cat_cap4: 'Até 4', cat_cap6: 'Até 6', cat_cap8: 'Até 8',
     /* booking modal */
     book_title: (nome) => `Reservar ${nome}`, book_name: 'Nome completo',
     book_email: 'E-mail', book_phone: 'Telefone', book_guests: 'Hóspedes',
@@ -73,6 +74,7 @@ export const TRANSLATIONS = {
     card_night: 'noche', card_total: 'Total:',
     cat1: 'Frente al mar', cat2: 'Apartamento', cat3: 'Estacionamiento',
     cat4: 'Wi-Fi', cat5: 'Familias', cat6: 'Vista al mar', cat7: 'Playa', cat8: '2-8 personas',
+    cat_cap2: 'Hasta 2', cat_cap4: 'Hasta 4', cat_cap6: 'Hasta 6', cat_cap8: 'Hasta 8',
     book_title: (nome) => `Reservar ${nome}`, book_name: 'Nombre completo',
     book_email: 'Correo electrónico', book_phone: 'Teléfono', book_guests: 'Huéspedes',
     book_total: 'Total', book_signal: 'Señal (50%)', book_confirm: 'Confirmar reserva',
@@ -108,6 +110,7 @@ export const TRANSLATIONS = {
     card_night: 'night', card_total: 'Total:',
     cat1: 'Oceanfront', cat2: 'Apartment', cat3: 'Parking',
     cat4: 'Wi-Fi', cat5: 'Families', cat6: 'Ocean view', cat7: 'Beach', cat8: '2-8 guests',
+    cat_cap2: 'Up to 2', cat_cap4: 'Up to 4', cat_cap6: 'Up to 6', cat_cap8: 'Up to 8',
     book_title: (nome) => `Book ${nome}`, book_name: 'Full name',
     book_email: 'Email', book_phone: 'Phone', book_guests: 'Guests',
     book_total: 'Total', book_signal: 'Deposit (50%)', book_confirm: 'Confirm booking',

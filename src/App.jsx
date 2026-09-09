@@ -74,8 +74,7 @@ export default function App() {
       .pm-cat-btn[data-active="true"] span{color:#FFF!important;}
       .pm-pubsite-main{padding:32px 16px 56px!important;}
       .pm-pubsite-group-head{gap:12px!important;}
-      .pm-pubsite-group-thumb{width:60px!important;height:46px!important;}
-      .pm-pubsite-group-name{font-size:18px!important;}
+      .pm-pubsite-group-logo{height:44px!important;}
       .pm-pubsite-group-count{width:100%!important;order:3;}
       .pm-pubsite-combo{padding:16px!important;}
       .pm-pubsite-footer-grid{padding:32px 16px!important;gap:28px!important;}

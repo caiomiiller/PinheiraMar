@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, ChevronDown,
-  Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Wifi, Car, Users,
-  BedDouble, AlertCircle } from 'lucide-react';
+  Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Users,
+  AlertCircle } from 'lucide-react';
 import { C, F, WHATSAPP_URL } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
   stayBreakdown, nights, fmtShort, pad, WD } from '../../lib/helpers';
@@ -14,9 +14,9 @@ import { DestinoSection } from './DestinoSection';
 import { BookingModal } from '../../components/BookingModal';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 
-// Ícone de cada residencial, usado junto ao nome no cabeçalho de grupo
-// (public/logo-icon-pinheiramar.png e public/logo-icon-caminho.png).
-const RESIDENCIAL_LOGOS = { pinheiramar: '/logo-icon-pinheiramar.png', novoimovel: '/logo-icon-caminho.png' };
+// Logo vertical de cada residencial, usada no cabeçalho de cada grupo de
+// apartamentos (substitui o ícone + nome em texto que havia antes).
+const RESIDENCIAL_LOGOS = { pinheiramar: '/logo-vertical-pinheiramar.png', novoimovel: '/logo-vertical-caminho.png' };
 
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 // Extrai {dia, mês, dia da semana} de uma data 'yyyy-mm-dd' para o cartão de data grande da busca mobile.
@@ -89,23 +89,24 @@ export function PublicSite({ data, onCreate }) {
     })).sort((x, y) =>
       (Number(y.available) - Number(x.available)) ||
       (Number(y.fits) - Number(x.fits)) ||
+      // sem filtro de categoria selecionado, os apartamentos Frente Mar aparecem primeiro
+      (!activeCategory ? (Number(y.apt.vista === 'Frente Mar') - Number(x.apt.vista === 'Frente Mar')) : 0) ||
       (x.apt.preco - y.apt.preco));
     const availableApts = withInfo.filter(w => w.available).map(w => w.apt);
     const needsCombo = valid && hosp > 0 && hosp > maxCap;
     const combo = needsCombo ? findCombo(availableApts, hosp) : null;
     return { residencial: r, active, withInfo, maxCap, availableApts, needsCombo, combo };
-  }), [data, ci, co, hosp, valid]);
+  }), [data, ci, co, hosp, valid, activeCategory]);
 
   const hasFrenteMar = data.apartamentos.some(a => a.ativo && a.vista === 'Frente Mar');
 
   const catFilter = (apt) => {
     if (!activeCategory) return true;
-    const am = Array.isArray(apt.amenidades) ? apt.amenidades.join(' ').toLowerCase() : '';
     if (activeCategory === 'frente_mar') return apt.vista === 'Frente Mar';
-    if (activeCategory === 'wifi') return am.includes('wi-fi') || am.includes('wifi');
-    if (activeCategory === 'estacion') return am.includes('estacion');
-    if (activeCategory === 'familia') return apt.capacidade >= 4;
-    if (activeCategory === 'praia') return true;
+    if (activeCategory === 'cap2') return apt.capacidade === 2;
+    if (activeCategory === 'cap4') return apt.capacidade === 4;
+    if (activeCategory === 'cap6') return apt.capacidade === 6;
+    if (activeCategory === 'cap8') return apt.capacidade >= 8;
     return true;
   };
 
@@ -255,12 +256,11 @@ export function PublicSite({ data, onCreate }) {
     return (
       <div ref={el => { groupRefs.current[r.id] = el; }} style={{ marginBottom: 72, scrollMarginTop: 140 }}>
         <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
-          <div className="pm-pubsite-group-thumb" style={{ width: 96, height: 72, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} style={{ width: '72%', height: '72%', objectFit: 'contain', display: 'block' }} onError={e => { e.target.style.display = 'none'; }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <div className="pm-pubsite-group-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', color: BLACK }}>{r.nome}</div>
-            <div style={{ fontSize: 13.5, color: GREY, marginTop: 3, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
+          <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} className="pm-pubsite-group-logo"
+            style={{ height: 64, width: 'auto', maxWidth: 220, flexShrink: 0, display: 'block', objectFit: 'contain' }}
+            onError={e => { e.target.style.display = 'none'; }} />
+          <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center' }}>
+            <div style={{ fontSize: 13.5, color: GREY, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
           </div>
           <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
         </div>
@@ -318,6 +318,12 @@ export function PublicSite({ data, onCreate }) {
       {/* ══ HEADER ══ */}
       <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
         <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
+
+          {/* marca PinheiraMar — garante que o cabeçalho nunca fica vazio no telemóvel
+              (onde a busca e o seletor de idioma ficam escondidos) */}
+          <a href="/" className="pm-pubsite-brand" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
+            <img src="/logo-vertical-pinheiramar.png" alt="PinheiraMar" style={{ height: 40, width: 'auto', display: 'block' }} />
+          </a>
 
           {/* centred search (desktop) */}
           <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
@@ -441,12 +447,12 @@ export function PublicSite({ data, onCreate }) {
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: WHITE, position: 'sticky', top: 64, zIndex: 40 }}>
         <div className="pm-pubsite-catstrip" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {[
-            { key: null,         icon: <Home size={16} />,       label: tr('cat2') },
-            { key: 'frente_mar', icon: <Waves size={16} />,      label: tr('cat1') },
-            { key: 'wifi',       icon: <Wifi size={16} />,       label: tr('cat4') },
-            { key: 'estacion',   icon: <Car size={16} />,        label: tr('cat3') },
-            { key: 'familia',    icon: <Users size={16} />,      label: tr('cat5') },
-            { key: 'praia',      icon: <BedDouble size={16} />,  label: tr('cat7') },
+            { key: null,         icon: <Home size={16} />,  label: tr('cat2') },
+            { key: 'frente_mar', icon: <Waves size={16} />, label: tr('cat1') },
+            { key: 'cap2',       icon: <Users size={16} />, label: tr('cat_cap2') },
+            { key: 'cap4',       icon: <Users size={16} />, label: tr('cat_cap4') },
+            { key: 'cap6',       icon: <Users size={16} />, label: tr('cat_cap6') },
+            { key: 'cap8',       icon: <Users size={16} />, label: tr('cat_cap8') },
           ].filter(cat => cat.key !== 'frente_mar' || hasFrenteMar).map(cat => {
             const on = activeCategory === cat.key;
             return (
