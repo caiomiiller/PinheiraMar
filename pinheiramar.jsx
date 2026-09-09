@@ -332,7 +332,7 @@ Acesse www.pinheiramar.com.br ou entre em contacto via WhatsApp/redes sociais.
 4. POLÍTICA DE PETS
 
 • Aceitos cães e gatos com mais de 6 meses e até 10 kg (máximo 2 pets por apartamento).
-• Taxa única de R$ 150,00 por pet.
+• Taxa única de R$ 200,00 por pet.
 • O proprietário é responsável pela limpeza, silêncio e uso de tapete higiênico dentro do apartamento.
 • Não é permitido utilizar utensílios do apartamento para o animal.
 
@@ -1473,7 +1473,7 @@ function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, setHosp, 
               <PolicyItem icon="🕐" title="Check-in" text={`A partir das ${data.settings.checkInHora || '13:00'}`} />
               <PolicyItem icon="🚪" title="Check-out" text={`Até às ${data.settings.checkOutHora || '10:00'}`} />
               <PolicyItem icon="🔇" title="Lei do silêncio" text="Das 22h às 7h, excepto Réveillon e Carnaval." />
-              <PolicyItem icon="🐾" title="Animais de estimação" text="Permitidos mediante taxa única de R$ 150,00 por pet (até 10 kg, máx. 2)." />
+              <PolicyItem icon="🐾" title="Animais de estimação" text="Permitidos mediante taxa única de R$ 200,00 por pet (até 10 kg, máx. 2)." />
               <PolicyItem icon="🚗" title="Estacionamento" text="1 vaga gratuita incluída. Vaga adicional: R$ 50,00 (sujeito a disponibilidade)." />
               <PolicyItem icon="🚭" title="Fumar" text="Proibido em todas as áreas internas e comuns." />
             </section>
@@ -4140,7 +4140,7 @@ CHECK-IN: 13h00 | CHECK-OUT: 10h00
 3. POLÍTICA DE PETS
 
 • Aceitos cães e gatos com mais de 6 meses e até 10 kg (máximo 2 pets por apartamento).
-• Taxa única de R$ 150,00 por pet.
+• Taxa única de R$ 200,00 por pet.
 • O proprietário é responsável pela limpeza, silêncio e uso de tapete higiênico dentro do apartamento.
 
 ---
