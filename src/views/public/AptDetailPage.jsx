@@ -218,7 +218,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
 
             {/* sleeping arrangements */}
             <section style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #eee' }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 16px' }}>Arranjos para dormir</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 16px' }}>Acomodações</h2>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 {camas.map((c, i) => (
                   <div key={i} style={{ padding: '16px 20px', background: '#f8f8f8', borderRadius: 14, minWidth: 140 }}>
