@@ -85,7 +85,14 @@ export const Badge = ({ status }) => {
 
 export function PhotoTile({ apt, h = 184, radius = 14 }) {
   if (apt.foto) {
-    return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', background: `center/cover no-repeat url(${apt.foto})`, position: 'relative' }}>
+    // Usa <img> em vez de background-image: os browsers aplicam um
+    // reamostragem de maior qualidade a <img> ao reduzir fotos grandes
+    // para miniaturas pequenas — com background-image ficavam com um ar
+    // "esborratado"/pixelado nos cartões pequenos, apesar de as mesmas
+    // fotos abrirem nítidas em tamanho grande (galeria/lightbox).
+    return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', position: 'relative' }}>
+      <img src={apt.foto} alt={apt.nome || ''} loading="lazy" decoding="async"
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       <span style={tilePill}>{apt.vista}</span>
     </div>;
   }

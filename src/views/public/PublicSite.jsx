@@ -309,10 +309,12 @@ export function PublicSite({ data, onCreate }) {
       <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
         <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
 
-          {/* wordmark — logótipo oficial (public/logo-horizontal.png), marca
-              de destino partilhada pelos dois residenciais. */}
-          <a href="#" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-            <img src="/logo-horizontal.png" alt="Pinheira Mar Residencial" style={{ height: 52, width: 'auto', display: 'block' }} />
+          {/* wordmarks — logótipos oficiais dos dois residenciais
+              (public/logo-horizontal.png e public/logo-caminho-horizontal.png). */}
+          <a href="#" className="pm-pubsite-logos" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <img src="/logo-horizontal.png" alt="Residencial PinheiraMar" style={{ height: 48, width: 'auto', display: 'block' }} />
+            <span style={{ width: 1, alignSelf: 'stretch', margin: '10px 0', background: BORDER, flexShrink: 0 }} />
+            <img src="/logo-caminho-horizontal.png" alt="Residencial Caminho do Mar" style={{ height: 48, width: 'auto', display: 'block' }} />
           </a>
 
           {/* centred search (desktop) */}

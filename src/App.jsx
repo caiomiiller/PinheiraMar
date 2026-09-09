@@ -64,6 +64,7 @@ export default function App() {
 
       /* ── site público (booking-style) — telemóvel ── */
       .pm-pubsite-header-row{padding:0 16px!important;gap:12px!important;}
+      .pm-pubsite-logos img{height:34px!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
       .pm-pubsite-lang{display:none!important;}

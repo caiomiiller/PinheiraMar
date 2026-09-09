@@ -39,11 +39,11 @@ export function seedData() {
     // capacidade/piso (não há "Frente Mar" aqui — usa a faixa "à beira-mar"
     // como referência, com um pequeno acréscimo por piso, tal como no
     // PinheiraMar). Ajusta livremente em Admin → Apartamentos.
-    { id: 'n01', residencialId: 'novoimovel', nome: 'Apto 01', tipo: 'Apto 01 - Térreo, a 150m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 150m da praia', capacidade: 6, preco: 320, foto: '', ativo: true },
-    { id: 'n02', residencialId: 'novoimovel', nome: 'Apto 02', tipo: 'Apto 02 - Térreo, a 150m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 150m da praia', capacidade: 6, preco: 320, foto: '', ativo: true },
-    { id: 'n03', residencialId: 'novoimovel', nome: 'Apto 03', tipo: 'Apto 03 - 2º Piso, a 150m da praia, 4 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 4, preco: 260, foto: '', ativo: true },
-    { id: 'n04', residencialId: 'novoimovel', nome: 'Apto 04', tipo: 'Apto 04 - 2º Piso, a 150m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 9, preco: 440, foto: '', ativo: true },
-    { id: 'n05', residencialId: 'novoimovel', nome: 'Apto 05', tipo: 'Apto 05 - 2º Piso, a 150m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 9, preco: 440, foto: '', ativo: true },
+    { id: 'n01', residencialId: 'novoimovel', nome: 'Apto 01', tipo: 'Apto 01 - Térreo, a 150m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 150m da praia', capacidade: 6, preco: 320, foto: '/fotos/n01/1.jpg', fotos: ['/fotos/n01/1.jpg', '/fotos/n01/2.jpg', '/fotos/n01/3.jpg', '/fotos/n01/4.jpg', '/fotos/n01/5.jpg', '/fotos/n01/6.jpg', '/fotos/n01/7.jpg'], ativo: true },
+    { id: 'n02', residencialId: 'novoimovel', nome: 'Apto 02', tipo: 'Apto 02 - Térreo, a 150m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 150m da praia', capacidade: 6, preco: 320, foto: '/fotos/n02/1.jpg', fotos: ['/fotos/n02/1.jpg', '/fotos/n02/2.jpg', '/fotos/n02/3.jpg', '/fotos/n02/4.jpg', '/fotos/n02/5.jpg', '/fotos/n02/6.jpg', '/fotos/n02/7.jpg'], ativo: true },
+    { id: 'n03', residencialId: 'novoimovel', nome: 'Apto 03', tipo: 'Apto 03 - 2º Piso, a 150m da praia, 4 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 4, preco: 260, foto: '/fotos/n03/1.jpg', fotos: ['/fotos/n03/1.jpg', '/fotos/n03/2.jpg', '/fotos/n03/3.jpg', '/fotos/n03/4.jpg', '/fotos/n03/5.jpg', '/fotos/n03/6.jpg'], ativo: true },
+    { id: 'n04', residencialId: 'novoimovel', nome: 'Apto 04', tipo: 'Apto 04 - 2º Piso, a 150m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 9, preco: 440, foto: '/fotos/n04/1.jpg', fotos: ['/fotos/n04/1.jpg', '/fotos/n04/2.jpg', '/fotos/n04/3.jpg', '/fotos/n04/4.jpg', '/fotos/n04/5.jpg', '/fotos/n04/6.jpg', '/fotos/n04/7.jpg', '/fotos/n04/8.jpg'], ativo: true },
+    { id: 'n05', residencialId: 'novoimovel', nome: 'Apto 05', tipo: 'Apto 05 - 2º Piso, a 150m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 9, preco: 440, foto: '/fotos/n05/1.jpg', fotos: ['/fotos/n05/1.jpg', '/fotos/n05/2.jpg', '/fotos/n05/3.jpg', '/fotos/n05/4.jpg', '/fotos/n05/5.jpg', '/fotos/n05/6.jpg', '/fotos/n05/7.jpg', '/fotos/n05/8.jpg', '/fotos/n05/9.jpg', '/fotos/n05/10.jpg', '/fotos/n05/11.jpg', '/fotos/n05/12.jpg', '/fotos/n05/13.jpg', '/fotos/n05/14.jpg', '/fotos/n05/15.jpg', '/fotos/n05/16.jpg', '/fotos/n05/17.jpg', '/fotos/n05/18.jpg', '/fotos/n05/19.jpg'], ativo: true },
     { id: 'n06', residencialId: 'novoimovel', nome: 'Apto 06', tipo: 'Apto 06 - Cobertura (3º Piso), a 150m da praia, 6 pessoas', piso: 'Cobertura', vista: 'A 150m da praia', capacidade: 6, preco: 380, foto: '', ativo: true },
   ];
 
@@ -320,7 +320,11 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
 // reservar noutro telemóvel, nem vice-versa. Para um motor de reservas
 // verdadeiramente partilhado entre visitantes seria necessário um
 // backend (ex.: uma base de dados), o que fica fora do âmbito actual.
-export const STORE_KEY = 'pinheiramar:data:v8';
+// v9: adiciona fotos reais dos apartamentos do Caminho do Mar (n01-n05;
+// n06 ainda sem fotos — aguarda envio) e actualiza os logótipos no
+// cabeçalho do site (ambos os residenciais); muda a versão para que
+// quem já tinha a v8 guardada também receba as novas fotos.
+export const STORE_KEY = 'pinheiramar:data:v9';
 export let memFallback = null;
 export async function loadData() {
   try {
