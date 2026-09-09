@@ -79,6 +79,15 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const totalComExtras = bd ? bd.total + extrasTotal + (useApt2 && apt2 ? total2 : 0) : 0;
   const sinal = Math.round(totalComExtras * (data.settings.sinalPct / 100));
 
+  // A pesquisa (hosp) veio da página de busca e pode exceder a capacidade
+  // deste apartamento sozinho — nesse caso o cliente TEM de combinar com um
+  // segundo apartamento para o número de hóspedes pesquisado ser respeitado;
+  // não deixamos finalizar a reserva de um único apartamento nessa situação,
+  // para não haver dúvida sobre quantas pessoas cabem de facto na estadia.
+  const precisaSegundoApto = hosp > 0 && hosp > apt.capacidade;
+  const capacidadeCombinada = apt.capacidade + (apt2 ? apt2.capacidade : 0);
+  const comboAtendeReq = !precisaSegundoApto || (useApt2 && apt2Id && isAvail2 && capacidadeCombinada >= hosp);
+
   // min nights for active season
   const activeSeason = localCi ? (data.seasons || []).find(s => localCi >= s.inicio && localCi <= s.fim) : null;
   const minN = activeSeason?.minNoites || 1;
@@ -92,7 +101,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   );
 
   const handleBook = () => {
-    if (!localCi || !localCo || localNights < 1 || !meetsMin) return;
+    if (!localCi || !localCo || localNights < 1 || !meetsMin || !comboAtendeReq) return;
     setCi(localCi); setCo(localCo); setHosp(useApt2 ? g1 + g2 : localHosp);
     onBook(apt, apt2 || null, useApt2 ? g1 : localHosp, useApt2 ? g2 : null);
   };
@@ -329,8 +338,19 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                 </div>
               </div>
 
+              {/* aviso: a pesquisa exige mais hóspedes do que este apartamento acomoda sozinho */}
+              {precisaSegundoApto && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10, padding: '10px 14px', borderRadius: 10, background: '#FEE2E2', border: '1px solid #F5B5B5' }}>
+                  <AlertCircle size={16} color="#B91C1C" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <div style={{ fontSize: 12.5, color: '#991B1B', fontWeight: 600, lineHeight: 1.5 }}>
+                    Você pesquisou para <b>{hosp} hóspedes</b> — este apartamento acomoda até {apt.capacidade}.
+                    Marque "Adicionar segundo apartamento" abaixo para reservar para todo o grupo.
+                  </div>
+                </div>
+              )}
+
               {/* second apartment toggle */}
-              <div style={{ marginBottom: 10, padding: '10px 14px', background: '#f9f9f9', borderRadius: 10, border: '1px solid #ebebeb' }}>
+              <div style={{ marginBottom: 10, padding: '10px 14px', background: precisaSegundoApto && !useApt2 ? '#FEF6F6' : '#f9f9f9', borderRadius: 10, border: precisaSegundoApto && !useApt2 ? '1px solid #E8A3A3' : '1px solid #ebebeb' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13.5, fontWeight: 600 }}>
                   <input type="checkbox" checked={useApt2} onChange={e => { setUseApt2(e.target.checked); if (!e.target.checked) setApt2Id(''); }}
                     style={{ width: 16, height: 16, accentColor: C.coral, cursor: 'pointer' }} />
@@ -427,8 +447,15 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
               )}
 
               {(() => {
-                const canBook = localNights && isAvail && meetsMin && (!useApt2 || (apt2Id && isAvail2));
-                const label = !localNights ? 'Selecione as datas' : !isAvail ? 'Indisponível' : !meetsMin ? `Mínimo ${minN} noites` : useApt2 && apt2Id && !isAvail2 ? (apt2?.nome || '') + ' indisponível' : useApt2 && !apt2Id ? 'Escolha o 2º apto' : 'Reservar agora';
+                const canBook = localNights && isAvail && meetsMin && (!useApt2 || (apt2Id && isAvail2)) && comboAtendeReq;
+                const label = !localNights ? 'Selecione as datas'
+                  : !isAvail ? 'Indisponível'
+                  : !meetsMin ? `Mínimo ${minN} noites`
+                  : precisaSegundoApto && !useApt2 ? 'Adicione o 2º apartamento'
+                  : useApt2 && !apt2Id ? 'Escolha o 2º apto'
+                  : useApt2 && apt2Id && !isAvail2 ? (apt2?.nome || '') + ' indisponível'
+                  : precisaSegundoApto && !comboAtendeReq ? `Capacidade insuficiente para ${hosp} hóspedes`
+                  : 'Reservar agora';
                 return (
                   <button onClick={handleBook} disabled={!canBook}
                     style={{ width: '100%', padding: '15px 0', background: canBook ? C.coral : '#ccc', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 16, cursor: canBook ? 'pointer' : 'not-allowed', fontFamily: F.sans, transition: 'background .15s' }}

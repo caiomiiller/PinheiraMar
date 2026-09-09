@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, ChevronDown,
   Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Wifi, Car, Users,
-  BedDouble } from 'lucide-react';
+  BedDouble, AlertCircle } from 'lucide-react';
 import { C, F, WHATSAPP_URL } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
   stayBreakdown, nights, fmtShort, pad, WD } from '../../lib/helpers';
@@ -166,7 +166,7 @@ export function PublicSite({ data, onCreate }) {
   };
 
   /* ── reusable card ── */
-  const PCard = ({ apt, available = true, fits = true, bd = null }) => {
+  const PCard = ({ apt, available = true, fits = true, bd = null, needsCombo = false }) => {
     const rate = valid && bd ? Math.round(bd.total / bd.n) : apt.preco;
     return (
       <div onClick={() => available && openDetail(apt)}
@@ -195,7 +195,13 @@ export function PublicSite({ data, onCreate }) {
             <div style={{ fontSize: 13, color: GREY, whiteSpace: 'nowrap' }}>até {apt.capacidade} hóspedes</div>
           </div>
           <div style={{ fontSize: 13, color: GREY, marginTop: 3 }}>{apt.piso} · {apt.vista}</div>
-          {valid && !fits && <div style={{ fontSize: 12, color: ACCENT, fontWeight: 600, marginTop: 5, letterSpacing: '.02em' }}>Combinar com outro apartamento</div>}
+          {valid && !fits && (
+            needsCombo
+              ? <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: '#C0392B', fontWeight: 800, marginTop: 6, letterSpacing: '.02em' }}>
+                  <AlertCircle size={13} /> Combine com outro apartamento — obrigatório para {hosp} hóspedes
+                </div>
+              : <div style={{ fontSize: 12, color: ACCENT, fontWeight: 600, marginTop: 5, letterSpacing: '.02em' }}>Combinar com outro apartamento</div>
+          )}
           {valid && bd && <div style={{ fontSize: 12.5, color: GREY, marginTop: 4 }}>Total {money(bd.total)} · {bd.n} noites</div>}
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'baseline', gap: 4 }}>
             <span style={{ fontSize: 18, fontWeight: 700, color: BLACK }}>{money(rate)}</span>
@@ -207,7 +213,7 @@ export function PublicSite({ data, onCreate }) {
   };
 
   /* ── scrollable row ── */
-  const Row = ({ items, scrollable }) => {
+  const Row = ({ items, scrollable, needsCombo = false }) => {
     const ref = useRef(null);
     const shift = (d) => ref.current?.scrollBy({ left: d * 280, behavior: 'smooth' });
     if (!items.length) return null;
@@ -216,7 +222,7 @@ export function PublicSite({ data, onCreate }) {
         <div ref={ref} className="pm-row-scroll" style={{ display: 'flex', gap: 24, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
           {items.map(({ apt, available, fits, bd }) => (
             <div key={apt.id} className="pm-row-item" style={{ minWidth: 260, flex: '0 0 260px' }}>
-              <PCard apt={apt} available={available} fits={fits} bd={bd} />
+              <PCard apt={apt} available={available} fits={fits} bd={bd} needsCombo={needsCombo} />
             </div>
           ))}
         </div>
@@ -230,7 +236,7 @@ export function PublicSite({ data, onCreate }) {
     ) : (
       <div className="pm-results-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))', gap: '40px 28px' }}>
         {items.map(({ apt, available, fits, bd }) => (
-          <PCard key={apt.id} apt={apt} available={available} fits={fits} bd={bd} />
+          <PCard key={apt.id} apt={apt} available={available} fits={fits} bd={bd} needsCombo={needsCombo} />
         ))}
       </div>
     );
@@ -281,7 +287,7 @@ export function PublicSite({ data, onCreate }) {
           </div>
         )}
 
-        <Row items={list} scrollable={!valid && list.length > 4} />
+        <Row items={list} scrollable={!valid && list.length > 4} needsCombo={needsCombo} />
       </div>
     );
   };
