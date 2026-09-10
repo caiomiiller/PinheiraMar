@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Home, Settings, Waves } from 'lucide-react';
 import { C, F, applyTheme } from './lib/constants';
 import { loadData, saveData, STORE_KEY, seedData } from './lib/seed';
+import { supabase, supabaseConfigured, APP_STATE_TABLE, APP_STATE_ROW_ID } from './lib/supabaseClient';
 import { PublicSite } from './views/public/PublicSite';
 import { Admin } from './views/admin/Admin';
 import { LoginScreen } from './views/admin/Admin';
@@ -28,6 +29,22 @@ export default function App() {
       if (alive) setData(d);
     })();
     return () => { alive = false; };
+  }, []);
+
+  // Sincronização entre dispositivos: quando o Supabase está configurado
+  // (ver supabaseClient.js), este dispositivo escuta alterações gravadas
+  // por qualquer outro (outro computador, outro telemóvel) e atualiza-se
+  // sozinho, sem precisar de recarregar a página. Sem o Supabase
+  // configurado isto não faz nada — comportamento igual a antes.
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+    const channel = supabase
+      .channel('app_state_sync')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: APP_STATE_TABLE, filter: `id=eq.${APP_STATE_ROW_ID}` },
+        (payload) => { if (payload.new?.data) setData(payload.new.data); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   // o site público mostra sempre os dois residenciais lado a lado, por

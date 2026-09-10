@@ -1,5 +1,6 @@
 import { C } from './constants';
 import { uid, code, ymd, today, nights, stayBreakdown } from './helpers';
+import { supabase, supabaseConfigured, APP_STATE_TABLE, APP_STATE_ROW_ID } from './supabaseClient';
 
 /* ─────────────────────────────────────────────────────────────────────────
    Multi-imóvel: existe UM único store `data`, partilhado por todos os
@@ -307,19 +308,13 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
 // que quem já tinha a v7 guardada também receba estes dados.
 //
 // Guarda em localStorage do browser (persiste entre recarregamentos e
-// fechos de separador, no MESMO browser/dispositivo). `window.storage`
-// era usado antes como camada de armazenamento, mas essa API só existe
-// dentro do preview de artefactos da Claude — num site publicado a sério
-// (Vercel, etc.) `window.storage` não existe, por isso os dados nunca
-// eram guardados de facto: cada acesso ao site recomeçava do zero. Isto
-// corrige isso, usando localStorage como armazenamento real.
+// fechos de separador, no MESMO browser/dispositivo) — serve de cache
+// local instantânea e de rede de segurança quando o Supabase não estiver
+// configurado ou estiver indisponível no momento. `window.storage` era
+// usado antes como camada de armazenamento, mas essa API só existe dentro
+// do preview de artefactos da Claude — num site publicado a sério
+// (Vercel, etc.) `window.storage` não existe.
 //
-// Nota importante: por não haver servidor/backend, os dados continuam a
-// viver apenas no browser de quem os grava — o que o Admin altera neste
-// computador/browser não aparece automaticamente para um hóspede a
-// reservar noutro telemóvel, nem vice-versa. Para um motor de reservas
-// verdadeiramente partilhado entre visitantes seria necessário um
-// backend (ex.: uma base de dados), o que fica fora do âmbito actual.
 // v9: adiciona fotos reais dos apartamentos do Caminho do Mar (n01-n05;
 // n06 ainda sem fotos — aguarda envio) e actualiza os logótipos no
 // cabeçalho do site (ambos os residenciais); muda a versão para que
@@ -327,19 +322,65 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
 // v10: acrescenta o prefixo "Residencial" ao nome do Caminho do Mar
 // (fica "Residencial Caminho do Mar", tal como "Residencial PinheiraMar");
 // muda a versão para que quem já tinha a v9 guardada também receba o nome novo.
+//
+// v11: os dados passam a sincronizar entre dispositivos através do
+// Supabase (ver supabaseClient.js e supabase-setup.sql) — antes cada
+// browser/dispositivo tinha a sua própria cópia isolada em localStorage,
+// por isso o que o Admin alterava num computador não aparecia no
+// telemóvel, nem vice-versa. Sem as variáveis de ambiente do Supabase
+// configuradas, o site continua a funcionar exactamente como antes
+// (localStorage só neste dispositivo) — nada quebra.
 export const STORE_KEY = 'pinheiramar:data:v10';
 export let memFallback = null;
-export async function loadData() {
+
+function readLocalStorage() {
   try {
     const raw = window.localStorage?.getItem(STORE_KEY);
     if (raw) return JSON.parse(raw);
-  } catch (e) { /* localStorage indisponível ou chave inválida → seed */ }
+  } catch (e) { /* localStorage indisponível ou chave inválida */ }
+  return null;
+}
+
+export async function loadData() {
+  // Fonte de verdade partilhada, quando configurada — ver supabaseClient.js.
+  if (supabaseConfigured) {
+    try {
+      const { data: row, error } = await supabase
+        .from(APP_STATE_TABLE).select('data').eq('id', APP_STATE_ROW_ID).maybeSingle();
+      if (error) throw error;
+      if (row?.data) return row.data;
+      // Tabela criada mas ainda sem a linha 'main' — primeira utilização
+      // depois de ligar o Supabase. Semeia a partir do que já estiver
+      // neste navegador (dados reais, se os houver) ou do seed de
+      // demonstração, e já grava para os próximos dispositivos partirem
+      // do mesmo ponto.
+      const seeded = readLocalStorage() || seedData();
+      await saveData(seeded);
+      return seeded;
+    } catch (e) {
+      // Supabase configurado mas indisponível agora (rede em baixo, tabela
+      // ainda não criada via supabase-setup.sql, etc.) — não bloqueia o
+      // site, cai para a cópia local abaixo.
+      console.warn('Supabase indisponível — a usar cópia local deste dispositivo por agora.', e);
+    }
+  }
+  const local = readLocalStorage();
+  if (local) return local;
   // compatibilidade com o antigo `window.storage`, caso ainda exista neste contexto
   try { if (window.storage) { const r = await window.storage.get(STORE_KEY); if (r && r.value) return JSON.parse(r.value); } }
   catch (e) { /* ignore */ }
   return memFallback;
 }
+
 export async function saveData(d) {
   memFallback = d;
   try { window.localStorage?.setItem(STORE_KEY, JSON.stringify(d)); } catch (e) { /* ex.: modo privado sem quota — mantém apenas em memória */ }
+  if (supabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from(APP_STATE_TABLE)
+        .upsert({ id: APP_STATE_ROW_ID, data: d, updated_at: new Date().toISOString() });
+      if (error) console.warn('Não foi possível sincronizar com o Supabase — gravado só neste dispositivo por agora.', error);
+    } catch (e) { console.warn('Não foi possível sincronizar com o Supabase — gravado só neste dispositivo por agora.', e); }
+  }
 }
