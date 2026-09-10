@@ -57,6 +57,10 @@ export default function App() {
   const createReservation = (r) => update(prev => ({ ...prev, reservas: [...prev.reservas, r] }));
 
   const css = `
+    /* nunca deixar a página inteira deslocar-se na horizontal — qualquer
+       elemento largo (tabelas, grelhas) deve rolar dentro do seu próprio
+       contentor, nunca "puxar" o corpo da página consigo */
+    html, body{overflow-x:hidden;}
     .pmf:focus{border-color:${C.brisa}!important;box-shadow:0 0 0 3px rgba(46,126,140,.16)!important;}
     .pm-pop{animation:pmpop .18s ease;}
     @keyframes pmpop{from{opacity:0;transform:translateY(8px) scale(.99);}to{opacity:1;transform:none;}}
@@ -87,6 +91,15 @@ export default function App() {
       .pm-policy-grid{grid-template-columns:1fr!important;}
       .pm-policy-side{border-right:none!important;border-bottom:1px solid ${C.line}!important;padding:16px!important;}
       .pm-policy-main{padding:16px!important;}
+      .pm-res-listcards{display:block!important;}
+      .pm-taxa-row{gap:8px!important;}
+      .pm-taxa-name{flex-basis:100%!important;order:-1!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;}
+      .pm-taxa-price{min-width:auto!important;}
+      .pm-taxa-tipo{min-width:auto!important;}
+      .pm-taxa-por{min-width:auto!important;}
+      .pm-pay-row{flex-wrap:wrap!important;}
+      .pm-pay-icon{display:none!important;}
+      .pm-pay-actions{flex-basis:100%!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;margin-top:8px!important;}
       .pm-search-grid{grid-template-columns:1fr 1fr!important;}
       .pm-book-grid{grid-template-columns:1fr!important;}
       .pm-dash-grid{grid-template-columns:1fr!important;}

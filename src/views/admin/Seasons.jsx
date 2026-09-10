@@ -3,12 +3,13 @@ import { Plus, Pencil, Trash2, X, Check, Copy, Wallet } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { uid, money, today, parseYMD, fmtLong, ymd, addDays, roomFullName } from '../../lib/helpers';
 import { Card, PageHead, Btn, Modal, Field, TextInput, DateInput,
-  NumberInput, Badge, duplicateInList, DragGrip, PhotoTile, MoneyInput } from '../../components/ui';
+  NumberInput, Badge, duplicateInList, DragGrip, PhotoTile, MoneyInput, ConfirmDialog } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import { iconBtn, secTitle } from './Reservations';
 
 export function Seasons({ data, update }) {
   const [editing, setEditing] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
   const t = today();
   const save = (s) => {
     update(prev => { const ex = prev.seasons.some(x => x.id === s.id); return { ...prev, seasons: ex ? prev.seasons.map(x => x.id === s.id ? s : x) : [...prev.seasons, s] }; });
@@ -48,12 +49,22 @@ export function Seasons({ data, update }) {
               </div>
               <button onClick={() => duplicate(s.id)} title="Duplicar" style={iconBtn}><Copy size={16} /></button>
               <button onClick={() => setEditing(s)} title="Editar" style={iconBtn}><Pencil size={16} /></button>
-              <button onClick={() => remove(s.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={16} /></button>
+              <button onClick={() => setConfirmId(s.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={16} /></button>
             </Card>
           );
         })}
       </div>
       {editing && <SeasonForm initial={editing === 'new' ? null : editing} isNew={editing === 'new'} apartamentos={data.apartamentos} onSave={save} onClose={() => setEditing(null)} />}
+      {confirmId && (() => {
+        const s = data.seasons.find(x => x.id === confirmId);
+        return (
+          <ConfirmDialog
+            message={<>Tem a certeza que quer eliminar a temporada <b>{s?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
+            onConfirm={() => { remove(confirmId); setConfirmId(null); }}
+            onCancel={() => setConfirmId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, X, AlertCircle } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, uid } from '../../lib/helpers';
-import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, DragGrip, MoneyInput } from '../../components/ui';
+import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, DragGrip, MoneyInput, ConfirmDialog } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import { iconBtn } from './Reservations';
 
 export function TaxasView({ data, update }) {
   const taxas = data.taxasAdicionais || [];
   const [editing, setEditing] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
 
   const save = (tx) => {
     update(prev => {
@@ -37,20 +38,20 @@ export function TaxasView({ data, update }) {
           </div>
         )}
         {taxas.map((tx, idx) => (
-          <div key={tx.id} {...dnd.zone(idx)} style={{ display: 'flex', alignItems: 'center', gap: 14, rowGap: 8, flexWrap: 'wrap', padding: '16px 20px', borderBottom: idx < taxas.length - 1 ? `1px solid ${C.line}` : 'none', ...dnd.deco(idx) }}>
+          <div key={tx.id} {...dnd.zone(idx)} className="pm-taxa-row" style={{ display: 'flex', alignItems: 'center', gap: 14, rowGap: 8, flexWrap: 'wrap', padding: '16px 20px', borderBottom: idx < taxas.length - 1 ? `1px solid ${C.line}` : 'none', ...dnd.deco(idx) }}>
             <DragGrip {...dnd.grip(idx)} />
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="pm-taxa-name" style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: 15, color: C.ocean, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.nome}</div>
             </div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: C.ink, minWidth: 64, textAlign: 'right' }}>{money(tx.preco)}</div>
-            <div style={{ minWidth: 90, textAlign: 'center' }}>
+            <div className="pm-taxa-price" style={{ fontWeight: 700, fontSize: 14, color: C.ink, minWidth: 64, textAlign: 'right' }}>{money(tx.preco)}</div>
+            <div className="pm-taxa-tipo" style={{ minWidth: 90, textAlign: 'center' }}>
               <span style={{ fontSize: 13, color: tx.tipo === 'obrigatoria' ? '#1C7A5B' : C.inkSoft, background: tx.tipo === 'obrigatoria' ? '#D1FAE5' : C.espuma, borderRadius: 999, padding: '3px 10px', fontWeight: 600 }}>
                 {TIPO_LABEL[tx.tipo] || tx.tipo}
               </span>
             </div>
-            <div style={{ minWidth: 72, fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>{POR_LABEL[tx.por] || tx.por}</div>
+            <div className="pm-taxa-por" style={{ minWidth: 72, fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>{POR_LABEL[tx.por] || tx.por}</div>
             <button onClick={() => setEditing(tx)} style={iconBtn} title="Editar"><Pencil size={15} /></button>
-            <button onClick={() => remove(tx.id)} style={{ ...iconBtn, color: '#B23B3B' }} title="Eliminar"><Trash2 size={15} /></button>
+            <button onClick={() => setConfirmId(tx.id)} style={{ ...iconBtn, color: '#B23B3B' }} title="Eliminar"><Trash2 size={15} /></button>
           </div>
         ))}
       </div>
@@ -61,6 +62,16 @@ export function TaxasView({ data, update }) {
       </div>
 
       {editing && <TaxaForm initial={editing === 'new' ? null : editing} isNew={editing === 'new'} onSave={save} onClose={() => setEditing(null)} />}
+      {confirmId && (() => {
+        const tx = taxas.find(x => x.id === confirmId);
+        return (
+          <ConfirmDialog
+            message={<>Tem a certeza que quer eliminar a taxa <b>{tx?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
+            onConfirm={() => { remove(confirmId); setConfirmId(null); }}
+            onCancel={() => setConfirmId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

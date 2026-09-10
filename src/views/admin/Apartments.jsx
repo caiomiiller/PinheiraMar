@@ -3,12 +3,13 @@ import { Plus, Pencil, Trash2, Upload, X, Check, BedDouble, Copy, Star, GripVert
 import { C, F } from '../../lib/constants';
 import { uid, money } from '../../lib/helpers';
 import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput,
-  Select, Textarea, PhotoTile, DragGrip, MoneyInput, duplicateInList } from '../../components/ui';
+  Select, Textarea, PhotoTile, DragGrip, MoneyInput, duplicateInList, ConfirmDialog } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import { iconBtn } from './Reservations';
 
 export function Apartments({ data, update }) {
   const [editing, setEditing] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
   const save = (a) => {
     update(prev => {
       const exists = prev.apartamentos.some(x => x.id === a.id);
@@ -39,11 +40,21 @@ export function Apartments({ data, update }) {
             </div>
             <button onClick={() => duplicate(a.id)} title="Duplicar" style={iconBtn}><Copy size={16} /></button>
             <button onClick={() => setEditing(a)} title="Editar" style={iconBtn}><Pencil size={16} /></button>
-            <button onClick={() => remove(a.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={16} /></button>
+            <button onClick={() => setConfirmId(a.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={16} /></button>
           </Card>
         ))}
       </div>
       {editing && <ApartmentForm initial={editing === 'new' ? null : editing} isNew={editing === 'new'} residencial={residencial} onSave={save} onClose={() => setEditing(null)} />}
+      {confirmId && (() => {
+        const a = data.apartamentos.find(x => x.id === confirmId);
+        return (
+          <ConfirmDialog
+            message={<>Tem a certeza que quer eliminar <b>{a?.nome || 'este apartamento'}</b>? Esta ação não pode ser desfeita.</>}
+            onConfirm={() => { remove(confirmId); setConfirmId(null); }}
+            onCancel={() => setConfirmId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

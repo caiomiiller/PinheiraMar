@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { CreditCard, Check, X, ExternalLink, Star, Copy, Trash2, Database } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { uid } from '../../lib/helpers';
-import { Card, PageHead, Btn, DragGrip, duplicateInList } from '../../components/ui';
+import { Card, PageHead, Btn, DragGrip, duplicateInList, ConfirmDialog } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import { iconBtn } from './Reservations';
 
 export function PaymentsView({ data, update }) {
+  const [confirmId, setConfirmId] = useState(null);
   const toggle = (id) => update(prev => ({ ...prev, pagamentos: prev.pagamentos.map(p => p.id === id ? { ...p, conectado: !p.conectado } : p) }));
   const remove = (id) => update(prev => ({ ...prev, pagamentos: prev.pagamentos.filter(p => p.id !== id) }));
   const duplicate = (id) => update(prev => ({ ...prev, pagamentos: duplicateInList(prev.pagamentos, id, p => ({ ...p, id: 'pay' + uid(), nome: p.nome + ' (cópia)', conectado: false })) }));
@@ -34,11 +35,11 @@ export function PaymentsView({ data, update }) {
       <div style={{ display: 'grid', gap: 12 }}>
         {data.pagamentos.map((p, idx) => (
           <Card key={p.id} {...dnd.zone(idx)} style={{ padding: '16px 18px', ...dnd.deco(idx) }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div className="pm-pay-row" style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <DragGrip {...dnd.grip(idx)} style={{ marginTop: 4 }} />
 
               {/* colour badge */}
-              <div style={{ width: 44, height: 44, borderRadius: 11, background: p.cor, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <div className="pm-pay-icon" style={{ width: 44, height: 44, borderRadius: 11, background: p.cor, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                 <span style={{ color: '#fff', fontWeight: 800, fontSize: 13, letterSpacing: '-.02em' }}>{p.nome.slice(0, 2).toUpperCase()}</span>
               </div>
 
@@ -62,7 +63,7 @@ export function PaymentsView({ data, update }) {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end', flexShrink: 0 }}>
+              <div className="pm-pay-actions" style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end', flexShrink: 0 }}>
                 <Btn variant={p.conectado ? 'accent' : 'soft'} size="sm" icon={p.conectado ? Check : undefined} onClick={() => toggle(p.id)}>
                   {p.conectado ? 'Ativo' : 'Ativar'}
                 </Btn>
@@ -74,13 +75,24 @@ export function PaymentsView({ data, update }) {
                 )}
                 <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
                   <button onClick={() => duplicate(p.id)} title="Duplicar" style={iconBtn}><Copy size={14} /></button>
-                  <button onClick={() => remove(p.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={14} /></button>
+                  <button onClick={() => setConfirmId(p.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={14} /></button>
                 </div>
               </div>
             </div>
           </Card>
         ))}
       </div>
+
+      {confirmId && (() => {
+        const p = data.pagamentos.find(x => x.id === confirmId);
+        return (
+          <ConfirmDialog
+            message={<>Tem a certeza que quer eliminar <b>{p?.nome || 'este meio de pagamento'}</b>? Esta ação não pode ser desfeita.</>}
+            onConfirm={() => { remove(confirmId); setConfirmId(null); }}
+            onCancel={() => setConfirmId(null)}
+          />
+        );
+      })()}
 
       {/* integration guide */}
       <Card style={{ padding: 22, marginTop: 18 }}>

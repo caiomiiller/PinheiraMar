@@ -410,7 +410,7 @@ export function Reservations({ data, update }) {
             <button onClick={() => setManualOrder(false)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
             <button onClick={() => setManualOrder(true)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: manualOrder ? C.ocean : C.espuma, color: manualOrder ? '#fff' : C.inkSoft }}>Manual ⠿</button>
           </div>
-          <div style={{ overflowX: 'auto' }}>
+          <div className="pm-hide-sm" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 720 }}>
               <thead><tr style={{ background: C.espuma, textAlign: 'left', color: C.inkSoft }}>
                 {[manualOrder ? '⠿' : '', 'Código', 'Residencial', 'Apartamento', 'Hóspede', 'Estadia', 'Origem', 'Total', 'Estado', ''].map((h, i) => <th key={i} style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{h}</th>)}
@@ -438,6 +438,33 @@ export function Reservations({ data, update }) {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* versão mobile — cartões em vez de tabela larga, com a mesma
+              informação relevante que aparece em "Reservas no período" do
+              Financeiro (hóspede, datas, total, estado) em vez de obrigar
+              a rolar a tabela na horizontal para ver algo útil */}
+          <div className="pm-res-listcards" style={{ display: 'none' }}>
+            {listSorted.slice(0, listCap).map(r => (
+              <div key={r.id} style={{ padding: '13px 16px', borderTop: `1px solid ${C.line}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontFamily: F.disp, fontSize: 12.5, color: C.ocean }}>{r.codigo}</span>
+                  <Badge status={r.status} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 15.5, marginBottom: 3 }}>{r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || '—')}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 12.5, color: C.inkSoft, marginBottom: 6 }}>
+                  <ResPill residencial={aptResidencial(r.apartamentoId)} /> <span>{aptName(r.apartamentoId)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, flexWrap: 'wrap', rowGap: 4 }}>
+                  <span style={{ color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</span>
+                  <span style={{ fontWeight: 700 }}>{money(r.total)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                  <button onClick={() => duplicate(r.id)} title="Duplicar" style={iconBtn}><Copy size={15} /></button>
+                  <button onClick={() => setEditing(r)} title="Editar" style={iconBtn}><Pencil size={15} /></button>
+                </div>
+              </div>
+            ))}
           </div>
           <div style={{ padding: '11px 16px', fontSize: 12.5, color: C.inkSoft, borderTop: `1px solid ${C.line}` }}>
             {listSorted.length > listCap ? `A mostrar as ${listCap} reservas mais recentes de ${listSorted.length}. Use a exportação para ver todas.` : `${listSorted.length} reserva(s) no total.`}

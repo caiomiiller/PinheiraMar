@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Check, Pencil, Trash2, AlertCircle, Plus } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { Card, PageHead, Btn, Modal, Field, TextInput } from '../../components/ui';
+import { Card, PageHead, Btn, Modal, Field, TextInput, ConfirmDialog } from '../../components/ui';
 import { TRANSLATIONS } from '../../lib/translations';
 import { iconBtn } from './Reservations';
 
@@ -20,6 +20,7 @@ export function IdiomasView({ data, update }) {
   ];
   const [showAdd, setShowAdd] = useState(false);
   const [editando, setEditando] = useState(null); // { codigo, nativo, bandeira }
+  const [confirmCodigo, setConfirmCodigo] = useState(null);
 
   const saveIdiomas = (list) => update(prev => ({ ...prev, settings: { ...prev.settings, idiomas: list } }));
 
@@ -79,7 +80,7 @@ export function IdiomasView({ data, update }) {
             </div>
 
             <button onClick={() => setEditando(lang)} style={iconBtn} title="Editar"><Pencil size={15} /></button>
-            <button onClick={() => remove(lang.codigo)} style={{ ...iconBtn, color: '#B23B3B' }} title="Remover"><Trash2 size={15} /></button>
+            <button onClick={() => setConfirmCodigo(lang.codigo)} style={{ ...iconBtn, color: '#B23B3B' }} title="Remover"><Trash2 size={15} /></button>
           </Card>
         ))}
 
@@ -135,6 +136,19 @@ export function IdiomasView({ data, update }) {
           </div>
         </Modal>
       )}
+
+      {confirmCodigo && (() => {
+        const lang = idiomas.find(i => i.codigo === confirmCodigo);
+        return (
+          <ConfirmDialog
+            title="Remover idioma"
+            message={<>Tem a certeza que quer remover <b>{lang?.nativo || 'este idioma'}</b> do site? Os hóspedes deixarão de poder escolhê-lo.</>}
+            confirmLabel="Remover"
+            onConfirm={() => { remove(confirmCodigo); setConfirmCodigo(null); }}
+            onCancel={() => setConfirmCodigo(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -126,6 +126,21 @@ export const PageHead = ({ title, sub, action }) => (
 );
 export const Card = ({ children, style, ...rest }) => <div {...rest} style={{ background: '#fff', borderRadius: 16, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
 
+// Diálogo de confirmação genérico — usado antes de qualquer eliminação
+// permanente (apartamento, taxa, idioma, meio de pagamento, temporada...),
+// para evitar que um toque acidental na lixeira apague algo sem querer.
+export function ConfirmDialog({ title = 'Confirmar exclusão', message, confirmLabel = 'Eliminar', onConfirm, onCancel }) {
+  return (
+    <Modal title={title} onClose={onCancel}
+      footer={<>
+        <Btn variant="ghost" onClick={onCancel}>Cancelar</Btn>
+        <Btn variant="danger" icon={undefined} onClick={onConfirm} style={{ background: '#B23B3B', color: '#fff', border: '1px solid #B23B3B' }}>{confirmLabel}</Btn>
+      </>}>
+      <p style={{ fontSize: 14, color: C.ink, lineHeight: 1.55, margin: 0 }}>{message}</p>
+    </Modal>
+  );
+}
+
 // Reordenação por arrastar-e-soltar para qualquer lista de gestão.
 export const Row = ({ k, v, strong, accent }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
