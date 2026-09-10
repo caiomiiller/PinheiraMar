@@ -58,9 +58,16 @@ export function Admin({ data, update, initialResidencialId }) {
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: F.sans, color: C.ink, background: C.espuma }}>
       {/* sidebar (md+) */}
       <aside className="pm-sidebar" style={{ width: sidebarCollapsed ? 68 : 240, transition: 'width .16s ease', background: C.ocean, color: 'rgba(255,255,255,.78)', flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 18px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 10px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: '#fff', flexShrink: 0 }}><Waves size={19} /></div>
           {!sidebarCollapsed && <div><div style={{ fontFamily: F.disp, fontSize: 17, color: '#fff', lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: sidebarCollapsed ? 'center' : 'flex-end', padding: '0 8px 18px' }}>
+          <button onClick={() => setSidebarCollapsed(c => !c)} title={sidebarCollapsed ? 'Expandir menu' : 'Minimizar menu'}
+            style={{ width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.12)', border: 'none', color: 'rgba(255,255,255,.85)', cursor: 'pointer', flexShrink: 0 }}>
+            {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
         </div>
 
         {/* seletor de imóvel */}
@@ -99,10 +106,6 @@ export function Admin({ data, update, initialResidencialId }) {
             );
           })}
         </div>
-        <button onClick={() => setSidebarCollapsed(c => !c)} title={sidebarCollapsed ? 'Expandir menu' : 'Minimizar menu'}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 9, width: '100%', padding: sidebarCollapsed ? '10px 0' : '10px 14px', marginTop: 8, background: 'rgba(255,255,255,.08)', border: 'none', borderRadius: 10, color: 'rgba(255,255,255,.78)', cursor: 'pointer', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
-          {sidebarCollapsed ? <ChevronRight size={17} /> : <><ChevronLeft size={17} /> Minimizar menu</>}
-        </button>
       </aside>
 
       <div style={{ flex: 1, minWidth: 0 }}>

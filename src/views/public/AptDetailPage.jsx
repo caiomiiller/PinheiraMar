@@ -6,6 +6,7 @@ import { C, F, WHATSAPP_URL } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, addDays, fmtShort, fmtLong, WD,
   isAvailable, stayBreakdown, nightlyRate, seasonForDate } from '../../lib/helpers';
 import { Btn, Badge, PhotoTile, Field } from '../../components/ui';
+import { AvailabilityCalendar } from '../../components/AvailabilityCalendar';
 
 export const HIGHLIGHTS = [
   { match: /wi.fi|internet/i,       icon: '📶', label: 'Wi-Fi grátis' },
@@ -27,6 +28,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const [localCo, setLocalCo] = useState(co || '');
   const [localHosp, setLocalHosp] = useState(Math.min(hosp || 1, apt.capacidade));
   const [guestOpen, setGuestOpen] = useState(false);
+  const [calOpen, setCalOpen] = useState(false);
   // reserva conjunta
   const [useApt2, setUseApt2] = useState(false);
   const [apt2Id, setApt2Id] = useState('');
@@ -315,19 +317,17 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                 </div>
               </div>
 
-              {/* date inputs */}
+              {/* seletor de datas — abre o calendário de disponibilidade */}
               <div style={{ border: '1px solid #b0b0b0', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-                  <div style={{ padding: '10px 14px', borderRight: '1px solid #b0b0b0' }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', marginBottom: 3 }}>Check-in</div>
-                    <input type="date" value={localCi} min={ymd(td)} onChange={e => { setLocalCi(e.target.value); if (localCo && nights(e.target.value, localCo) < 1) setLocalCo(''); }}
-                      style={{ border: 'none', outline: 'none', fontSize: 14, width: '100%', fontFamily: F.sans }} />
-                  </div>
-                  <div style={{ padding: '10px 14px' }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', marginBottom: 3 }}>Check-out</div>
-                    <input type="date" value={localCo} min={localCi ? ymd(addDays(parseYMD(localCi), 1)) : ymd(addDays(td, 1))} onChange={e => setLocalCo(e.target.value)}
-                      style={{ border: 'none', outline: 'none', fontSize: 14, width: '100%', fontFamily: F.sans }} />
-                  </div>
+                  <button onClick={() => setCalOpen(o => !o)} style={{ padding: '10px 14px', border: 'none', borderRight: '1px solid #b0b0b0', background: calOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: F.sans }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', marginBottom: 3, color: '#222' }}>Check-in</div>
+                    <div style={{ fontSize: 14, color: localCi ? '#222' : '#717171' }}>{localCi ? fmtShort(localCi) : 'Adicionar data'}</div>
+                  </button>
+                  <button onClick={() => setCalOpen(o => !o)} style={{ padding: '10px 14px', border: 'none', background: calOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: F.sans }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', marginBottom: 3, color: '#222' }}>Check-out</div>
+                    <div style={{ fontSize: 14, color: localCo ? '#222' : '#717171' }}>{localCo ? fmtShort(localCo) : 'Adicionar data'}</div>
+                  </button>
                 </div>
                 <div style={{ padding: '10px 14px', borderTop: '1px solid #b0b0b0' }}>
                   <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Hóspedes <span style={{ fontWeight: 400, color: '#717171', fontSize: 11 }}>(máx. {apt.capacidade})</span></div>
@@ -338,6 +338,16 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                   </div>
                 </div>
               </div>
+
+              {calOpen && (
+                <div style={{ marginBottom: 10 }}>
+                  <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo}
+                    onChange={(newCi, newCo) => {
+                      setLocalCi(newCi); setLocalCo(newCo);
+                      if (newCi && newCo) setCalOpen(false);
+                    }} />
+                </div>
+              )}
 
               {/* aviso: a pesquisa exige mais hóspedes do que este apartamento acomoda sozinho */}
               {precisaSegundoApto && (

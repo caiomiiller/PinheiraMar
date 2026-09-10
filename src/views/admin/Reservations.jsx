@@ -378,14 +378,14 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                 }).filter(x => x.right - x.left > 4);
                 return (
                   <div key={apt.id} style={{ display: 'flex', borderBottom: `1px solid ${C.line}` }}>
-                    <div style={{ width: NAMEW, flexShrink: 0, padding: '10px 14px', borderRight: `1px solid ${C.line}`, background: '#fff' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 600, fontSize: 13.5 }}>{apt.nome}</span>
+                    <div style={{ width: NAMEW, flexShrink: 0, padding: '0 14px', borderRight: `1px solid ${C.line}`, background: '#fff', display: 'flex', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflow: 'hidden' }}>
+                        <span style={{ fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap' }}>{apt.nome}</span>
                         <ResBadge residencial={residencialOf(data, apt)} />
+                        <span style={{ fontSize: 11.5, color: C.inkSoft, whiteSpace: 'nowrap' }}>{apt.capacidade}p</span>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.inkSoft }}>{apt.vista} · {apt.capacidade}p</div>
                     </div>
-                    <div style={{ position: 'relative', width: DAYS * COLW, flexShrink: 0, height: 50 }}>
+                    <div style={{ position: 'relative', width: DAYS * COLW, flexShrink: 0, height: 40 }}>
                       {/* day cells */}
                       <div style={{ display: 'flex', height: '100%' }}>
                         {days.map((d, i) => {
