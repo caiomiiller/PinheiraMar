@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Building2, Tag, CreditCard,
-  Users, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown } from 'lucide-react';
+  Users, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { C, F, applyTheme } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 import { Btn } from '../../components/ui';
@@ -33,6 +33,10 @@ export function Admin({ data, update, initialResidencialId }) {
   const [residencialId, setResidencialId] = useState(initialResidencialId || data.residenciais[0].id);
   const residencial = data.residenciais.find(r => r.id === residencialId) || data.residenciais[0];
   const [picker, setPicker] = useState(false);
+  // recolhe a barra lateral (só no desktop — no mobile ela já fica sempre
+  // oculta) para dar mais largura ao painel de reservas mostrar mais dias
+  // do mês sem rolagem horizontal
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // reserva pendente de abertura, vinda de um clique no Painel de controle
   // (ver Dashboard.jsx "Próximos check-ins/check-outs")
   const [pendingReservationId, setPendingReservationId] = useState(null);
@@ -53,14 +57,14 @@ export function Admin({ data, update, initialResidencialId }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: F.sans, color: C.ink, background: C.espuma }}>
       {/* sidebar (md+) */}
-      <aside className="pm-sidebar" style={{ width: 240, background: C.ocean, color: 'rgba(255,255,255,.78)', flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 18px' }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: '#fff' }}><Waves size={19} /></div>
-          <div><div style={{ fontFamily: F.disp, fontSize: 17, color: '#fff', lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>
+      <aside className="pm-sidebar" style={{ width: sidebarCollapsed ? 68 : 240, transition: 'width .16s ease', background: C.ocean, color: 'rgba(255,255,255,.78)', flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 18px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: '#fff', flexShrink: 0 }}><Waves size={19} /></div>
+          {!sidebarCollapsed && <div><div style={{ fontFamily: F.disp, fontSize: 17, color: '#fff', lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>}
         </div>
 
         {/* seletor de imóvel */}
-        {data.residenciais.length > 1 && (
+        {!sidebarCollapsed && data.residenciais.length > 1 && (
           <div style={{ position: 'relative', margin: '0 8px 18px' }}>
             <button onClick={() => setPicker(p => !p)} style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
@@ -83,16 +87,22 @@ export function Admin({ data, update, initialResidencialId }) {
           </div>
         )}
 
-        {TABS.map(t => {
-          const on = tab === t.id;
-          return (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '11px 14px', marginBottom: 3,
-              background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? '#fff' : 'rgba(255,255,255,.78)',
-              border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: on ? 600 : 500, textAlign: 'left',
-            }}><t.icon size={18} /> {t.label}</button>
-          );
-        })}
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          {TABS.map(t => {
+            const on = tab === t.id;
+            return (
+              <button key={t.id} onClick={() => setTab(t.id)} title={sidebarCollapsed ? t.label : undefined} style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 11, padding: sidebarCollapsed ? '11px 0' : '11px 14px', marginBottom: 3,
+                background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? '#fff' : 'rgba(255,255,255,.78)',
+                border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: on ? 600 : 500, textAlign: 'left',
+              }}><t.icon size={18} /> {!sidebarCollapsed && t.label}</button>
+            );
+          })}
+        </div>
+        <button onClick={() => setSidebarCollapsed(c => !c)} title={sidebarCollapsed ? 'Expandir menu' : 'Minimizar menu'}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 9, width: '100%', padding: sidebarCollapsed ? '10px 0' : '10px 14px', marginTop: 8, background: 'rgba(255,255,255,.08)', border: 'none', borderRadius: 10, color: 'rgba(255,255,255,.78)', cursor: 'pointer', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+          {sidebarCollapsed ? <ChevronRight size={17} /> : <><ChevronLeft size={17} /> Minimizar menu</>}
+        </button>
       </aside>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -125,7 +135,9 @@ export function Admin({ data, update, initialResidencialId }) {
             <button key={t.id} onClick={() => setTab(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 9, border: 'none', whiteSpace: 'nowrap', background: tab === t.id ? 'rgba(255,255,255,.16)' : 'transparent', color: '#fff', fontSize: 13, fontWeight: 600 }}><t.icon size={15} /> {t.label}</button>
           ))}
         </div>
-        <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: 1180, margin: '0 auto' }}>
+        {/* Reservas ganha a largura toda disponível (sem o limite de 1180px das
+            outras abas) para aproveitar o espaço liberado ao minimizar o menu */}
+        <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: tab === 'reservas' ? 'none' : 1180, margin: '0 auto' }}>
           {tab === 'painel' && <Dashboard data={scoped} go={setTab} openReservation={openReservation} />}
           {/* Reservas é partilhado pelos dois residenciais (não usa o "recorte" do
               imóvel seleccionado) — o gestor regista/confirma reservas de qualquer
