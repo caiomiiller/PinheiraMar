@@ -285,7 +285,7 @@ export function PublicSite({ data, onCreate }) {
             <div style={{ fontSize: 14, color: BLACK, lineHeight: 1.65 }}>
               <b>Para {hosp} hóspedes em {r.nome} é necessário combinar apartamentos.</b>
               {combo.enough
-                ? <> Sugestão: <b>{combo.pick.map(a => `${a.nome} (${a.capacidade} pax)`).join(' + ')}</b> — capacidade total de {combo.cap} pessoas.</>
+                ? <> Sugestão: <b>{combo.pick.map(a => `${a.nome} (${a.capacidade} pessoas)`).join(' + ')}</b> — capacidade total de {combo.cap} pessoas.</>
                 : <> Não há unidades disponíveis suficientes neste imóvel para estas datas.</>}
               {combo.enough && (
                 <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
