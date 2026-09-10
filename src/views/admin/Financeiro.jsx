@@ -76,7 +76,7 @@ export function Financeiro({ data, go }) {
     <div>
       <PageHead title="Financeiro" sub="Receitas, estatísticas e desempenho por apartamento."
         action={
-          <div style={{ display: 'flex', background: C.espuma, borderRadius: 10, padding: 3 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', background: C.espuma, borderRadius: 10, padding: 3 }}>
             {PERIODOS.map(p => (
               <button key={p.id} onClick={() => setPeriodo(p.id)} style={{ padding: '7px 12px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: periodo === p.id ? '#fff' : 'transparent', color: periodo === p.id ? C.ocean : C.inkSoft, boxShadow: periodo === p.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none', whiteSpace: 'nowrap' }}>
                 {p.label}

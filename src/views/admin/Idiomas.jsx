@@ -62,9 +62,9 @@ export function IdiomasView({ data, update }) {
 
         {/* outros idiomas */}
         {outros.map(lang => (
-          <Card key={lang.codigo} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Card key={lang.codigo} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 26, flexShrink: 0 }}>{lang.bandeira}</span>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 120 }}>
               <span style={{ fontWeight: 600, fontSize: 16 }}>{lang.nativo}</span>
               <span style={{ marginLeft: 8, fontSize: 13, color: C.inkSoft }}>({lang.nome})</span>
               {!TRANSLATIONS[lang.codigo] && (

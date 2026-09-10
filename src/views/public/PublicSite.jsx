@@ -416,8 +416,9 @@ export function PublicSite({ data, onCreate }) {
         </div>
       </div>
 
-      {/* ══ HERO ══ */}
-      <section style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
+      {/* ══ HERO — escondido no telemóvel (ver App.jsx), onde ocupava a tela
+             toda antes do hóspede ver a busca/resultados; fica só no desktop ══ */}
+      <section className="pm-pubsite-hero" style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
         <img
           src={r0.heroImage}
           alt=""

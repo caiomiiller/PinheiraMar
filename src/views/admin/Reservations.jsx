@@ -44,15 +44,18 @@ function ResPill({ residencial }) {
 
 export function Reservations({ data, update }) {
   const [view, setView] = useState('calendario');
-  const [start, setStart] = useState(today());
+  const [start, setStart] = useState(() => { const t = today(); return new Date(t.getFullYear(), t.getMonth(), 1); });
   const [showPrices, setShowPrices] = useState(false);
   const [editing, setEditing] = useState(null);
   const [prefill, setPrefill] = useState(null);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef(null);
 
-  const DAYS = 21, COLW = 46, NAMEW = 188;
-  const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => addDays(start, i)), [start]);
+  const COLW = 46, NAMEW = 188;
+  // mostra sempre o mês inteiro (28-31 dias, conforme o mês de `start`, que é
+  // sempre o dia 1 do mês exibido) em vez de uma janela fixa de dias
+  const DAYS = useMemo(() => new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(), [start]);
+  const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => addDays(start, i)), [start, DAYS]);
   const aptName = (id) => data.apartamentos.find(a => a.id === id)?.nome || '—';
   const aptResidencial = (id) => residencialOf(data, data.apartamentos.find(a => a.id === id));
   const cap1 = (str) => str.charAt(0).toUpperCase() + str.slice(1);
@@ -93,7 +96,6 @@ export function Reservations({ data, update }) {
     });
     setEditing(null); setPrefill(null);
   };
-  const remove = (id) => { update(prev => ({ ...prev, reservas: prev.reservas.filter(x => x.id !== id) })); setEditing(null); };
   const duplicate = (id) => update(prev => ({ ...prev, reservas: duplicateInList(prev.reservas, id, r => ({ ...r, id: uid(), codigo: code(), status: 'pendente', extras: (r.extras || []).map(e => ({ ...e, id: uid() })) })) }));
 
   // ── Base de dados: exportar / importar ──
@@ -254,7 +256,7 @@ export function Reservations({ data, update }) {
                         })}
                       </div>
                       <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 12, paddingTop: 10, display: 'flex', gap: 6 }}>
-                        <button onClick={() => { setStart(today()); setMonthPickerOpen(false); }}
+                        <button onClick={() => { const t = today(); setStart(new Date(t.getFullYear(), t.getMonth(), 1)); setMonthPickerOpen(false); }}
                           style={{ flex: 1, padding: '8px 0', borderRadius: 9, border: `1px solid ${C.line}`, background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                           Hoje
                         </button>
@@ -274,32 +276,23 @@ export function Reservations({ data, update }) {
             )}
           </div>
 
-          {/* ── navegação ── */}
+          {/* ── navegação — o calendário mostra sempre o mês inteiro, por isso só há
+                 avanço/recuo de mês (a navegação por semana foi removida) ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
             {/* mês anterior */}
             <button onClick={() => shiftMonth(-1)} title="Mês anterior"
-              style={{ height: 32, padding: '0 8px', border: `1px solid ${C.line}`, borderRadius: '8px 0 0 8px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
-              <ChevronLeft size={14} /><ChevronLeft size={14} style={{ marginLeft: -6 }} />
-            </button>
-            {/* semana anterior */}
-            <button onClick={() => setStart(addDays(start, -7))} title="Semana anterior"
-              style={{ height: 32, padding: '0 8px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
+              style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: '8px 0 0 8px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
               <ChevronLeft size={14} />
             </button>
             {/* hoje */}
-            <button onClick={() => setStart(today())} title="Ir para hoje"
+            <button onClick={() => { const t = today(); setStart(new Date(t.getFullYear(), t.getMonth(), 1)); }} title="Ir para o mês atual"
               style={{ height: 32, padding: '0 12px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
               Hoje
             </button>
-            {/* próxima semana */}
-            <button onClick={() => setStart(addDays(start, 7))} title="Próxima semana"
-              style={{ height: 32, padding: '0 8px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
-              <ChevronRight size={14} />
-            </button>
             {/* próximo mês */}
             <button onClick={() => shiftMonth(1)} title="Próximo mês"
-              style={{ height: 32, padding: '0 8px', border: `1px solid ${C.line}`, borderLeft: 'none', borderRadius: '0 8px 8px 0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
-              <ChevronRight size={14} /><ChevronRight size={14} style={{ marginLeft: -6 }} />
+              style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderLeft: 'none', borderRadius: '0 8px 8px 0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
+              <ChevronRight size={14} />
             </button>
           </div>
 
@@ -451,7 +444,7 @@ export function Reservations({ data, update }) {
       )}
 
       {editing && <ReservationForm data={data} initial={editing === 'new' ? prefill : editing} isNew={editing === 'new'}
-        onSave={save} onRemove={remove} onClose={() => { setEditing(null); setPrefill(null); }} />}
+        onSave={save} onClose={() => { setEditing(null); setPrefill(null); }} />}
     </div>
   );
 }
@@ -478,7 +471,7 @@ export const MoneyInput = ({ value, onChange, style }) => (
   </div>
 );
 
-export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClose }) {
+export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
   const i = initial || {};
   const firstApt = data.apartamentos[0];
   const [aptId, setAptId] = useState(i.apartamentoId || firstApt.id);
@@ -555,7 +548,6 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
   return (
     <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${residencial.nome} · ${apt.nome} · ${apt.piso} · ${apt.vista}`} onClose={onClose} wide
       footer={<>
-        {!isNew && <Btn variant="danger" icon={Trash2} onClick={() => onRemove(i.id)} style={{ marginRight: 'auto' }}>Eliminar</Btn>}
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
         <Btn variant="primary" disabled={!canSave} style={{ opacity: canSave ? 1 : .5 }}
           onClick={() => {
@@ -583,8 +575,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
         {/* Status */}
         <div>
           <div style={secTitle}><Tag size={16} color={C.brisa} /> Status da reserva</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Estado">
+          <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="Estado" hint={!isNew ? 'Para eliminar uma reserva, marque o estado como Cancelada — ela some do calendário e deixa de bloquear as datas.' : undefined}>
               <Select value={status} onChange={e => setStatus(e.target.value)}>
                 <option value="confirmada">Reservado / Confirmada</option><option value="pendente">Pendente</option>
                 <option value="bloqueio">Bloqueio</option><option value="cancelada">Cancelada</option>
@@ -597,7 +589,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
         {/* Detalhes da reserva */}
         <div>
           <div style={secTitle}><CalendarDays size={16} color={C.brisa} /> Detalhes da reserva</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="Check-in" required><DateInput value={ci} onChange={e => { setCi(e.target.value); if (nights(e.target.value, co) < 1) setCo(ymd(addDays(parseYMD(e.target.value), 1))); }} /></Field>
             <Field label="Check-out" required><DateInput value={co} min={ymd(addDays(parseYMD(ci), 1))} onChange={e => setCo(e.target.value)} /></Field>
           </div>
@@ -605,7 +597,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
             <Clock size={14} color={C.brisa} /> Check-in a partir das <b style={{ color: C.ink }}>{residencial.checkInHora}</b> · check-out até às <b style={{ color: C.ink }}>{residencial.checkOutHora}</b> ({residencial.nome}). Pode terminar e iniciar reservas no mesmo dia.
           </div>
           {status !== 'bloqueio' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
               <Field label="Adultos"><Stepper value={adultos} set={setAdultos} min={1} max={apt.capacidade} /></Field>
               <Field label="Crianças"><Stepper value={criancas} set={setCriancas} min={0} max={Math.max(0, apt.capacidade - 1)} /></Field>
             </div>
@@ -631,11 +623,11 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onClos
         {status !== 'bloqueio' && <div>
           <div style={secTitle}><Users size={16} color={C.brisa} /> Detalhes do hóspede</div>
           <div style={{ display: 'grid', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Nome" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Primeiro nome" /></Field>
               <Field label="Sobrenome" required><TextInput value={sobrenome} onChange={e => setSobrenome(e.target.value)} placeholder="Apelido" /></Field>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Telefone"><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
               <Field label="País"><Select value={pais} onChange={e => setPais(e.target.value)}>{[...new Set([pais, ...PAISES])].map(p => <option key={p}>{p}</option>)}</Select></Field>
             </div>

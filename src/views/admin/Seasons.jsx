@@ -96,7 +96,7 @@ export function SeasonForm({ initial, isNew, apartamentos, onSave, onClose }) {
           })}>{isNew ? 'Salvar' : 'Guardar alterações'}</Btn></>}>
       <div style={{ display: 'grid', gap: 16 }}>
         <Field label="Nomeie sua temporada" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Alta 2027-2028" /></Field>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <Field label="Início da temporada" required><DateInput value={inicio} onChange={e => setInicio(e.target.value)} /></Field>
           <Field label="Fim da temporada" required><DateInput value={fim} min={inicio} onChange={e => setFim(e.target.value)} /></Field>
           <Field label="Mín. de noites"><NumberInput min={1} value={minN} onChange={e => setMinN(e.target.value)} /></Field>

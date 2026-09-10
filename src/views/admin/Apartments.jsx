@@ -107,7 +107,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
 
   /* ── Section wrapper ── */
   const Sec = ({ label, children }) => (
-    <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+    <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
       <div style={{ paddingTop: 2 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{label}</div>
       </div>
@@ -168,10 +168,10 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
       <div style={{ padding: '0 2px' }}>
 
         {/* ── 1. Visão geral ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Visão geral</div></div>
           <div style={{ display: 'grid', gap: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 12 }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 12 }}>
               <Field label="Título do apartamento" required>
                 <TextInput value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex.: Apto 102 - Térreo Frente Mar, 4 pessoas" />
               </Field>
@@ -179,7 +179,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
                 <NumberInput value={1} readOnly style={{ background: C.espuma }} />
               </Field>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, alignItems: 'end' }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, alignItems: 'end' }}>
               <SpinField label="Hóspedes" hint value={hospedes} onChange={setHospedes} min={1} />
               <SpinField label="Crianças" hint value={criancas} onChange={setCriancas} min={0} />
               <Field label="Tamanho" hint="m²">
@@ -195,7 +195,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
                 </label>
               </Field>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Piso">
                 <Select value={piso} onChange={e => setPiso(e.target.value)}>
                   {['Térreo', '1º Piso', '2º Piso', '3º Piso'].map(o => <option key={o}>{o}</option>)}
@@ -211,7 +211,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
         </div>
 
         {/* ── 2. Camas ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Camas</div></div>
           <div style={{ display: 'grid', gap: 10 }}>
             {camas.map(c => (
@@ -241,10 +241,10 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
         </div>
 
         {/* ── 3. Amenidades ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Amenidades</div></div>
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px 12px' }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px 12px' }}>
               {amenList.map(a => (
                 <label key={a} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 13.5 }}>
                   <input type="checkbox" checked={amenidades.has(a)} onChange={() => toggleAmen(a)}
@@ -261,7 +261,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
         </div>
 
         {/* ── 4. Fotos ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Fotos</div></div>
           <div>
             {fotos.length > 0 && (
@@ -307,7 +307,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
         </div>
 
         {/* ── 5. Descrição ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Descrição</div>
             <div style={{ fontSize: 12, color: C.brisa, marginTop: 8, cursor: 'pointer', fontWeight: 600 }}>Encontre Ideias</div>
@@ -321,7 +321,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
         </div>
 
         {/* ── 6. Endereço ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Endereço</div></div>
           <div style={{ display: 'grid', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
@@ -333,7 +333,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
             <Field label="Cidade, Estado, País" hint="ⓘ">
               <TextInput value={cidade} onChange={e => setCidade(e.target.value)} />
             </Field>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: 12 }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: 12 }}>
               <Field label="Endereço"><TextInput value={endereco} onChange={e => setEndereco(e.target.value)} /></Field>
               <Field label="Código postal (CEP)"><TextInput value={cep} onChange={e => setCep(e.target.value)} /></Field>
             </div>
@@ -348,13 +348,13 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
         </div>
 
         {/* ── 7. Preço ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0 8px' }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0 8px' }}>
           <div style={{ paddingTop: 2 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Preço</div>
             <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 3 }}>(antes de impostos)</div>
           </div>
           <div style={{ display: 'grid', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 1fr', gap: 12, alignItems: 'end' }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '180px 1fr 1fr', gap: 12, alignItems: 'end' }}>
               <Field label="Tipo de cobrança">
                 <Select value="Por noite" readOnly style={{ background: C.espuma }}>
                   <option>Por noite</option>

@@ -37,7 +37,7 @@ export function TaxasView({ data, update }) {
           </div>
         )}
         {taxas.map((tx, idx) => (
-          <div key={tx.id} {...dnd.zone(idx)} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: idx < taxas.length - 1 ? `1px solid ${C.line}` : 'none', ...dnd.deco(idx) }}>
+          <div key={tx.id} {...dnd.zone(idx)} style={{ display: 'flex', alignItems: 'center', gap: 14, rowGap: 8, flexWrap: 'wrap', padding: '16px 20px', borderBottom: idx < taxas.length - 1 ? `1px solid ${C.line}` : 'none', ...dnd.deco(idx) }}>
             <DragGrip {...dnd.grip(idx)} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: 15, color: C.ocean, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.nome}</div>
@@ -88,7 +88,7 @@ export function TaxaForm({ initial, isNew, onSave, onClose }) {
         <Field label="Nomeie sua taxa" required hint="ⓘ">
           <TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Higienização e Serviços de Hospedagem" />
         </Field>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
           <Field label="Adicione a taxa por" hint="ⓘ">
             <Select value={por} onChange={e => setPor(e.target.value)}>
               <option value="reserva">Reserva</option>

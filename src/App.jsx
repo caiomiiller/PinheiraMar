@@ -67,7 +67,7 @@ export default function App() {
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
       .pm-pubsite-lang{display:none!important;}
-      .pm-pubsite-hero-inner{padding:0 16px 36px!important;}
+      .pm-pubsite-hero{display:none!important;}
       .pm-pubsite-catstrip{padding:12px 16px!important;gap:8px!important;}
       .pm-cat-btn{flex-direction:row!important;gap:7px!important;padding:10px 16px!important;font-size:14px!important;border:1px solid #E2E0DB!important;border-radius:999px!important;background:#FFF!important;}
       .pm-cat-btn[data-active="true"]{background:#0D0D0D!important;border-color:#0D0D0D!important;color:#FFF!important;}

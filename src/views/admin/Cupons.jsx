@@ -35,6 +35,11 @@ export function CuponsView({ data, update }) {
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Adicionar</Btn>} />
 
       <div style={{ background: '#fff', borderRadius: 16, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+       {/* no telemóvel a tabela de cupões não cabe em 6 colunas — em vez de
+           espremer o texto, deixa rolar na horizontal (mesmo padrão da lista
+           de reservas) */}
+       <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: 640 }}>
         {/* header row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.2fr 0.6fr 80px 72px', gap: 12, padding: '10px 20px', background: C.espuma, borderBottom: `1px solid ${C.line}`, fontSize: 12, fontWeight: 700, color: C.inkSoft }}>
           <span>NOME / CÓDIGO</span><span>DESCONTO</span><span>VALIDADE</span><span>USOS</span><span>ESTADO</span><span></span>
@@ -70,6 +75,8 @@ export function CuponsView({ data, update }) {
             </div>
           );
         })}
+        </div>
+       </div>
       </div>
 
       {/* apply cupon note */}
@@ -115,7 +122,7 @@ export function CuponForm({ initial, isNew, onSave, onClose }) {
         </Btn>
       </>}>
       <div style={{ display: 'grid', gap: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <Field label="Nome do cupão" required hint="Para identificação interna">
             <TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Desconto Fidelidade" />
           </Field>
@@ -126,7 +133,7 @@ export function CuponForm({ initial, isNew, onSave, onClose }) {
             </div>
           </Field>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
           <Field label="Tipo de desconto">
             <Select value={tipo} onChange={e => setTipo(e.target.value)}>
               <option value="percentagem">Percentagem (%)</option>
@@ -142,7 +149,7 @@ export function CuponForm({ initial, isNew, onSave, onClose }) {
             <NumberInput min={0} value={maxUsos} onChange={e => setMaxUsos(e.target.value)} />
           </Field>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <Field label="Válido de" required><DateInput value={inicio} onChange={e => setInicio(e.target.value)} /></Field>
           <Field label="Válido até" required><DateInput value={fim} min={inicio} onChange={e => setFim(e.target.value)} /></Field>
         </div>
