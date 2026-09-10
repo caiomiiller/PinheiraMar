@@ -109,7 +109,9 @@ export default function App() {
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}
 
       /* ── site público (booking-style) — telemóvel ── */
-      .pm-pubsite-header-row{padding:0 16px!important;gap:12px!important;}
+      .pm-pubsite-header-row{padding:10px 16px!important;gap:12px!important;height:auto!important;justify-content:center!important;}
+      .pm-pubsite-brand-desktop{display:none!important;}
+      .pm-pubsite-brand-mobile{display:block!important;height:72px!important;width:auto!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
       .pm-pubsite-lang{display:none!important;}

@@ -336,7 +336,10 @@ export function PublicSite({ data, onCreate }) {
           {/* marca PinheiraMar — garante que o cabeçalho nunca fica vazio no telemóvel
               (onde a busca e o seletor de idioma ficam escondidos) */}
           <a href="/" className="pm-pubsite-brand" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
-            <img src="/logo-vertical-pinheiramar.png" alt="PinheiraMar" style={{ height: 40, width: 'auto', display: 'block' }} />
+            {/* horizontal no desktop (cabe melhor numa barra estreita); vertical, maior e
+                centrado no telemóvel — trocados por CSS na media query mobile em App.jsx */}
+            <img src="/logo-horizontal.png" alt="PinheiraMar" className="pm-pubsite-brand-desktop" style={{ height: 40, width: 'auto', display: 'block' }} />
+            <img src="/logo-vertical-pinheiramar.png" alt="PinheiraMar" className="pm-pubsite-brand-mobile" style={{ height: 40, width: 'auto', display: 'none' }} />
           </a>
 
           {/* centred search (desktop) */}
