@@ -20,10 +20,16 @@ export function Financeiro({ data, go }) {
   const inPeriodo = (r) => {
     const d = parseYMD(r.checkIn);
     const y = t.getFullYear(), m = t.getMonth();
+    // "Últimos N dias" olha para trás a partir de hoje — check-in tem de estar
+    // entre (hoje - N dias) e hoje, inclusive. Sem o limite inferior (>= 0),
+    // qualquer reserva com check-in FUTURO entrava sempre (t - d ficava
+    // negativo, que é sempre <= 30/90), fazendo o filtro incluir reservas de
+    // daqui a meses em vez de só as dos últimos N dias.
+    const diffDias = (t - d) / (1000*60*60*24);
     if (periodo === 'year')  return d.getFullYear() === y;
     if (periodo === 'month') return d.getFullYear() === y && d.getMonth() === m;
-    if (periodo === '30d')   return (t - d) / (1000*60*60*24) <= 30;
-    if (periodo === '90d')   return (t - d) / (1000*60*60*24) <= 90;
+    if (periodo === '30d')   return diffDias >= 0 && diffDias <= 30;
+    if (periodo === '90d')   return diffDias >= 0 && diffDias <= 90;
     return true;
   };
 
