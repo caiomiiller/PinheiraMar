@@ -152,8 +152,8 @@ Entre em contato via WhatsApp/redes sociais ou pelo site.
 
 5. ESTACIONAMENTO
 
-• Cada apartamento tem direito a 1 vaga de garagem.
-• Vaga adicional: taxa única de R$ 50,00 por automóvel (sujeito a disponibilidade).
+• Taxa obrigatória de vaga de garagem: R$ 50,00 por automóvel (1 vaga).
+• Vaga adicional: mais R$ 50,00 por automóvel (sujeito a disponibilidade).
 
 ---
 

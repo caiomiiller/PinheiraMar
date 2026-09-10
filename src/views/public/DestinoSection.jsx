@@ -180,7 +180,7 @@ export function DestinoSection({ residencial }) {
               <div style={{ display: 'grid', gap: 18 }}>
                 {[
                   { ic: '✈️', titulo: 'De avião', texto: 'Aeroporto Internacional Hercílio Luz (Florianópolis) — 48 km do Residencial. Aluguel de carro recomendado ou transfer privado.' },
-                  { ic: '🚗', titulo: 'De carro', texto: `BR-101 Sul → SC-282 em direção a Palhoça → seguir para Praia da Pinheira. GPS: "${residencial?.nome || 'Residencial PinheiraMar'}, Praia da Pinheira". Estacionamento gratuito (1 vaga por apartamento).` },
+                  { ic: '🚗', titulo: 'De carro', texto: `BR-101 Sul → SC-282 em direção a Palhoça → seguir para Praia da Pinheira. GPS: "${residencial?.nome || 'Residencial PinheiraMar'}, Praia da Pinheira". Estacionamento mediante taxa obrigatória (1 vaga por apartamento); vaga adicional com acréscimo.` },
                   { ic: '🚌', titulo: 'De ônibus', texto: 'Terminal Rodoviário de Florianópolis → linha para Palhoça → van/mototáxi para a Pinheira. Tempo total aprox. 1h30.' },
                   { ic: '📍', titulo: 'Distâncias úteis', texto: 'Centro de Florianópolis: 35 km · Palhoça (centro): 22 km · Guarda do Embaú: 2 km · Garopaba: 28 km · Imbituba: 45 km.' },
                 ].map((it, i) => (

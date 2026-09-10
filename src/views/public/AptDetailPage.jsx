@@ -293,7 +293,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
               <PolicyItem icon="🚪" title="Check-out" text={`Até às ${data.settings.checkOutHora || '10:00'}`} />
               <PolicyItem icon="🔇" title="Lei do silêncio" text="Das 22h às 7h, excepto Réveillon e Carnaval." />
               <PolicyItem icon="🐾" title="Animais de estimação" text="Permitidos mediante taxa única de R$ 200,00 por pet (até 10 kg, máx. 2)." />
-              <PolicyItem icon="🚗" title="Estacionamento" text="1 vaga gratuita incluída. Vaga adicional: R$ 50,00 (sujeito a disponibilidade)." />
+              <PolicyItem icon="🚗" title="Estacionamento" text="Taxa obrigatória de vaga de estacionamento: R$ 50,00 (1 automóvel). Vaga adicional: mais R$ 50,00 (sujeito a disponibilidade)." />
               <PolicyItem icon="🚭" title="Fumar" text="Proibido em todas as áreas internas e comuns." />
             </section>
 
