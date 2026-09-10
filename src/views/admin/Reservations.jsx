@@ -48,6 +48,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   const [showPrices, setShowPrices] = useState(false);
   const [editing, setEditing] = useState(null);
   const [prefill, setPrefill] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // reserva pendente de eliminação rápida a partir da lista
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef(null);
 
@@ -532,7 +533,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
                     <td style={{ padding: '11px 14px' }}><Badge status={r.status} /></td>
                     <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => duplicate(r.id)} title="Duplicar" style={iconBtn}><Copy size={15} /></button>
+                      <button onClick={() => setDeleteConfirm(r)} title="Eliminar" style={iconBtn}><Trash2 size={15} /></button>
                       <button onClick={() => setEditing(r)} title="Editar" style={{ ...iconBtn, marginLeft: 6 }}><Pencil size={15} /></button>
                     </td>
                   </tr>
@@ -574,6 +575,14 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       {editing && <ReservationForm data={data} initial={editing === 'new' ? prefill : editing} isNew={editing === 'new'}
         onSave={save} onRemove={remove} onDuplicate={duplicate} onClose={() => { setEditing(null); setPrefill(null); }} />}
+
+      {deleteConfirm && (
+        <ConfirmDialog
+          message={<>Eliminar definitivamente a reserva <b>{deleteConfirm.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
+          onConfirm={() => { remove(deleteConfirm.id); setDeleteConfirm(null); }}
+          onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
     </div>
   );
 }
