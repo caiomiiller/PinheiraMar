@@ -118,12 +118,12 @@ export function Financeiro({ data, go }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 18, marginBottom: 18 }} className="pm-dash-grid">
         {/* receita por apartamento */}
         <Card style={{ padding: 20 }}>
-          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: '0 0 16px' }}>Desempenho por apartamento</h3>
+          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: '0 0 16px' }}>Desempenho por apartamento <span style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 400 }}>(barra e % comparam cada apartamento ao de maior receita no período — não é fatia do total)</span></h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${C.line}` }}>
-                  {['Apartamento', 'Reservas', 'Noites', 'Receita', 'Participação'].map(h => (
+                  {['Apartamento', 'Reservas', 'Noites', 'Receita', 'Desempenho'].map(h => (
                     <th key={h} style={{ padding: '6px 10px 10px', textAlign: h === 'Apartamento' ? 'left' : 'right', color: C.inkSoft, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
