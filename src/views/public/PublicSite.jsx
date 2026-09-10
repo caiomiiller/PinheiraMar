@@ -306,7 +306,7 @@ export function PublicSite({ data, onCreate }) {
         {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td, 2))} hosp={hosp || 2} data={bookingScoped}
           onClose={() => setBooking(null)}
           onConfirm={r => { onCreate(r); setDone(d => d || { reserva: r, apt: booking.apt }); }} />}
-        {done && <ConfirmationModal info={done} settings={doneScoped.settings} onClose={() => { setDone(null); setBooking(null); }} />}
+        {done && <ConfirmationModal info={done} settings={doneScoped.settings} onClose={() => { setDone(null); setBooking(null); setDetail(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
       </>
     );
   }

@@ -190,10 +190,10 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
                 <NumberInput value={1} readOnly style={{ background: C.espuma }} />
               </Field>
             </div>
-            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, alignItems: 'end' }}>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, alignItems: 'start' }}>
               <SpinField label="Hóspedes" hint value={hospedes} onChange={setHospedes} min={1} />
               <SpinField label="Crianças" hint value={criancas} onChange={setCriancas} min={0} />
-              <Field label="Tamanho" hint="m²">
+              <Field label="Tamanho">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <NumberInput min={0} value={tamanho} onChange={e => setTamanho(e.target.value)} style={{ width: '100%' }} placeholder="38" />
                   <span style={{ fontSize: 13, color: C.inkSoft, flexShrink: 0 }}>m²</span>

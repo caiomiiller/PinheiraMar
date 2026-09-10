@@ -42,7 +42,7 @@ function ResPill({ residencial }) {
   );
 }
 
-export function Reservations({ data, update }) {
+export function Reservations({ data, update, openReservationId, onOpenedReservation }) {
   const [view, setView] = useState('calendario');
   const [start, setStart] = useState(() => { const t = today(); return new Date(t.getFullYear(), t.getMonth(), 1); });
   const [showPrices, setShowPrices] = useState(false);
@@ -51,7 +51,16 @@ export function Reservations({ data, update }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef(null);
 
-  const COLW = 46, NAMEW = 188;
+  // abre diretamente uma reserva vinda do Painel de controle (cliques em
+  // "Próximos check-ins/check-outs") — ver Dashboard.jsx e Admin.jsx
+  useEffect(() => {
+    if (!openReservationId) return;
+    const r = data.reservas.find(x => x.id === openReservationId);
+    if (r) setEditing(r);
+    onOpenedReservation?.();
+  }, [openReservationId]);
+
+  const COLW = 38, NAMEW = 170; // reduzido para mostrar mais dias do mês sem rolar tanto
   // mostra sempre o mês inteiro (28-31 dias, conforme o mês de `start`, que é
   // sempre o dia 1 do mês exibido) em vez de uma janela fixa de dias
   const DAYS = useMemo(() => new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(), [start]);
@@ -87,7 +96,36 @@ export function Reservations({ data, update }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [monthPickerOpen]);
 
-  const openNew = (aptId, dObj) => { setPrefill(aptId ? { apartamentoId: aptId, checkIn: ymd(dObj), checkOut: ymd(addDays(dObj, 1)) } : null); setEditing('new'); };
+  const openNew = (aptId, dObj, endDObj, status) => {
+    setPrefill(aptId ? { apartamentoId: aptId, checkIn: ymd(dObj), checkOut: ymd(addDays(endDObj || dObj, 1)), ...(status ? { status } : {}) } : null);
+    setEditing('new');
+  };
+
+  // ── seleção por arrastar no calendário (clicar e arrastar de uma data a
+  // outra, à semelhança do Wix) — ao soltar o rato sobre mais de um dia,
+  // mostra um menu rápido para criar reserva, aplicar uma tarifa pontual
+  // ou bloquear o período; um clique simples (sem arrastar) mantém o
+  // comportamento antigo de abrir logo uma nova reserva nesse dia ──
+  const [dragSel, setDragSel] = useState(null); // { aptId, startIdx, endIdx } enquanto arrasta
+  const [rangeMenu, setRangeMenu] = useState(null); // { aptId, startIdx, endIdx, x, y } menu aberto
+  const [quickRate, setQuickRate] = useState(null); // { aptId, startIdx, endIdx } modal de tarifa rápida
+
+  useEffect(() => {
+    if (!dragSel) return;
+    const onUp = (e) => {
+      const lo = Math.min(dragSel.startIdx, dragSel.endIdx), hi = Math.max(dragSel.startIdx, dragSel.endIdx);
+      if (lo === hi) {
+        openNew(dragSel.aptId, days[lo]);
+      } else {
+        const x = Math.min(e.clientX, window.innerWidth - 240);
+        const y = Math.min(e.clientY, window.innerHeight - 180);
+        setRangeMenu({ aptId: dragSel.aptId, startIdx: lo, endIdx: hi, x, y });
+      }
+      setDragSel(null);
+    };
+    window.addEventListener('mouseup', onUp);
+    return () => window.removeEventListener('mouseup', onUp);
+  }, [dragSel, days]);
 
   const save = (r) => {
     update(prev => {
@@ -352,9 +390,13 @@ export function Reservations({ data, update }) {
                         {days.map((d, i) => {
                           const we = d.getDay() === 0 || d.getDay() === 6;
                           const hol = holidaysOn(d);
+                          const inDrag = dragSel && dragSel.aptId === apt.id && i >= Math.min(dragSel.startIdx, dragSel.endIdx) && i <= Math.max(dragSel.startIdx, dragSel.endIdx);
                           return (
-                            <div key={i} onClick={() => openNew(apt.id, d)} title="Criar reserva"
-                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: hol ? 'rgba(62,124,177,.07)' : (we ? 'rgba(231,215,182,.13)' : '#fff'), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft }}>
+                            <div key={i}
+                              onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
+                              onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
+                              title="Clique para criar uma reserva, ou arraste para escolher um período"
+                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (hol ? 'rgba(62,124,177,.07)' : (we ? 'rgba(231,215,182,.13)' : '#fff')), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
                               {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
                             </div>
                           );
@@ -402,6 +444,64 @@ export function Reservations({ data, update }) {
           })()}
         </Card>
       )}
+
+      {/* menu rápido ao soltar o rato após arrastar sobre vários dias —
+          "Criar reserva", "Adicionar tarifa rápida" ou "Definir como
+          ocupado", à semelhança do Wix */}
+      {rangeMenu && (() => {
+        const apt = data.apartamentos.find(a => a.id === rangeMenu.aptId);
+        const startD = days[rangeMenu.startIdx], endD = days[rangeMenu.endIdx];
+        const nNoites = rangeMenu.endIdx - rangeMenu.startIdx + 1;
+        const close = () => setRangeMenu(null);
+        const itemStyle = { width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px', background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, color: C.ink, textAlign: 'left' };
+        return (
+          <>
+            <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 150 }} />
+            <div className="pm-pop" style={{ position: 'fixed', left: rangeMenu.x, top: rangeMenu.y, zIndex: 151, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 14px 34px rgba(10,40,46,.22)', padding: 6, minWidth: 230 }}>
+              <div style={{ padding: '8px 10px 6px', fontSize: 12, color: C.inkSoft, borderBottom: `1px solid ${C.line}`, marginBottom: 4 }}>
+                {apt?.nome} · {fmtShort(ymd(startD))} → {fmtShort(ymd(addDays(endD, 1)))} · <b>{nNoites} noite{nNoites > 1 ? 's' : ''}</b>
+              </div>
+              <button onClick={() => { openNew(rangeMenu.aptId, startD, endD); close(); }} style={itemStyle}
+                onMouseEnter={e => e.currentTarget.style.background = C.espuma} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                <Plus size={15} color={C.brisa} /> Criar reserva
+              </button>
+              <button onClick={() => { setQuickRate({ aptId: rangeMenu.aptId, startIdx: rangeMenu.startIdx, endIdx: rangeMenu.endIdx }); close(); }} style={itemStyle}
+                onMouseEnter={e => e.currentTarget.style.background = C.espuma} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                <Tag size={15} color={C.brisa} /> Adicionar tarifa rápida
+              </button>
+              <button onClick={() => { openNew(rangeMenu.aptId, startD, endD, 'bloqueio'); close(); }} style={itemStyle}
+                onMouseEnter={e => e.currentTarget.style.background = C.espuma} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                <AlertCircle size={15} color={C.brisa} /> Definir como ocupado
+              </button>
+            </div>
+          </>
+        );
+      })()}
+
+      {quickRate && (() => {
+        const apt = data.apartamentos.find(a => a.id === quickRate.aptId);
+        const startD = days[quickRate.startIdx], endD = days[quickRate.endIdx];
+        const nNoites = quickRate.endIdx - quickRate.startIdx + 1;
+        return (
+          <QuickRateModal apt={apt} startD={startD} endD={endD} nNoites={nNoites}
+            onClose={() => setQuickRate(null)}
+            onSave={preco => {
+              update(prev => ({
+                ...prev,
+                seasons: [{
+                  id: 's' + uid(),
+                  nome: `Tarifa rápida — ${apt.nome}`,
+                  inicio: ymd(startD),
+                  fim: ymd(endD),
+                  ativa: true,
+                  minNoites: 1,
+                  precos: { [apt.id]: { diaSemana: preco, fimSemana: preco } },
+                }, ...(prev.seasons || [])],
+              }));
+              setQuickRate(null);
+            }} />
+        );
+      })()}
 
       {view === 'lista' && (
         <Card style={{ overflow: 'hidden' }}>
@@ -499,6 +599,28 @@ export const MoneyInput = ({ value, onChange, style }) => (
       style={{ width: '100%', border: 'none', outline: 'none', padding: '7px 0', fontSize: 13, fontFamily: F.sans, background: 'transparent', color: C.ink }} />
   </div>
 );
+
+// Modal simples usado pela opção "Adicionar tarifa rápida" do menu de
+// arrastar no calendário — cria uma temporada pontual (só para este
+// apartamento e este período) em vez de reaproveitar o editor completo de
+// Opções de preços, para manter a ação de um único ecrã.
+function QuickRateModal({ apt, startD, endD, nNoites, onClose, onSave }) {
+  const [preco, setPreco] = useState(apt?.preco || 0);
+  return (
+    <Modal title="Tarifa rápida"
+      subtitle={`${apt?.nome} · ${fmtShort(ymd(startD))} → ${fmtShort(ymd(addDays(endD, 1)))} · ${nNoites} noite${nNoites > 1 ? 's' : ''}`}
+      onClose={onClose}
+      footer={<>
+        <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
+        <Btn variant="primary" onClick={() => onSave(Number(preco) || 0)}>Guardar tarifa</Btn>
+      </>}>
+      <Field label="Preço por noite neste período"
+        hint="Aplicado a todas as noites do período selecionado, só para este apartamento — substitui a tarifa normal enquanto durar. Pode ajustar ou remover depois em Opções de preços.">
+        <MoneyInput value={preco} onChange={e => setPreco(e.target.value)} />
+      </Field>
+    </Modal>
+  );
+}
 
 export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
   const i = initial || {};

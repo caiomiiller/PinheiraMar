@@ -4,7 +4,7 @@ import { C, F } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong } from '../../lib/helpers';
 import { Card, PageHead, Badge, Btn } from '../../components/ui';
 
-export function Dashboard({ data, go }) {
+export function Dashboard({ data, go, openReservation }) {
   const t = today();
   const ativas = data.reservas.filter(r => r.status !== 'cancelada');
   const horizon = 30;
@@ -41,7 +41,10 @@ export function Dashboard({ data, go }) {
     const d = parseYMD(r[dateField]);
     const isToday = ymd(d) === ymd(t);
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: isToday ? '#FBF1E6' : C.espuma, borderRadius: 10, border: isToday ? `1px solid #EBD9C0` : '1px solid transparent' }}>
+      <div onClick={() => openReservation?.(r.id)} title="Abrir reserva"
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: isToday ? '#FBF1E6' : C.espuma, borderRadius: 10, border: isToday ? `1px solid #EBD9C0` : '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
+        onMouseEnter={openReservation ? e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(10,40,46,.10)' : undefined}
+        onMouseLeave={openReservation ? e => e.currentTarget.style.boxShadow = '' : undefined}>
         <div style={{ textAlign: 'center', minWidth: 40, flexShrink: 0 }}>
           <div style={{ fontSize: 18, fontWeight: 700, fontFamily: F.disp, lineHeight: 1, color: isToday ? C.coralDeep : C.ink }}>{d.getDate()}</div>
           <div style={{ fontSize: 10, color: C.inkSoft, textTransform: 'uppercase' }}>{d.toLocaleDateString('pt-BR', { month: 'short' })}</div>

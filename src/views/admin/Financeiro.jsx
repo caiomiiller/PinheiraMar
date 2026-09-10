@@ -67,7 +67,7 @@ export function Financeiro({ data, go }) {
   const KPI = ({ label, value, sub, accent }) => (
     <Card style={{ padding: 18 }}>
       <div style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 600, marginBottom: 6 }}>{label}</div>
-      <div className="pm-fin-kpi-value" style={{ fontSize: 28, fontWeight: 700, fontFamily: F.disp, color: accent ? C.coralDeep : C.ink, lineHeight: 1.15 }}>{value}</div>
+      <div className="pm-fin-kpi-value" style={{ fontSize: 'clamp(18px, 2.1vw, 26px)', fontWeight: 700, fontFamily: F.disp, color: accent ? C.coralDeep : C.ink, lineHeight: 1.15, overflowWrap: 'anywhere' }}>{value}</div>
       {sub && <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 4 }}>{sub}</div>}
     </Card>
   );

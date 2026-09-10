@@ -33,6 +33,10 @@ export function Admin({ data, update, initialResidencialId }) {
   const [residencialId, setResidencialId] = useState(initialResidencialId || data.residenciais[0].id);
   const residencial = data.residenciais.find(r => r.id === residencialId) || data.residenciais[0];
   const [picker, setPicker] = useState(false);
+  // reserva pendente de abertura, vinda de um clique no Painel de controle
+  // (ver Dashboard.jsx "Próximos check-ins/check-outs")
+  const [pendingReservationId, setPendingReservationId] = useState(null);
+  const openReservation = (id) => { setPendingReservationId(id); setTab('reservas'); };
 
   useEffect(() => { applyTheme(residencialId); }, [residencialId]);
 
@@ -122,12 +126,12 @@ export function Admin({ data, update, initialResidencialId }) {
           ))}
         </div>
         <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: 1180, margin: '0 auto' }}>
-          {tab === 'painel' && <Dashboard data={scoped} go={setTab} />}
+          {tab === 'painel' && <Dashboard data={scoped} go={setTab} openReservation={openReservation} />}
           {/* Reservas é partilhado pelos dois residenciais (não usa o "recorte" do
               imóvel seleccionado) — o gestor regista/confirma reservas de qualquer
               imóvel neste mesmo ambiente, com uma etiqueta de cor a identificar a
               qual residencial cada apartamento pertence. Ver Reservations.jsx. */}
-          {tab === 'reservas' && <Reservations data={data} update={update} />}
+          {tab === 'reservas' && <Reservations data={data} update={update} openReservationId={pendingReservationId} onOpenedReservation={() => setPendingReservationId(null)} />}
           {tab === 'financeiro' && <Financeiro data={scoped} go={setTab} />}
           {tab === 'apartamentos' && <Apartments data={scoped} update={scopedUpdate} />}
           {tab === 'temporadas' && <Seasons data={scoped} update={scopedUpdate} />}
