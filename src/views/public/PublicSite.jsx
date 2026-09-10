@@ -423,7 +423,7 @@ export function PublicSite({ data, onCreate }) {
         <img
           src={r0.heroImage}
           alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
           onError={e => { e.target.style.display = 'none'; }}
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 40%, rgba(0,0,0,.72) 100%)' }} />

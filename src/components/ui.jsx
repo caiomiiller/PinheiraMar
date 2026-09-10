@@ -92,7 +92,7 @@ export function PhotoTile({ apt, h = 184, radius = 14 }) {
     // fotos abrirem nítidas em tamanho grande (galeria/lightbox).
     return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', position: 'relative' }}>
       <img src={apt.foto} alt={apt.nome || ''} loading="lazy" decoding="async"
-        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        style={{ width: '100%', height: '100%', display: 'block' }} />
       <span style={tilePill}>{apt.vista}</span>
     </div>;
   }

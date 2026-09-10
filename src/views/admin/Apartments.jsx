@@ -283,7 +283,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
                     <div key={idx} {...dndFotos.zone(idx)}
                       draggable={grip.draggable} onDragStart={grip.onDragStart} onDragEnd={grip.onDragEnd} title={grip.title}
                       style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3', background: C.espuma, cursor: 'grab', ...dndFotos.deco(idx) }}>
-                      <img src={f} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                      <img src={f} alt="" style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
                         onError={e => { e.target.style.display = 'none'; }} />
                       <span style={{ position: 'absolute', bottom: 3, left: 3, width: 18, height: 18, borderRadius: 5, background: 'rgba(0,0,0,.4)', display: 'grid', placeItems: 'center', color: '#fff', pointerEvents: 'none' }}>
                         <GripVertical size={12} />

@@ -158,11 +158,11 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           {fotos.length >= 3 ? (
             <div ref={galleryRef} onScroll={onGalleryScroll} className="pm-detail-gallery" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '240px 180px', gap: 4 }}>
               <div style={{ gridRow: '1 / 3', position: 'relative', cursor: 'pointer' }} onClick={() => openLightbox(0)}>
-                <img src={fotos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
+                <img src={fotos[0]} alt="" style={{ width: '100%', height: '100%' }} onError={e => e.target.style.display='none'} />
               </div>
               {fotos.slice(1).map((f, i) => (
                 <div key={i} style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }} onClick={() => openLightbox(i + 1)}>
-                  <img src={f} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
+                  <img src={f} alt="" style={{ width: '100%', height: '100%' }} onError={e => e.target.style.display='none'} />
                 </div>
               ))}
               {fotos.length === 0 && <PhotoTile apt={apt} h={420} radius={0} />}
