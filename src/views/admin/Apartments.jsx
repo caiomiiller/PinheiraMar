@@ -27,12 +27,12 @@ export function Apartments({ data, update }) {
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Adicionar</Btn>} />
       <div style={{ display: 'grid', gap: 12 }}>
         {data.apartamentos.map((a, idx) => (
-          <Card key={a.id} {...dnd.zone(idx)} style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12, ...dnd.deco(idx) }}>
+          <Card key={a.id} {...dnd.zone(idx)} className="pm-apt-row" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12, ...dnd.deco(idx) }}>
             <DragGrip {...dnd.grip(idx)} />
             <div style={{ width: 96, flexShrink: 0 }}><PhotoTile apt={a} h={64} radius={10} /></div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="pm-apt-info" style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: F.disp, fontSize: 18 }}>{a.nome} <span style={{ fontSize: 13, color: C.inkSoft, fontFamily: F.sans }}>— {a.piso} · {a.vista}</span></div>
-              <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2, display: 'flex', gap: 14 }}>
+              <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 <span>Até {a.capacidade} pessoas</span><span>{money(a.preco)} / noite (base)</span>
                 {!a.ativo && <span style={{ color: '#B23B3B', fontWeight: 600 }}>Inativo</span>}
               </div>

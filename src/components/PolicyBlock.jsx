@@ -5,14 +5,14 @@ import { Field, TextInput } from './ui';
 export function PolicyBlock({ label, hint, value, onChange, titleValue, onTitleChange }) {
   return (
     <div style={{ background: '#fff', border: `1px solid ${C.line}`, borderRadius: 14, overflow: 'hidden', marginBottom: 18 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: 200 }}>
+      <div className="pm-policy-grid" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: 200 }}>
         {/* left */}
-        <div style={{ background: '#f9fafa', borderRight: `1px solid ${C.line}`, padding: '28px 22px' }}>
+        <div className="pm-policy-side" style={{ background: '#f9fafa', borderRight: `1px solid ${C.line}`, padding: '28px 22px' }}>
           <div style={{ fontFamily: F.disp, fontSize: 16, fontWeight: 600, color: C.ocean, marginBottom: 8 }}>{label}</div>
           {hint && <div style={{ fontSize: 12.5, color: C.inkSoft, lineHeight: 1.55 }}>{hint}</div>}
         </div>
         {/* right */}
-        <div style={{ padding: '24px 26px', display: 'grid', gap: 14 }}>
+        <div className="pm-policy-main" style={{ padding: '24px 26px', display: 'grid', gap: 14 }}>
           <Field label="Título">
             <TextInput
               value={titleValue}

@@ -71,7 +71,22 @@ export default function App() {
     @media(max-width:760px){
       .pm-sidebar{display:none!important;}
       .pm-tabbar{display:flex!important;}
+      .pm-mobile-picker{display:block!important;}
       .pm-hide-sm{display:none!important;}
+
+      /* ── painel de gestão — telemóvel ── */
+      .pm-res-toolbar{flex-direction:column!important;align-items:stretch!important;}
+      .pm-res-toggle{width:100%!important;}
+      .pm-res-toggle button{flex:1!important;}
+      .pm-res-monthpicker{margin-left:0!important;display:flex!important;justify-content:center!important;}
+      .pm-res-navrow{margin-left:0!important;width:100%!important;justify-content:center!important;flex-wrap:wrap!important;row-gap:8px!important;}
+      .pm-res-legend{gap:10px!important;justify-content:center!important;}
+      .pm-fin-kpi-value{font-size:20px!important;}
+      .pm-apt-row{flex-wrap:wrap!important;}
+      .pm-apt-info{flex-basis:100%!important;order:3!important;margin-top:8px!important;}
+      .pm-policy-grid{grid-template-columns:1fr!important;}
+      .pm-policy-side{border-right:none!important;border-bottom:1px solid ${C.line}!important;padding:16px!important;}
+      .pm-policy-main{padding:16px!important;}
       .pm-search-grid{grid-template-columns:1fr 1fr!important;}
       .pm-book-grid{grid-template-columns:1fr!important;}
       .pm-dash-grid{grid-template-columns:1fr!important;}

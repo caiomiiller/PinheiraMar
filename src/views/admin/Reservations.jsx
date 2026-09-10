@@ -200,15 +200,15 @@ export function Reservations({ data, update }) {
         </div>
       )}
 
-      <Card style={{ padding: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', background: C.espuma, borderRadius: 10, padding: 3 }}>
+      <Card className="pm-res-toolbar" style={{ padding: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div className="pm-res-toggle" style={{ display: 'flex', background: C.espuma, borderRadius: 10, padding: 3 }}>
           {['calendario', 'lista'].map(v => (
             <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, background: view === v ? '#fff' : 'transparent', color: view === v ? C.ocean : C.inkSoft, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>{v === 'calendario' ? 'Calendário' : 'Lista'}</button>
           ))}
         </div>
         {view === 'calendario' && <>
           {/* ── mês/ano clicável com dropdown picker ── */}
-          <div style={{ position: 'relative', marginLeft: 8 }} ref={monthPickerRef}>
+          <div className="pm-res-monthpicker" style={{ position: 'relative', marginLeft: 8 }} ref={monthPickerRef}>
             <button onClick={() => setMonthPickerOpen(o => !o)}
               style={{ display: 'flex', alignItems: 'center', gap: 8, background: monthPickerOpen ? C.espuma : 'none', border: `1px solid ${monthPickerOpen ? C.line : 'transparent'}`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontFamily: F.disp, fontSize: 17, fontWeight: 600, color: C.ocean }}>
               <CalendarDays size={16} color={C.brisa} />
@@ -278,27 +278,29 @@ export function Reservations({ data, update }) {
 
           {/* ── navegação — o calendário mostra sempre o mês inteiro, por isso só há
                  avanço/recuo de mês (a navegação por semana foi removida) ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-            {/* mês anterior */}
-            <button onClick={() => shiftMonth(-1)} title="Mês anterior"
-              style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: '8px 0 0 8px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
-              <ChevronLeft size={14} />
-            </button>
-            {/* hoje */}
-            <button onClick={() => { const t = today(); setStart(new Date(t.getFullYear(), t.getMonth(), 1)); }} title="Ir para o mês atual"
-              style={{ height: 32, padding: '0 12px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
-              Hoje
-            </button>
-            {/* próximo mês */}
-            <button onClick={() => shiftMonth(1)} title="Próximo mês"
-              style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderLeft: 'none', borderRadius: '0 8px 8px 0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
-              <ChevronRight size={14} />
-            </button>
-          </div>
+          <div className="pm-res-navrow" style={{ display: 'flex', alignItems: 'center', gap: 16, marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {/* mês anterior */}
+              <button onClick={() => shiftMonth(-1)} title="Mês anterior"
+                style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: '8px 0 0 8px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
+                <ChevronLeft size={14} />
+              </button>
+              {/* hoje */}
+              <button onClick={() => { const t = today(); setStart(new Date(t.getFullYear(), t.getMonth(), 1)); }} title="Ir para o mês atual"
+                style={{ height: 32, padding: '0 12px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
+                Hoje
+              </button>
+              {/* próximo mês */}
+              <button onClick={() => shiftMonth(1)} title="Próximo mês"
+                style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderLeft: 'none', borderRadius: '0 8px 8px 0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
+                <ChevronRight size={14} />
+              </button>
+            </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: C.inkSoft, cursor: 'pointer' }}>
-            <input type="checkbox" checked={showPrices} onChange={e => setShowPrices(e.target.checked)} /> Mostrar preços
-          </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: C.inkSoft, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <input type="checkbox" checked={showPrices} onChange={e => setShowPrices(e.target.checked)} /> Mostrar preços
+            </label>
+          </div>
         </>}
       </Card>
 
@@ -374,13 +376,13 @@ export function Reservations({ data, update }) {
               })}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 16, padding: '12px 16px', fontSize: 12.5, color: C.inkSoft, flexWrap: 'wrap', alignItems: 'center', borderTop: `1px solid ${C.line}` }}>
+          <div className="pm-res-legend" style={{ display: 'flex', gap: 16, padding: '12px 16px', fontSize: 12.5, color: C.inkSoft, flexWrap: 'wrap', alignItems: 'center', borderTop: `1px solid ${C.line}` }}>
             {Object.entries(STATUS).filter(([k]) => k !== 'cancelada').map(([k, s]) =>
               <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: s.bar }} /> {s.label}</span>)}
-            <span style={{ width: 1, height: 16, background: C.line }} />
+            <span className="pm-hide-sm" style={{ width: 1, height: 16, background: C.line }} />
             {Object.entries(HOLIDAY_LABELS).map(([tp, label]) =>
               <span key={tp} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} /> {label}</span>)}
-            <span style={{ marginLeft: 'auto' }}>Check-out 10h · check-in 13h — turnover no mesmo dia permitido.</span>
+            <span className="pm-hide-sm" style={{ marginLeft: 'auto' }}>Check-out 10h · check-in 13h — turnover no mesmo dia permitido.</span>
           </div>
           {(() => {
             const items = [];

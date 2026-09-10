@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Building2, Tag, CreditCard,
-  Users, Settings, Waves, Home, Plus, Minus, AlertCircle, Sun, ChevronDown } from 'lucide-react';
+  Users, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown } from 'lucide-react';
 import { C, F, applyTheme } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 import { Btn } from '../../components/ui';
@@ -10,7 +10,6 @@ import { Reservations } from './Reservations';
 import { Apartments } from './Apartments';
 import { Seasons } from './Seasons';
 import { TaxasView } from './Taxas';
-import { CuponsView } from './Cupons';
 import { IdiomasView } from './Idiomas';
 import { PoliticasView } from './Politicas';
 import { SettingsView } from './Settings';
@@ -23,7 +22,6 @@ export const TABS = [
   { id: 'apartamentos', label: 'Apartamentos', icon: Home },
   { id: 'temporadas', label: 'Opções de preços', icon: Tag },
   { id: 'taxas', label: 'Taxas Adicionais', icon: Plus },
-  { id: 'cupons', label: 'Cupons', icon: Minus },
   { id: 'politicas', label: 'Políticas', icon: AlertCircle },
   { id: 'idiomas', label: 'Idiomas', icon: Sun },
   { id: 'configuracoes', label: 'Configurações', icon: Settings },
@@ -94,6 +92,29 @@ export function Admin({ data, update, initialResidencialId }) {
       </aside>
 
       <div style={{ flex: 1, minWidth: 0 }}>
+        {/* seletor de imóvel — telemóvel (a sidebar com o seletor fica oculta abaixo de 760px) */}
+        {data.residenciais.length > 1 && (
+          <div className="pm-mobile-picker" style={{ display: 'none', position: 'relative', padding: '10px 14px', background: C.oceanDeep }}>
+            <button onClick={() => setPicker(p => !p)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+              padding: '10px 12px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.16)',
+              borderRadius: 10, color: '#fff', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, textAlign: 'left',
+            }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{residencial.nome}</span>
+              <ChevronDown size={14} style={{ flexShrink: 0, transform: picker ? 'rotate(180deg)' : 'none' }} />
+            </button>
+            {picker && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 14, right: 14, background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
+                {data.residenciais.map(r => (
+                  <button key={r.id} onClick={() => { setResidencialId(r.id); setPicker(false); }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '11px 12px', border: 'none', background: r.id === residencialId ? C.espuma : '#fff', color: C.ink, cursor: 'pointer', fontSize: 13.5, fontWeight: r.id === residencialId ? 700 : 500 }}>
+                    {r.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {/* mobile tab bar */}
         <div className="pm-tabbar" style={{ display: 'none', background: C.ocean, padding: '10px', gap: 6, overflowX: 'auto' }}>
           {TABS.map(t => (
@@ -111,7 +132,6 @@ export function Admin({ data, update, initialResidencialId }) {
           {tab === 'apartamentos' && <Apartments data={scoped} update={scopedUpdate} />}
           {tab === 'temporadas' && <Seasons data={scoped} update={scopedUpdate} />}
           {tab === 'taxas' && <TaxasView data={scoped} update={scopedUpdate} />}
-          {tab === 'cupons' && <CuponsView data={scoped} update={scopedUpdate} />}
           {tab === 'politicas' && <PoliticasView data={scoped} update={scopedUpdate} />}
           {tab === 'idiomas' && <IdiomasView data={scoped} update={scopedUpdate} />}
           {tab === 'configuracoes' && <SettingsView data={scoped} update={scopedUpdate} />}
