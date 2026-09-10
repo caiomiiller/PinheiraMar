@@ -9,8 +9,8 @@ import { useT } from '../../lib/translations';
 import { Btn, PhotoTile, Field } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
-import { Section } from './Section';
 import { DestinoSection } from './DestinoSection';
+import { AvailabilityCalendar } from '../../components/AvailabilityCalendar';
 import { BookingModal } from '../../components/BookingModal';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 
@@ -67,10 +67,23 @@ export function PublicSite({ data, onCreate }) {
   const [hosp, setHosp] = useState(0);
   const [booking, setBooking] = useState(null);
   const [done, setDone] = useState(null);
-  const [liked, setLiked] = useState({});
+  // favoritos persistem no browser do visitante (localStorage) para não se
+  // perderem ao atualizar a página ou voltar mais tarde — antes eram só
+  // estado em memória.
+  const [liked, setLiked] = useState(() => {
+    try {
+      const raw = localStorage.getItem('pm_liked');
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('pm_liked', JSON.stringify(liked)); } catch { /* ignora (privado/bloqueado) */ }
+  }, [liked]);
   const [detail, setDetail] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [sortMode, setSortMode] = useState('default'); // 'default' | 'price_asc' | 'price_desc'
   const [guestOpen, setGuestOpen] = useState(false);
+  const [calOpen, setCalOpen] = useState(false);
   const resultsRef = useRef(null);
   const headerRef = useRef(null);
   const groupRefs = useRef({});
@@ -86,17 +99,19 @@ export function PublicSite({ data, onCreate }) {
       available: valid ? isAvailable(data.reservas, a.id, ci, co) : true,
       fits: !hosp || a.capacidade >= hosp,
       bd: valid ? stayBreakdown(a, data.seasons, ci, co) : null,
-    })).sort((x, y) =>
-      (Number(y.available) - Number(x.available)) ||
-      (Number(y.fits) - Number(x.fits)) ||
-      // sem filtro de categoria selecionado, os apartamentos Frente Mar aparecem primeiro
-      (!activeCategory ? (Number(y.apt.vista === 'Frente Mar') - Number(x.apt.vista === 'Frente Mar')) : 0) ||
-      (x.apt.preco - y.apt.preco));
+    })).sort((x, y) => {
+      const priceDiff = sortMode === 'price_desc' ? (y.apt.preco - x.apt.preco) : (x.apt.preco - y.apt.preco);
+      return (Number(y.available) - Number(x.available)) ||
+        (Number(y.fits) - Number(x.fits)) ||
+        // sem ordenação explícita nem filtro de categoria, os apartamentos Frente Mar aparecem primeiro
+        (sortMode === 'default' && !activeCategory ? (Number(y.apt.vista === 'Frente Mar') - Number(x.apt.vista === 'Frente Mar')) : 0) ||
+        priceDiff;
+    });
     const availableApts = withInfo.filter(w => w.available).map(w => w.apt);
     const needsCombo = valid && hosp > 0 && hosp > maxCap;
     const combo = needsCombo ? findCombo(availableApts, hosp) : null;
     return { residencial: r, active, withInfo, maxCap, availableApts, needsCombo, combo };
-  }), [data, ci, co, hosp, valid, activeCategory]);
+  }), [data, ci, co, hosp, valid, activeCategory, sortMode]);
 
   const hasFrenteMar = data.apartamentos.some(a => a.ativo && a.vista === 'Frente Mar');
 
@@ -138,16 +153,14 @@ export function PublicSite({ data, onCreate }) {
   );
   const segInput = { border: 'none', outline: 'none', background: 'transparent', fontFamily: F.sans, fontSize: 14.5, color: BLACK, width: '100%' };
 
-  /* ── cartão de data grande (busca mobile em ecrã cheio) — input nativo invisível por cima para abrir o calendário do telemóvel ── */
-  const DateCard = ({ label, value, min, onChange, compact }) => {
+  /* ── cartão de data grande (busca mobile em ecrã cheio) — abre o calendário de disponibilidade visual ── */
+  const DateCard = ({ label, value, onClick, compact }) => {
     const parts = bigDateParts(value);
     return (
       <div>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{label}</div>
-        <div style={{ position: 'relative', border: `1px solid ${BORDER}`, borderRadius: 14, padding: compact ? '12px' : '14px 16px', background: WHITE }}>
-          <input type="date" value={value} min={min} onChange={onChange}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, border: 'none', cursor: 'pointer' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pointerEvents: 'none' }}>
+        <button onClick={onClick} style={{ width: '100%', textAlign: 'left', position: 'relative', border: `1px solid ${BORDER}`, borderRadius: 14, padding: compact ? '12px' : '14px 16px', background: WHITE, cursor: 'pointer', fontFamily: F.sans }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {parts ? (
               <div style={{ display: 'flex', alignItems: 'baseline', gap: compact ? 8 : 12 }}>
                 <span style={{ fontSize: compact ? 26 : 34, fontWeight: 800, color: BLACK, lineHeight: 1 }}>{parts.day}</span>
@@ -161,7 +174,7 @@ export function PublicSite({ data, onCreate }) {
             )}
             <CalendarDays size={compact ? 15 : 18} color={GREY} />
           </div>
-        </div>
+        </button>
       </div>
     );
   };
@@ -328,15 +341,32 @@ export function PublicSite({ data, onCreate }) {
 
           {/* centred search (desktop) */}
           <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'stretch', height: 44, border: `1px solid ${BORDER}`, background: WHITE, maxWidth: 680, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'stretch', height: 44, border: `1px solid ${BORDER}`, background: WHITE, maxWidth: 680, width: '100%', position: 'relative' }}>
               <Seg label={tr('search_checkin')}>
-                <input type="date" value={ci} min={ymd(td)} style={segInput}
-                  onChange={e => { setCi(e.target.value); if (co && nights(e.target.value, co) < 1) setCo(''); }} />
+                <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => { setGuestOpen(false); setCalOpen(o => !o); }}>
+                  <span style={{ color: ci ? BLACK : '#AAA' }}>{ci ? fmtShort(ci) : 'Selecionar entrada'}</span>
+                </div>
               </Seg>
               <Seg label={tr('search_checkout')}>
-                <input type="date" value={co} min={ci ? ymd(addDays(parseYMD(ci), 1)) : ymd(addDays(td,1))} style={segInput}
-                  onChange={e => setCo(e.target.value)} />
+                <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => { setGuestOpen(false); setCalOpen(o => !o); }}>
+                  <span style={{ color: co ? BLACK : '#AAA' }}>{co ? fmtShort(co) : 'Selecionar saída'}</span>
+                </div>
               </Seg>
+              {calOpen && (
+                <>
+                  <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+                    <AvailabilityCalendar ci={ci} co={co}
+                      onChange={(newCi, newCo) => {
+                        setCi(newCi);
+                        if (newCo && nights(newCi, newCo) < 1) setCo(''); else setCo(newCo);
+                        if (newCi && newCo) setCalOpen(false);
+                      }} />
+                  </div>
+                </>
+              )}
               <Seg label={tr('search_who')} last>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => setGuestOpen(o => !o)}>
@@ -356,7 +386,7 @@ export function PublicSite({ data, onCreate }) {
                   </div>
                 )}
               </Seg>
-              <button onClick={() => { setGuestOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+              <button onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
                 style={{ padding: '0 24px', background: BLACK, color: WHITE, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 {tr('search_btn').toUpperCase()}
               </button>
@@ -383,11 +413,17 @@ export function PublicSite({ data, onCreate }) {
         <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>Pesquisar disponibilidade</div>
         <div style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <DateCard label={tr('search_checkin')} value={ci} min={ymd(td)} compact
-              onChange={e => { setCi(e.target.value); if (co && nights(e.target.value, co) < 1) setCo(''); }} />
-            <DateCard label={tr('search_checkout')} value={co} min={ci ? ymd(addDays(parseYMD(ci), 1)) : ymd(addDays(td, 1))} compact
-              onChange={e => setCo(e.target.value)} />
+            <DateCard label={tr('search_checkin')} value={ci} compact onClick={() => setCalOpen(o => !o)} />
+            <DateCard label={tr('search_checkout')} value={co} compact onClick={() => setCalOpen(o => !o)} />
           </div>
+          {calOpen && (
+            <AvailabilityCalendar ci={ci} co={co}
+              onChange={(newCi, newCo) => {
+                setCi(newCi);
+                if (newCo && nights(newCi, newCo) < 1) setCo(''); else setCo(newCo);
+                if (newCi && newCo) setCalOpen(false);
+              }} />
+          )}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_who')}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: `1px solid ${BORDER}`, borderRadius: 10 }}>
@@ -476,11 +512,22 @@ export function PublicSite({ data, onCreate }) {
       {/* ══ RESULTADOS — um bloco por imóvel, como um motor de reservas de hotel ══ */}
       <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 80px', scrollMarginTop: 80 }}>
         {valid && (
-          <div style={{ marginBottom: 44 }}>
-            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em' }}>
-              {fmtShort(ci)} — {fmtShort(co)} · {nights(ci, co)} noite{nights(ci,co) > 1 ? 's' : ''}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}
+          <div style={{ marginBottom: 44, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em' }}>
+                {fmtShort(ci)} — {fmtShort(co)} · {nights(ci, co)} noite{nights(ci,co) > 1 ? 's' : ''}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}
+              </div>
+              <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>Disponibilidade nos dois residenciais para estas datas.</div>
             </div>
-            <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>Disponibilidade nos dois residenciais para estas datas.</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: GREY, flexShrink: 0 }}>
+              Ordenar por
+              <select value={sortMode} onChange={e => setSortMode(e.target.value)}
+                style={{ border: `1px solid ${BORDER}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: F.sans, color: BLACK, background: WHITE, cursor: 'pointer' }}>
+                <option value="default">Recomendados</option>
+                <option value="price_asc">Preço: menor primeiro</option>
+                <option value="price_desc">Preço: maior primeiro</option>
+              </select>
+            </label>
           </div>
         )}
         {groups.map(g => <PropertyGroup key={g.residencial.id} g={g} />)}

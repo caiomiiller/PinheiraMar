@@ -16,6 +16,16 @@ export const F = {
 // nas páginas públicas) — link fixo do titular do WhatsApp Business.
 export const WHATSAPP_URL = 'https://api.whatsapp.com/send/?phone=%2B5548984761800&text&type=phone_number&app_absent=0';
 
+// Avaliação real do perfil Google Meu Negócio "PinheiraMar Residencial"
+// (não é calculada pela aplicação — atualizar manualmente de vez em quando,
+// consultando o próprio perfil no Google). Substitui a nota fixa "4,9" que
+// não correspondia a avaliações reais nenhumas.
+export const GOOGLE_RATING = {
+  value: '4,7',
+  count: 168,
+  url: 'https://www.google.com/maps/search/?api=1&query=PinheiraMar+Residencial+R.+Dom+Patr%C3%ADcio+82+Palho%C3%A7a+SC',
+};
+
 /* ───────────────────────── Temas por imóvel ─────────────────────────
    Cada residencial tem a sua paleta. "pinheiramar" reproduz a paleta
    original (tons de mar/areia). "novo imóvel" usa tons de bairro/verde,

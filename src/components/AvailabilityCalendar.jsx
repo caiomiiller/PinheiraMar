@@ -27,6 +27,8 @@ const navBtnStyle = {
 // (ex.: sai às 10h, entra às 13h) — o intervalo é meia-aberto, à semelhança do
 // resto da aplicação (ver isAvailable em lib/helpers.js).
 export function AvailabilityCalendar({ apt, reservas, ci, co, onChange }) {
+  // apt/reservas são opcionais: sem um apartamento concreto (ex.: pesquisa
+  // inicial, antes de escolher unidade) o calendário não bloqueia nenhum dia.
   const td = today();
   const base = ci ? parseYMD(ci) : td;
   const [viewYear, setViewYear] = useState(base.getFullYear());
@@ -36,7 +38,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange }) {
   const selCi = ci ? parseYMD(ci) : null;
   const selCo = co ? parseYMD(co) : null;
 
-  const isBlockedNight = (d) => !isAvailable(reservas, apt.id, ymd(d), ymd(addDays(d, 1)));
+  const isBlockedNight = (d) => apt ? !isAvailable(reservas, apt.id, ymd(d), ymd(addDays(d, 1))) : false;
   const isPast = (d) => d < td;
 
   const pendingEnd = (selCi && !selCo && hoverDay && hoverDay > selCi) ? hoverDay : null;
@@ -117,14 +119,16 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange }) {
         <button onClick={() => onChange('', '')} style={{ background: 'none', border: 'none', textDecoration: 'underline', fontSize: 12.5, color: C.ink, cursor: 'pointer', padding: 0 }}>
           Desmarcar datas
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: C.inkSoft }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.espuma, border: `1px solid ${C.line}`, display: 'inline-block' }} /> disponível
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff', border: `1px solid ${C.line}`, textDecoration: 'line-through', display: 'inline-block' }} /> ocupado
-          </span>
-        </div>
+        {apt && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: C.inkSoft }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.espuma, border: `1px solid ${C.line}`, display: 'inline-block' }} /> disponível
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff', border: `1px solid ${C.line}`, textDecoration: 'line-through', display: 'inline-block' }} /> ocupado
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

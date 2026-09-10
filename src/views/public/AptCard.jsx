@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart, BedDouble, Users, Check, Star } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, GOOGLE_RATING } from '../../lib/constants';
 import { money } from '../../lib/helpers';
 import { Badge, PhotoTile } from '../../components/ui';
 
@@ -33,7 +33,7 @@ export function AptCard({ apt, available = true, fits = true, bd = null, valid =
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
           <div style={{ fontWeight: 700, fontSize: 14.5, lineHeight: 1.3 }}>{apt.nome}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-            <Star size={12} fill="#222" color="#222" /><span style={{ fontSize: 12.5, fontWeight: 600 }}>4,9</span>
+            <Star size={12} fill="#222" color="#222" /><span style={{ fontSize: 12.5, fontWeight: 600 }}>{GOOGLE_RATING.value}</span>
           </div>
         </div>
         <div style={{ fontSize: 13, color: '#717171', marginTop: 2 }}>{apt.piso} · {apt.capacidade} pessoas</div>

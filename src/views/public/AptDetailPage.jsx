@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Car, Users,
   AlertCircle, CalendarDays, Check, Info, Waves, Star, MapPin, Home,
   MessageCircle, X, Share2 } from 'lucide-react';
-import { C, F, WHATSAPP_URL } from '../../lib/constants';
+import { C, F, WHATSAPP_URL, GOOGLE_RATING } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, addDays, fmtShort, fmtLong, WD,
   isAvailable, stayBreakdown, nightlyRate, seasonForDate } from '../../lib/helpers';
 import { Btn, Badge, PhotoTile, Field } from '../../components/ui';
@@ -29,6 +29,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const [localHosp, setLocalHosp] = useState(Math.min(hosp || 1, apt.capacidade));
   const [guestOpen, setGuestOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   // reserva conjunta
   const [useApt2, setUseApt2] = useState(false);
   const [apt2Id, setApt2Id] = useState('');
@@ -124,6 +125,10 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           <ChevronLeft size={20} /> Voltar
         </button>
         <div style={{ fontWeight: 700, fontSize: 16, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apt.nome}</div>
+        <button onClick={() => { if (navigator.share) { navigator.share({ title: apt.nome, url: window.location.href }).catch(() => {}); } else { navigator.clipboard?.writeText(window.location.href); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); } }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600, color: '#555' }}>
+          <Share2 size={16} /> {shareCopied ? 'Link copiado!' : 'Partilhar'}
+        </button>
         <button onClick={e => { e.stopPropagation(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600, color: liked[apt.id] ? C.coralDeep : '#555' }}>
           <Heart size={18} fill={liked[apt.id] ? C.coral : 'none'} color={liked[apt.id] ? C.coral : '#555'} /> Guardar
@@ -136,7 +141,12 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
         <div className="pm-detail-title-block" style={{ marginBottom: 18 }}>
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-.01em' }}>{apt.tipo || apt.nome}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 13.5 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Star size={14} fill="#222" color="#222" /><b>4,9</b></span>
+            <a href={GOOGLE_RATING.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'inherit', textDecoration: 'none' }}
+              title="Ver avaliações no Google">
+              <Star size={14} fill="#222" color="#222" /><b>{GOOGLE_RATING.value}</b>
+              <span style={{ color: '#717171', textDecoration: 'underline' }}>({GOOGLE_RATING.count} avaliações no Google)</span>
+            </a>
             <span style={{ color: '#717171' }}>·</span>
             <span style={{ color: '#717171' }}>{apt.piso}</span>
             <span style={{ color: '#717171' }}>·</span>
@@ -151,8 +161,8 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           <div className="pm-detail-float-nav" style={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 5, display: 'none', justifyContent: 'space-between', pointerEvents: 'none' }}>
             <button onClick={onBack} title="Voltar" style={{ ...floatBtn, pointerEvents: 'auto' }}><ChevronLeft size={20} /></button>
             <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
-              <button onClick={() => { if (navigator.share) { navigator.share({ title: apt.nome, url: window.location.href }).catch(() => {}); } else { navigator.clipboard?.writeText(window.location.href); } }}
-                title="Partilhar" style={floatBtn}><Share2 size={17} /></button>
+              <button onClick={() => { if (navigator.share) { navigator.share({ title: apt.nome, url: window.location.href }).catch(() => {}); } else { navigator.clipboard?.writeText(window.location.href); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); } }}
+                title={shareCopied ? 'Link copiado!' : 'Partilhar'} style={floatBtn}><Share2 size={17} /></button>
               <button onClick={e => { e.stopPropagation(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); }}
                 title="Guardar" style={floatBtn}><Heart size={17} fill={liked[apt.id] ? C.coral : 'none'} color={liked[apt.id] ? C.coral : '#333'} /></button>
             </div>
@@ -300,6 +310,11 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                 <p style={{ fontSize: 13.5, color: '#717171', marginTop: 10 }}>
                   📍 {apt.endereco || data.settings.endereco} · {apt.cidade || data.settings.cidade}
                 </p>
+                {apt.residencialId === 'pinheiramar' && (
+                  <p style={{ fontSize: 13.5, color: '#717171', marginTop: 6 }}>
+                    🛒 A poucos passos do Café Buteco e do Santos Supermercados, na Enseada da Pinheira.
+                  </p>
+                )}
               </section>
             )}
 
@@ -312,9 +327,12 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#717171' }}>a partir de </span>
                 <span style={{ fontSize: 22, fontWeight: 800 }}>{money(apt.preco)}</span>
                 <span style={{ fontSize: 14, color: '#717171' }}> / noite</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontSize: 13 }}>
-                  <Star size={13} fill="#222" color="#222" /><b>4,9</b>
-                </div>
+                <a href={GOOGLE_RATING.url} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontSize: 13, color: 'inherit', textDecoration: 'none' }}
+                  title="Ver avaliações no Google">
+                  <Star size={13} fill="#222" color="#222" /><b>{GOOGLE_RATING.value}</b>
+                  <span style={{ color: '#717171' }}>· {GOOGLE_RATING.count} avaliações</span>
+                </a>
               </div>
 
               {/* seletor de datas — abre o calendário de disponibilidade */}
