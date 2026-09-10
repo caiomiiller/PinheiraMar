@@ -345,7 +345,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       {view === 'calendario' && (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '65vh' }}>
             <div style={{ minWidth: NAMEW + DAYS * COLW }}>
               {/* header */}
               <div style={{ display: 'flex', borderBottom: `1px solid ${C.line}`, background: C.espuma, position: 'sticky', top: 0 }}>
@@ -532,8 +532,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
                     <td style={{ padding: '11px 14px' }}><Badge status={r.status} /></td>
                     <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => duplicate(r.id)} title="Duplicar" style={iconBtn}><Copy size={15} /></button>
-                      <button onClick={() => setEditing(r)} title="Editar" style={{ ...iconBtn, marginLeft: 6 }}><Pencil size={15} /></button>
+                      <button onClick={() => setEditing(r)} title="Editar" style={iconBtn}><Pencil size={15} /></button>
                     </td>
                   </tr>
                 ))}
