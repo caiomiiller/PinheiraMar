@@ -312,7 +312,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                 </p>
                 {apt.residencialId === 'pinheiramar' && (
                   <p style={{ fontSize: 13.5, color: '#717171', marginTop: 6 }}>
-                    🛒 A poucos passos do Café Buteco e do Santos Supermercados, na Enseada da Pinheira.
+                    🛒 A poucos passos do comércio local, Supermercados, Bares e Restaurantes.
                   </p>
                 )}
               </section>
