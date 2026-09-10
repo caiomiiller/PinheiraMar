@@ -205,6 +205,7 @@ export function PublicSite({ data, onCreate }) {
           )}
           {valid && bd && <div style={{ fontSize: 12.5, color: GREY, marginTop: 4 }}>Total {money(bd.total)} · {bd.n} noites</div>}
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            {!(valid && bd) && <span style={{ fontSize: 12.5, color: GREY }}>a partir de</span>}
             <span style={{ fontSize: 18, fontWeight: 700, color: BLACK }}>{money(rate)}</span>
             <span style={{ fontSize: 12.5, color: GREY }}>/noite</span>
           </div>

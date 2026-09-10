@@ -307,6 +307,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           <div className="pm-detail-side" id="booking-widget" style={{ position: 'sticky', top: 60 }}>
             <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 18, padding: 24, boxShadow: '0 8px 28px rgba(0,0,0,.12)' }}>
               <div style={{ marginBottom: 18 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#717171' }}>a partir de </span>
                 <span style={{ fontSize: 22, fontWeight: 800 }}>{money(apt.preco)}</span>
                 <span style={{ fontSize: 14, color: '#717171' }}> / noite</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontSize: 13 }}>
@@ -490,7 +491,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             </>
           ) : (
             <>
-              <div style={{ fontSize: 17, fontWeight: 800 }}>{money(apt.preco)} <span style={{ fontSize: 12.5, fontWeight: 500, color: '#717171' }}>/noite</span></div>
+              <div style={{ fontSize: 17, fontWeight: 800 }}><span style={{ fontSize: 12.5, fontWeight: 500, color: '#717171' }}>a partir de</span> {money(apt.preco)} <span style={{ fontSize: 12.5, fontWeight: 500, color: '#717171' }}>/noite</span></div>
               <div style={{ fontSize: 11.5, color: '#717171' }}>Selecione as datas</div>
             </>
           )}

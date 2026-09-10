@@ -50,7 +50,7 @@ export function Section({ icon, title, sub, apts, liked, setLiked, onCard, tr, h
               <div style={{ fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,.18)', display: 'inline-block', padding: '3px 10px', borderRadius: 999, marginBottom: 8 }}>🌊 Destaque</div>
               <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: '-.01em' }}>{apts[0].nome}</div>
               <div style={{ fontSize: 13.5, opacity: .88, marginTop: 3 }}>{apts[0].piso} · até {apts[0].capacidade} pessoas</div>
-              <div style={{ fontWeight: 700, fontSize: 17, marginTop: 6 }}>{money(apts[0].preco)} <span style={{ fontWeight: 400, fontSize: 13 }}>/ noite</span></div>
+              <div style={{ fontWeight: 700, fontSize: 17, marginTop: 6 }}><span style={{ fontWeight: 400, fontSize: 13 }}>a partir de</span> {money(apts[0].preco)} <span style={{ fontWeight: 400, fontSize: 13 }}>/ noite</span></div>
             </div>
           </div>
           {/* right column — remaining 2-4 as smaller cards */}
@@ -64,7 +64,7 @@ export function Section({ icon, title, sub, apts, liked, setLiked, onCard, tr, h
                 </button>
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(10,30,40,.72))', padding: '24px 16px 14px', color: '#fff' }}>
                   <div style={{ fontWeight: 700, fontSize: 15 }}>{apt.nome}</div>
-                  <div style={{ fontSize: 12.5, opacity: .88 }}>{apt.piso} · até {apt.capacidade} pessoas · {money(apt.preco)}/noite</div>
+                  <div style={{ fontSize: 12.5, opacity: .88 }}>{apt.piso} · até {apt.capacidade} pessoas · a partir de {money(apt.preco)}/noite</div>
                 </div>
               </div>
             ))}
