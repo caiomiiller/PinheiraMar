@@ -60,7 +60,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     onOpenedReservation?.();
   }, [openReservationId]);
 
-  const NAMEW = 170;
+  const COLW = 38, NAMEW = 170; // reduzido para mostrar mais dias do mês sem rolar tanto
   // mostra sempre o mês inteiro (28-31 dias, conforme o mês de `start`, que é
   // sempre o dia 1 do mês exibido) em vez de uma janela fixa de dias
   const DAYS = useMemo(() => new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(), [start]);
@@ -76,33 +76,6 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     if (ya === yb) return `${mName(a)} – ${mName(b)} de ${ya}`;
     return `${mName(a)} ${ya} – ${mName(b)} ${yb}`;
   }, [days]);
-
-  // largura dos dias é sempre fluida (fração do espaço disponível — nunca
-  // pixels fixos), para que o mês inteiro caiba sem rolagem horizontal seja
-  // qual for a largura do ecrã. A altura das linhas é calculada a partir do
-  // espaço vertical realmente disponível (ecrã menos cabeçalho/legenda), para
-  // que todos os apartamentos também caibam sem rolagem vertical.
-  const calGridRef = useRef(null);
-  const calFootRef = useRef(null);
-  const [availH, setAvailH] = useState(420);
-  useEffect(() => {
-    if (view !== 'calendario') return;
-    const recompute = () => {
-      if (!calGridRef.current) return;
-      const top = calGridRef.current.getBoundingClientRect().top;
-      const footH = calFootRef.current ? calFootRef.current.offsetHeight : 0;
-      setAvailH(Math.max(240, window.innerHeight - top - footH - 20));
-    };
-    recompute();
-    const raf = requestAnimationFrame(recompute); // após o 1º layout (legenda/feriados)
-    window.addEventListener('resize', recompute);
-    return () => { window.removeEventListener('resize', recompute); cancelAnimationFrame(raf); };
-  }, [view, data.apartamentos.length, days.length]);
-  const HEADER_H = 44;
-  const rowH = Math.max(22, Math.floor((availH - HEADER_H) / Math.max(1, data.apartamentos.length)));
-  const compactRow = rowH < 40;
-  const barH = Math.max(14, Math.min(36, rowH - 14));
-  const barTop = (rowH - barH) / 2;
 
   /* jump to start of a given month/year */
   const jumpToMonth = (year, month) => {
@@ -372,19 +345,18 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       {view === 'calendario' && (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <div ref={calGridRef}>
-            {/* header — largura dos dias em % do espaço disponível (nunca px
-                fixos), para que o mês inteiro caiba sem rolagem horizontal */}
-            <div style={{ display: 'flex', height: HEADER_H, boxSizing: 'border-box', borderBottom: `1px solid ${C.line}`, background: C.espuma }}>
-              <div style={{ width: NAMEW, flexShrink: 0, padding: '10px 14px', fontSize: 12.5, fontWeight: 700, color: C.inkSoft, borderRight: `1px solid ${C.line}` }}>Apartamento</div>
-              <div style={{ display: 'flex', flex: 1, minWidth: 0 }}>
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: NAMEW + DAYS * COLW }}>
+              {/* header */}
+              <div style={{ display: 'flex', borderBottom: `1px solid ${C.line}`, background: C.espuma, position: 'sticky', top: 0 }}>
+                <div style={{ width: NAMEW, flexShrink: 0, padding: '10px 14px', fontSize: 12.5, fontWeight: 700, color: C.inkSoft, borderRight: `1px solid ${C.line}` }}>Apartamento</div>
                 {days.map((d, i) => {
                   const we = d.getDay() === 0 || d.getDay() === 6;
                   const isToday = ymd(d) === ymd(today());
                   const hol = holidaysOn(d);
                   return (
                     <div key={i} title={hol ? hol.map(h => `${h.nome} — ${HOLIDAY_LABELS[h.tipo]}`).join(' · ') : ''}
-                      style={{ flex: '1 1 0%', minWidth: 0, textAlign: 'center', padding: '6px 0 4px', background: isToday ? '#DCEBE9' : (hol ? 'rgba(62,124,177,.10)' : (we ? 'rgba(231,215,182,.25)' : 'transparent')) }}>
+                      style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px', background: isToday ? '#DCEBE9' : (hol ? 'rgba(62,124,177,.10)' : (we ? 'rgba(231,215,182,.25)' : 'transparent')) }}>
                       <div style={{ fontSize: 10.5, color: C.inkSoft, textTransform: 'uppercase' }}>{WD[d.getDay()]}</div>
                       <div style={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: isToday ? C.ocean : C.ink }}>{d.getDate()}</div>
                       <div style={{ height: 6, marginTop: 1, display: 'flex', justifyContent: 'center', gap: 2 }}>
@@ -394,86 +366,83 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                   );
                 })}
               </div>
-            </div>
-            {/* linhas — altura calculada para que todos os apartamentos
-                caibam no espaço disponível sem rolagem vertical */}
-            {data.apartamentos.map(apt => {
-              const segs = data.reservas.filter(r => r.apartamentoId === apt.id && r.status !== 'cancelada').map(r => {
-                const rawS = Math.round((parseYMD(r.checkIn) - start) / MS);
-                const rawE = Math.round((parseYMD(r.checkOut) - start) / MS);
-                // chega a meio do dia de check-in (13h) e sai a meio do dia de check-out (10h)
-                const leftPct = Math.max(0, (rawS + 0.5)) / DAYS * 100;
-                const rightPct = Math.min(DAYS, (rawE + 0.5)) / DAYS * 100;
-                return { r, leftPct, rightPct };
-              }).filter(x => x.rightPct - x.leftPct > (100 / DAYS) * 0.1);
-              return (
-                <div key={apt.id} style={{ display: 'flex', height: rowH, boxSizing: 'border-box', borderBottom: `1px solid ${C.line}` }}>
-                  <div style={{ width: NAMEW, flexShrink: 0, padding: compactRow ? '4px 14px' : '10px 14px', borderRight: `1px solid ${C.line}`, background: '#fff', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 600, fontSize: compactRow ? 12.5 : 13.5 }}>{apt.nome}</span>
-                      <ResBadge residencial={residencialOf(data, apt)} />
+              {/* rows */}
+              {data.apartamentos.map(apt => {
+                const segs = data.reservas.filter(r => r.apartamentoId === apt.id && r.status !== 'cancelada').map(r => {
+                  const rawS = Math.round((parseYMD(r.checkIn) - start) / MS);
+                  const rawE = Math.round((parseYMD(r.checkOut) - start) / MS);
+                  // chega a meio do dia de check-in (13h) e sai a meio do dia de check-out (10h)
+                  const left = Math.max(0, (rawS + 0.5) * COLW);
+                  const right = Math.min(DAYS * COLW, (rawE + 0.5) * COLW);
+                  return { r, left, right };
+                }).filter(x => x.right - x.left > 4);
+                return (
+                  <div key={apt.id} style={{ display: 'flex', borderBottom: `1px solid ${C.line}` }}>
+                    <div style={{ width: NAMEW, flexShrink: 0, padding: '10px 14px', borderRight: `1px solid ${C.line}`, background: '#fff' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, fontSize: 13.5 }}>{apt.nome}</span>
+                        <ResBadge residencial={residencialOf(data, apt)} />
+                      </div>
+                      <div style={{ fontSize: 11.5, color: C.inkSoft }}>{apt.vista} · {apt.capacidade}p</div>
                     </div>
-                    {!compactRow && <div style={{ fontSize: 11.5, color: C.inkSoft }}>{apt.vista} · {apt.capacidade}p</div>}
-                  </div>
-                  <div style={{ position: 'relative', flex: 1, minWidth: 0, height: '100%' }}>
-                    {/* day cells */}
-                    <div style={{ display: 'flex', height: '100%' }}>
-                      {days.map((d, i) => {
-                        const we = d.getDay() === 0 || d.getDay() === 6;
-                        const hol = holidaysOn(d);
-                        const inDrag = dragSel && dragSel.aptId === apt.id && i >= Math.min(dragSel.startIdx, dragSel.endIdx) && i <= Math.max(dragSel.startIdx, dragSel.endIdx);
+                    <div style={{ position: 'relative', width: DAYS * COLW, flexShrink: 0, height: 50 }}>
+                      {/* day cells */}
+                      <div style={{ display: 'flex', height: '100%' }}>
+                        {days.map((d, i) => {
+                          const we = d.getDay() === 0 || d.getDay() === 6;
+                          const hol = holidaysOn(d);
+                          const inDrag = dragSel && dragSel.aptId === apt.id && i >= Math.min(dragSel.startIdx, dragSel.endIdx) && i <= Math.max(dragSel.startIdx, dragSel.endIdx);
+                          return (
+                            <div key={i}
+                              onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
+                              onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
+                              title="Clique para criar uma reserva, ou arraste para escolher um período"
+                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (hol ? 'rgba(62,124,177,.07)' : (we ? 'rgba(231,215,182,.13)' : '#fff')), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
+                              {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* reservation bars */}
+                      {segs.map(({ r, left, right }) => {
+                        const st = STATUS[r.status];
                         return (
-                          <div key={i}
-                            onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
-                            onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
-                            title="Clique para criar uma reserva, ou arraste para escolher um período"
-                            style={{ flex: '1 1 0%', minWidth: 0, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (hol ? 'rgba(62,124,177,.07)' : (we ? 'rgba(231,215,182,.13)' : '#fff')), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
-                            {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
-                          </div>
+                          <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)`}
+                            style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: st.bar, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
+                            {r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || 'Reserva')}
+                          </button>
                         );
                       })}
                     </div>
-                    {/* reservation bars */}
-                    {segs.map(({ r, leftPct, rightPct }) => {
-                      const st = STATUS[r.status];
-                      return (
-                        <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)`}
-                          style={{ position: 'absolute', top: barTop, height: barH, left: `calc(${leftPct}% + 2px)`, width: `calc(${Math.max(1, rightPct - leftPct)}% - 4px)`, background: st.bar, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: barH < 22 ? 10.5 : 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
-                          {r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || 'Reserva')}
-                        </button>
-                      );
-                    })}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-          <div ref={calFootRef}>
-            <div className="pm-res-legend" style={{ display: 'flex', gap: 16, padding: '12px 16px', fontSize: 12.5, color: C.inkSoft, flexWrap: 'wrap', alignItems: 'center', borderTop: `1px solid ${C.line}` }}>
-              {Object.entries(STATUS).filter(([k]) => k !== 'cancelada').map(([k, s]) =>
-                <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: s.bar }} /> {s.label}</span>)}
-              <span className="pm-hide-sm" style={{ width: 1, height: 16, background: C.line }} />
-              {Object.entries(HOLIDAY_LABELS).map(([tp, label]) =>
-                <span key={tp} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} /> {label}</span>)}
-              <span className="pm-hide-sm" style={{ marginLeft: 'auto' }}>Check-out 10h · check-in 13h — turnover no mesmo dia permitido.</span>
+                );
+              })}
             </div>
-            {(() => {
-              const items = [];
-              days.forEach(d => { const h = holidaysOn(d); if (h) h.forEach(x => items.push({ date: d, ...x })); });
-              if (!items.length) return null;
-              return (
-                <div style={{ borderTop: `1px solid ${C.line}`, padding: '10px 16px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, marginRight: 2 }}>Feriados no período:</span>
-                  {items.map((it, idx) => (
-                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.espuma, borderRadius: 999, padding: '4px 10px', fontSize: 12, color: C.ink }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: HOLIDAY_COLORS[it.tipo] }} />
-                      <b style={{ fontWeight: 700 }}>{it.date.getDate()}/{it.date.getMonth() + 1}</b> {it.nome}
-                    </span>
-                  ))}
-                </div>
-              );
-            })()}
           </div>
+          <div className="pm-res-legend" style={{ display: 'flex', gap: 16, padding: '12px 16px', fontSize: 12.5, color: C.inkSoft, flexWrap: 'wrap', alignItems: 'center', borderTop: `1px solid ${C.line}` }}>
+            {Object.entries(STATUS).filter(([k]) => k !== 'cancelada').map(([k, s]) =>
+              <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: s.bar }} /> {s.label}</span>)}
+            <span className="pm-hide-sm" style={{ width: 1, height: 16, background: C.line }} />
+            {Object.entries(HOLIDAY_LABELS).map(([tp, label]) =>
+              <span key={tp} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} /> {label}</span>)}
+            <span className="pm-hide-sm" style={{ marginLeft: 'auto' }}>Check-out 10h · check-in 13h — turnover no mesmo dia permitido.</span>
+          </div>
+          {(() => {
+            const items = [];
+            days.forEach(d => { const h = holidaysOn(d); if (h) h.forEach(x => items.push({ date: d, ...x })); });
+            if (!items.length) return null;
+            return (
+              <div style={{ borderTop: `1px solid ${C.line}`, padding: '10px 16px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, marginRight: 2 }}>Feriados no período:</span>
+                {items.map((it, idx) => (
+                  <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.espuma, borderRadius: 999, padding: '4px 10px', fontSize: 12, color: C.ink }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: HOLIDAY_COLORS[it.tipo] }} />
+                    <b style={{ fontWeight: 700 }}>{it.date.getDate()}/{it.date.getMonth() + 1}</b> {it.nome}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
         </Card>
       )}
 
@@ -563,7 +532,8 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
                     <td style={{ padding: '11px 14px' }}><Badge status={r.status} /></td>
                     <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => setEditing(r)} title="Editar" style={iconBtn}><Pencil size={15} /></button>
+                      <button onClick={() => duplicate(r.id)} title="Duplicar" style={iconBtn}><Copy size={15} /></button>
+                      <button onClick={() => setEditing(r)} title="Editar" style={{ ...iconBtn, marginLeft: 6 }}><Pencil size={15} /></button>
                     </td>
                   </tr>
                 ))}
