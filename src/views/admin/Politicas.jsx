@@ -47,8 +47,8 @@ CHECK-IN: 13h00 | CHECK-OUT: 10h00
 
 4. ESTACIONAMENTO
 
-• Taxa obrigatória de vaga de garagem: R$ 50,00 por automóvel (1 vaga).
-• Vaga adicional: mais R$ 50,00 por automóvel (sujeito a disponibilidade).
+• Garantimos 1 vaga de garagem por apartamento, mediante taxa obrigatória.
+• Vaga adicional: taxa única de R$ 50,00 por automóvel (sujeito a disponibilidade).
 
 ---
 
