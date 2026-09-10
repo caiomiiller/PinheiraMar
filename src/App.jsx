@@ -86,6 +86,7 @@ export default function App() {
       .pm-res-navrow{margin-left:0!important;width:100%!important;justify-content:center!important;flex-wrap:wrap!important;row-gap:8px!important;}
       .pm-res-legend{gap:10px!important;justify-content:center!important;}
       .pm-fin-kpi-value{font-size:15px!important;}
+      .pm-pay-mobile{display:block!important;}
       .pm-apt-row{flex-wrap:wrap!important;}
       .pm-apt-info{flex-basis:100%!important;order:3!important;margin-top:8px!important;}
       .pm-policy-grid{grid-template-columns:1fr!important;}

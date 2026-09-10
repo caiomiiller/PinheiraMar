@@ -9,7 +9,7 @@ import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
 import { mkExtrasObrigatorios, buildCSV, downloadBlob, rowToReserva,
   EXTRA_PRESETS, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
-  NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS } from '../../components/ui';
+  NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS, ConfirmDialog } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import { sendConfirmationEmail } from '../../lib/email';
 import * as XLSX from 'xlsx';
@@ -135,6 +135,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     setEditing(null); setPrefill(null);
   };
   const duplicate = (id) => update(prev => ({ ...prev, reservas: duplicateInList(prev.reservas, id, r => ({ ...r, id: uid(), codigo: code(), status: 'pendente', extras: (r.extras || []).map(e => ({ ...e, id: uid() })) })) }));
+  const remove = (id) => { update(prev => ({ ...prev, reservas: prev.reservas.filter(x => x.id !== id) })); setEditing(null); };
 
   // ── Base de dados: exportar / importar ──
   const fileRef = useRef(null);
@@ -560,7 +561,6 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                   <span style={{ fontWeight: 700 }}>{money(r.total)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-                  <button onClick={() => duplicate(r.id)} title="Duplicar" style={iconBtn}><Copy size={15} /></button>
                   <button onClick={() => setEditing(r)} title="Editar" style={iconBtn}><Pencil size={15} /></button>
                 </div>
               </div>
@@ -573,7 +573,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
       )}
 
       {editing && <ReservationForm data={data} initial={editing === 'new' ? prefill : editing} isNew={editing === 'new'}
-        onSave={save} onClose={() => { setEditing(null); setPrefill(null); }} />}
+        onSave={save} onRemove={remove} onDuplicate={duplicate} onClose={() => { setEditing(null); setPrefill(null); }} />}
     </div>
   );
 }
@@ -622,7 +622,7 @@ function QuickRateModal({ apt, startD, endD, nNoites, onClose, onSave }) {
   );
 }
 
-export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
+export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDuplicate, onClose }) {
   const i = initial || {};
   const firstApt = data.apartamentos[0];
   const [aptId, setAptId] = useState(i.apartamentoId || firstApt.id);
@@ -647,6 +647,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
     // Nova reserva: pré-carregar as taxas obrigatórias
     return mkExtrasObrigatorios(data.taxasAdicionais);
   });
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const apt = data.apartamentos.find(a => a.id === aptId) || firstApt;
   // este ambiente é partilhado pelos dois residenciais — os horários/sinal
@@ -697,8 +699,16 @@ export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
   const ORIGENS = [...new Set([origem, 'Manual', 'Site', 'Telefone', 'WhatsApp', 'Booking', 'Airbnb'])];
 
   return (
+    <>
     <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${residencial.nome} · ${apt.nome} · ${apt.piso} · ${apt.vista}`} onClose={onClose} wide
+      headerActions={!isNew && onDuplicate && (
+        <button onClick={() => { onDuplicate(i.id); onClose(); }} title="Duplicar reserva"
+          style={{ background: C.espuma, border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft, flexShrink: 0 }}>
+          <Copy size={17} />
+        </button>
+      )}
       footer={<>
+        {!isNew && onRemove && <Btn variant="danger" icon={Trash2} onClick={() => setConfirmDelete(true)} style={{ marginRight: 'auto' }}>Eliminar</Btn>}
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
         <Btn variant="primary" disabled={!canSave} style={{ opacity: canSave ? 1 : .5 }}
           onClick={() => {
@@ -721,13 +731,13 @@ export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
             if (isNew && enviarEmail) sendConfirmationEmail(r, apt, data.settings);
           }}>{isNew ? 'Salvar reserva' : 'Guardar alterações'}</Btn>
       </>}>
-      <div style={{ display: 'grid', gap: 20 }}>
+      <div style={{ display: 'grid', gap: 20, gridTemplateColumns: 'minmax(0, 1fr)' }}>
 
         {/* Status */}
         <div>
           <div style={secTitle}><Tag size={16} color={C.brisa} /> Status da reserva</div>
           <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Estado" hint={!isNew ? 'Para eliminar uma reserva, marque o estado como Cancelada — ela some do calendário e deixa de bloquear as datas.' : undefined}>
+            <Field label="Estado" hint={!isNew ? 'Marque como Cancelada para manter no histórico sem bloquear as datas, ou use "Eliminar" abaixo para remover definitivamente.' : undefined}>
               <Select value={status} onChange={e => setStatus(e.target.value)}>
                 <option value="confirmada">Reservado / Confirmada</option><option value="pendente">Pendente</option>
                 <option value="bloqueio">Bloqueio</option><option value="cancelada">Cancelada</option>
@@ -801,7 +811,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
         {status !== 'bloqueio' && <div>
           <div style={secTitle}><Wallet size={16} color={C.brisa} /> Detalhes de pagamento</div>
           <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="pm-hide-sm" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 560 }}>
                 <thead>
                   <tr style={{ background: C.espuma, color: C.inkSoft, textAlign: 'left' }}>
@@ -851,6 +861,39 @@ export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
                 </tbody>
               </table>
             </div>
+
+            {/* versão mobile — mesmos campos da tabela acima, empilhados em
+                cartões para que nada fique escondido atrás de rolagem horizontal */}
+            <div className="pm-pay-mobile" style={{ display: 'none' }}>
+              <div style={{ padding: 12, borderTop: `1px solid ${C.line}` }}>
+                <div style={{ fontWeight: 600, color: C.ink, marginBottom: 4 }}>{roomFullName(apt)}</div>
+                <div style={{ fontSize: 11.5, color: C.inkSoft, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <Info size={12} /> {n} {n === 1 ? 'noite' : 'noites'} · tabela {money(bd.total)} ({money(suggested)}/noite)
+                  {precoEdited && <button type="button" onClick={() => { setPrecoEdited(false); setPrecoNoite(suggested); }} style={{ background: 'none', border: 'none', color: C.coralDeep, cursor: 'pointer', fontWeight: 600, fontSize: 11.5, padding: 0 }}>repor</button>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <MoneyInput value={precoNoite} onChange={e => { setPrecoNoite(e.target.value === '' ? '' : Number(e.target.value)); setPrecoEdited(true); }} style={{ flex: 1 }} />
+                  <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{money(acomod)}</span>
+                </div>
+              </div>
+              {extras.map(e => {
+                const v = (Number(e.qtd) || 0) * (Number(e.preco) || 0);
+                return (
+                  <div key={e.id} style={{ padding: 12, borderTop: `1px solid ${C.line}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input className="pmf" value={e.nome} onChange={ev => updExtra(e.id, { nome: ev.target.value })} placeholder="Descrição do serviço" style={{ ...cellInput, flex: 1 }} />
+                      <button type="button" onClick={() => delExtra(e.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.inkSoft, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Trash2 size={15} /></button>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input className="pmf" type="number" min="0" value={e.qtd} onChange={ev => updExtra(e.id, { qtd: ev.target.value })} style={{ ...cellInput, width: 56, flexShrink: 0 }} />
+                      <MoneyInput value={e.preco} onChange={ev => updExtra(e.id, { preco: ev.target.value })} style={{ flex: 1 }} />
+                      <span style={{ fontWeight: 600, minWidth: 72, textAlign: 'right', color: v < 0 ? C.coralDeep : C.ink }}>{money(v)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <button type="button" onClick={() => addExtra()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.ocean, fontWeight: 600, fontSize: 12.5 }}><Plus size={14} /> Adicionar item</button>
               {adultoExtra > 0 && (
@@ -879,5 +922,13 @@ export function ReservationForm({ data, initial, isNew, onSave, onClose }) {
         </div>}
       </div>
     </Modal>
+    {confirmDelete && (
+      <ConfirmDialog
+        message={<>Eliminar definitivamente a reserva <b>{i.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
+        onConfirm={() => { onRemove(i.id); setConfirmDelete(false); }}
+        onCancel={() => setConfirmDelete(false)}
+      />
+    )}
+    </>
   );
 }
