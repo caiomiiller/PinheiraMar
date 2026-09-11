@@ -111,7 +111,7 @@ export default function App() {
       /* ── site público (booking-style) — telemóvel ── */
       .pm-pubsite-header-row{padding:10px 16px!important;gap:12px!important;height:auto!important;justify-content:center!important;}
       .pm-pubsite-brand-desktop{display:none!important;}
-      .pm-pubsite-brand-mobile{display:block!important;height:72px!important;width:auto!important;}
+      .pm-pubsite-brand-mobile{display:block!important;height:96px!important;width:auto!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
       .pm-pubsite-lang{display:none!important;}
@@ -122,7 +122,7 @@ export default function App() {
       .pm-cat-btn[data-active="true"] span{color:#FFF!important;}
       .pm-pubsite-main{padding:32px 16px 56px!important;}
       .pm-pubsite-group-head{gap:12px!important;}
-      .pm-pubsite-group-logo{height:44px!important;}
+      .pm-pubsite-group-logo{height:60px!important;}
       .pm-pubsite-group-count{width:100%!important;order:3;}
       .pm-pubsite-combo{padding:16px!important;}
       .pm-pubsite-footer-grid{padding:32px 16px!important;gap:28px!important;}

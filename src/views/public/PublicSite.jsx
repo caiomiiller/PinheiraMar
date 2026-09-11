@@ -271,7 +271,7 @@ export function PublicSite({ data, onCreate }) {
       <div ref={el => { groupRefs.current[r.id] = el; }} style={{ marginBottom: 72, scrollMarginTop: 140 }}>
         <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
           <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} className="pm-pubsite-group-logo"
-            style={{ height: 64, width: 'auto', maxWidth: 220, flexShrink: 0, display: 'block', objectFit: 'contain' }}
+            style={{ height: 84, width: 'auto', maxWidth: 260, flexShrink: 0, display: 'block', objectFit: 'contain' }}
             onError={e => { e.target.style.display = 'none'; }} />
           <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center' }}>
             <div style={{ fontSize: 13.5, color: GREY, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
@@ -331,14 +331,14 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ HEADER ══ */}
       <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
-        <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
+        <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 72, display: 'flex', alignItems: 'center', gap: 32 }}>
 
           {/* marca PinheiraMar — garante que o cabeçalho nunca fica vazio no telemóvel
               (onde a busca e o seletor de idioma ficam escondidos) */}
           <a href="/" className="pm-pubsite-brand" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
             {/* horizontal no desktop (cabe melhor numa barra estreita); vertical, maior e
                 centrado no telemóvel — trocados por CSS na media query mobile em App.jsx */}
-            <img src="/logo-horizontal.png" alt="PinheiraMar" className="pm-pubsite-brand-desktop" style={{ height: 40, width: 'auto', display: 'block' }} />
+            <img src="/logo-horizontal.png" alt="PinheiraMar" className="pm-pubsite-brand-desktop" style={{ height: 56, width: 'auto', display: 'block' }} />
             <img src="/logo-vertical-pinheiramar.png" alt="PinheiraMar" className="pm-pubsite-brand-mobile" style={{ height: 40, width: 'auto', display: 'none' }} />
           </a>
 
