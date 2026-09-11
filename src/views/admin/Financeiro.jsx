@@ -3,12 +3,24 @@ import { Download, CreditCard, Wallet, ChevronDown } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, fmtLong, fmtShort } from '../../lib/helpers';
 import { buildCSV, downloadBlob } from '../../lib/csvUtils';
-import { Card, PageHead, Badge, Select, Field, Btn } from '../../components/ui';
+import { Card, PageHead, Badge, Select, Field, Btn, DateInput } from '../../components/ui';
 import * as XLSX from 'xlsx';
 
 export function Financeiro({ data, go }) {
   const t = today();
   const [periodo, setPeriodo] = useState('all');
+  // período "Personalizado" — datas escolhidas livremente pelo utilizador
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const selectPeriodo = (id) => {
+    setPeriodo(id);
+    // ao entrar em "Personalizado" pela primeira vez, sugere o mês atual como
+    // ponto de partida em vez de deixar os campos vazios (o que filtraria tudo)
+    if (id === 'custom' && !customFrom && !customTo) {
+      setCustomFrom(ymd(new Date(t.getFullYear(), t.getMonth(), 1)));
+      setCustomTo(ymd(t));
+    }
+  };
 
   const PERIODOS = [
     { id: 'all',  label: 'Todo período' },
@@ -16,6 +28,7 @@ export function Financeiro({ data, go }) {
     { id: 'month', label: 'Este mês' },
     { id: '30d',  label: 'Últimos 30 dias' },
     { id: '90d',  label: 'Últimos 90 dias' },
+    { id: 'custom', label: 'Personalizado' },
   ];
   const inPeriodo = (r) => {
     const d = parseYMD(r.checkIn);
@@ -30,6 +43,11 @@ export function Financeiro({ data, go }) {
     if (periodo === 'month') return d.getFullYear() === y && d.getMonth() === m;
     if (periodo === '30d')   return diffDias >= 0 && diffDias <= 30;
     if (periodo === '90d')   return diffDias >= 0 && diffDias <= 90;
+    if (periodo === 'custom') {
+      if (customFrom && d < parseYMD(customFrom)) return false;
+      if (customTo && d > parseYMD(customTo)) return false;
+      return true;
+    }
     return true;
   };
 
@@ -81,12 +99,28 @@ export function Financeiro({ data, go }) {
     <div>
       <PageHead title="Financeiro" sub="Receitas, estatísticas e desempenho por apartamento."
         action={
-          <div style={{ display: 'flex', flexWrap: 'wrap', background: C.espuma, borderRadius: 10, padding: 3 }}>
-            {PERIODOS.map(p => (
-              <button key={p.id} onClick={() => setPeriodo(p.id)} style={{ padding: '7px 12px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: periodo === p.id ? '#fff' : 'transparent', color: periodo === p.id ? C.ocean : C.inkSoft, boxShadow: periodo === p.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none', whiteSpace: 'nowrap' }}>
-                {p.label}
-              </button>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', background: C.espuma, borderRadius: 10, padding: 3 }}>
+              {PERIODOS.map(p => (
+                <button key={p.id} onClick={() => selectPeriodo(p.id)} style={{ padding: '7px 12px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: periodo === p.id ? '#fff' : 'transparent', color: periodo === p.id ? C.ocean : C.inkSoft, boxShadow: periodo === p.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none', whiteSpace: 'nowrap' }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {periodo === 'custom' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: C.inkSoft, fontWeight: 600 }}>
+                  De
+                  <DateInput value={customFrom} max={customTo || undefined}
+                    onChange={e => setCustomFrom(e.target.value)} style={{ width: 150, padding: '6px 9px', fontSize: 12.5 }} />
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: C.inkSoft, fontWeight: 600 }}>
+                  até
+                  <DateInput value={customTo} min={customFrom || undefined}
+                    onChange={e => setCustomTo(e.target.value)} style={{ width: 150, padding: '6px 9px', fontSize: 12.5 }} />
+                </label>
+              </div>
+            )}
           </div>
         } />
 
