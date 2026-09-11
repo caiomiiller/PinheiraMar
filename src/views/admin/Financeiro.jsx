@@ -52,7 +52,6 @@ export function Financeiro({ data, go }) {
     const noites = rs.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0);
     return { nome: a.nome, receita, qtd, noites };
   }).sort((a, b) => b.receita - a.receita);
-  const maxReceita = porApt.length ? Math.max(...porApt.map(p => p.receita)) : 1;
 
   // receita por mês (últimos 12 meses)
   const porMes = [];
@@ -118,12 +117,12 @@ export function Financeiro({ data, go }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 18, marginBottom: 18 }} className="pm-dash-grid">
         {/* receita por apartamento */}
         <Card style={{ padding: 20 }}>
-          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: '0 0 16px' }}>Desempenho por apartamento <span style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 400 }}>(barra e % comparam cada apartamento ao de maior receita no período — não é fatia do total)</span></h3>
+          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: '0 0 16px' }}>Desempenho por apartamento <span style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 400 }}>(participação de cada um na receita total do período)</span></h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${C.line}` }}>
-                  {['Apartamento', 'Reservas', 'Noites', 'Receita', 'Desempenho'].map(h => (
+                  {['Apartamento', 'Reservas', 'Noites', 'Receita', 'Participação'].map(h => (
                     <th key={h} style={{ padding: '6px 10px 10px', textAlign: h === 'Apartamento' ? 'left' : 'right', color: C.inkSoft, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -138,9 +137,9 @@ export function Financeiro({ data, go }) {
                     <td style={{ padding: '9px 10px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
                         <div style={{ width: 64, height: 7, background: C.espuma, borderRadius: 4, overflow: 'hidden' }}>
-                          <div style={{ width: `${maxReceita > 0 ? Math.round((p.receita / maxReceita) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.brisa},${C.ocean})`, borderRadius: 4 }} />
+                          <div style={{ width: `${recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.brisa},${C.ocean})`, borderRadius: 4 }} />
                         </div>
-                        <span style={{ fontSize: 12, color: C.inkSoft, minWidth: 30, textAlign: 'right' }}>{maxReceita > 0 ? Math.round((p.receita / maxReceita) * 100) : 0}%</span>
+                        <span style={{ fontSize: 12, color: C.inkSoft, minWidth: 30, textAlign: 'right' }}>{recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%</span>
                       </div>
                     </td>
                   </tr>
