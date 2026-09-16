@@ -373,6 +373,10 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               </div>
               {/* rows */}
               {data.apartamentos.map(apt => {
+                // residencial do apartamento — precisa dele para o sinalPct
+                // usado no prefixo "50% " das reservas em estado "Reservado"
+                // (ver etiqueta da barra abaixo).
+                const residencial = residencialOf(data, apt);
                 const segs = data.reservas.filter(r => r.apartamentoId === apt.id && r.status !== 'cancelada').map(r => {
                   const rawS = Math.round((parseYMD(r.checkIn) - start) / MS);
                   const rawE = Math.round((parseYMD(r.checkOut) - start) / MS);
@@ -386,7 +390,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <div style={{ width: NAMEW, flexShrink: 0, padding: '0 14px', borderRight: `1px solid ${C.line}`, background: '#fff', display: 'flex', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflow: 'hidden' }}>
                         <span style={{ fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap' }}>{apt.nome}</span>
-                        <ResBadge residencial={residencialOf(data, apt)} />
+                        <ResBadge residencial={residencial} />
                         <span style={{ fontSize: 11.5, color: C.inkSoft, whiteSpace: 'nowrap' }}>{apt.capacidade}p</span>
                       </div>
                     </div>
@@ -410,10 +414,14 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       </div>
                       {/* reservation bars */}
                       {segs.map(({ r, left, right }) => {
+                        // "50% " por escrito, além da cor amarela — a pedido do
+                        // Caio, para ficar claro mesmo sem depender só da cor que a
+                        // reserva já está em "Reservado" (sinal confirmado).
+                        const sinalMark = r.status === 'reservado' ? `${residencial.sinalPct}% ` : '';
                         return (
                           <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)${r.checkinRealizado ? ' · Check-in realizado' : ''}${r.checkoutRealizado ? ' · Check-out realizado' : ''}`}
                             style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: barBackground(displayStatus(r)), color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
-                            {r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || 'Reserva')}
+                            {r.status === 'bloqueio' ? '⛔ Bloqueio' : `${sinalMark}${r.hospede || 'Reserva'}`}
                           </button>
                         );
                       })}
