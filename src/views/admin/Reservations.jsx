@@ -9,7 +9,7 @@ import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
 import { mkExtrasObrigatorios, buildCSV, downloadBlob, rowToReserva,
   EXTRA_PRESETS, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
-  NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground } from '../../components/ui';
+  NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import { sendConfirmationEmail } from '../../lib/email';
 import * as XLSX from 'xlsx';
@@ -408,7 +408,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       {segs.map(({ r, left, right }) => {
                         return (
                           <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)${r.checkinRealizado ? ' · Check-in realizado' : ''}${r.checkoutRealizado ? ' · Check-out realizado' : ''}`}
-                            style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: barBackground(r.status), color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
+                            style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: barBackground(displayStatus(r)), color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
                             {r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || 'Reserva')}
                           </button>
                         );
@@ -420,7 +420,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             </div>
           </div>
           <div className="pm-res-legend" style={{ display: 'flex', gap: 16, padding: '12px 16px', fontSize: 12.5, color: C.inkSoft, flexWrap: 'wrap', alignItems: 'center', borderTop: `1px solid ${C.line}` }}>
-            {Object.entries(STATUS).filter(([k]) => k !== 'cancelada').map(([k, s]) =>
+            {Object.entries(STATUS).filter(([k]) => k !== 'cancelada' && k !== 'checkout').map(([k, s]) =>
               <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: barBackground(k) }} /> {s.label}</span>)}
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LogIn size={12} color="#065F46" /> Check-in realizado</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LogOut size={12} color="#8A2E2E" /> Check-out realizado</span>
@@ -540,7 +540,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{r.origem}</td>
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
-                    <td style={{ padding: '11px 14px' }}><Badge status={r.status} /></td>
+                    <td style={{ padding: '11px 14px' }}><Badge status={displayStatus(r)} /></td>
                     <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
                       <button onClick={() => setDeleteConfirm(r)} title="Eliminar" style={iconBtn}><Trash2 size={15} /></button>
                       <button onClick={() => setEditing(r)} title="Editar" style={{ ...iconBtn, marginLeft: 6 }}><Pencil size={15} /></button>
@@ -560,7 +560,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               <div key={r.id} style={{ padding: '13px 16px', borderTop: `1px solid ${C.line}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <span style={{ fontFamily: F.disp, fontSize: 12.5, color: C.ocean }}>{r.codigo}</span>
-                  <Badge status={r.status} />
+                  <Badge status={displayStatus(r)} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 700, fontSize: 15.5, marginBottom: 3, flexWrap: 'wrap' }}>
                   {r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || '—')}

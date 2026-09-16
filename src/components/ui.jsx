@@ -92,7 +92,21 @@ export const STATUS = {
   confirmado: { label: 'Confirmado', bg: '#E1F0EC', fg: '#1C7A5B', bar: '#2E9E78' },
   bloqueio: { label: 'Bloqueio', bg: '#E9ECEC', fg: '#5C6B6A', bar: '#8A9896', hatch: true },
   cancelada: { label: 'Cancelada', bg: '#F3E3E3', fg: '#A24C4C', bar: '#C98B8B' },
+  // pseudo-estado, só para cor/etiqueta (ver displayStatus abaixo) — nunca é
+  // uma opção do seletor "Estado" nem entra na legenda do calendário.
+  checkout: { label: 'Check-out', bg: '#F3E3E3', fg: '#A24C4C', bar: '#C98B8B' },
 };
+
+// Estado "efetivo" para pintar uma reserva concreta (barra do calendário,
+// Badge, cartões): a pedido do Caio, a reserva só fica vermelha de
+// check-out quando JÁ está Confirmado (100% pago) E o check-out foi
+// marcado — nos outros estados (Pendente/Reservado) o checkbox de
+// check-out não muda a cor, continua a mostrar o status de pagamento.
+// Usar sempre displayStatus(r), nunca r.status diretamente, em qualquer
+// sítio que pinte a reserva. STATUS[r.status] continua a ser o que se
+// lê/grava no formulário.
+export const displayStatus = (r) => (r.status === 'confirmado' && r.checkoutRealizado ? 'checkout' : r.status);
+
 export const Badge = ({ status }) => {
   const s = STATUS[status] || STATUS.pendente;
   return <span style={{ background: s.bg, color: s.fg, fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999 }}>{s.label}</span>;

@@ -2,7 +2,7 @@ import React from 'react';
 import { CalendarDays, Users, Wallet, BedDouble, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong } from '../../lib/helpers';
-import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge } from '../../components/ui';
+import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge, displayStatus } from '../../components/ui';
 
 export function Dashboard({ data, go, openReservation }) {
   const t = today();
@@ -58,7 +58,7 @@ export function Dashboard({ data, go, openReservation }) {
           </div>
           <div style={{ fontSize: 12, color: C.inkSoft }}>{aptName(r.apartamentoId)} · {nights(r.checkIn, r.checkOut)} noite(s)</div>
         </div>
-        <Badge status={r.status} />
+        <Badge status={displayStatus(r)} />
       </div>
     );
   };
