@@ -58,13 +58,14 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
     adultos: guests, criancas: 0, hospedes: guests,
     precoNoite: Math.round(bdX.total / Math.max(1, bdX.n)), precoTabela: bdX.total,
     extras: allExtras, total: totalVal, sinal: isB ? 0 : sinal,
-    // sinalPago automático: ao concluir este fluxo o sinal de 50% já está
-    // confirmado (hoje simbólico; quando o gateway de pagamento real estiver
-    // ligado, isto passa a refletir a confirmação dele). Não muda o status —
-    // a reserva continua "pendente" (por finalizar no check-in) até lá.
-    // A reserva "-B" (apartamento combinado) não tem sinal próprio (sinal:0
-    // acima), por isso também não leva a etiqueta de pago.
-    status: 'pendente', origem: 'Site', sinalPago: !isB, enviarEmail: true,
+    // sinalPago começa false: hoje, ao concluir este passo, o hóspede ainda
+    // não pagou nada de facto — o texto de confirmação (ConfirmationModal)
+    // pede para efetuar o sinal, e é a equipa que confirma manualmente
+    // depois (marcando o checkbox "Sinal já foi pago" no admin) quando vê o
+    // Pix/transferência cair. Quando o gateway de pagamento real estiver
+    // ligado, isto passa a ser confirmado automaticamente pelo webhook dele
+    // assim que o pagamento for aprovado — não neste passo do formulário.
+    status: 'pendente', origem: 'Site', sinalPago: false, enviarEmail: true,
     nota: isB ? `Reserva conjunta com ${apt.nome}` : hasApt2 ? `Reserva conjunta com ${apt2.nome}` : '',
     criadoEm: ymd(today()),
   });

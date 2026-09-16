@@ -65,7 +65,7 @@ export function seedData() {
     { id: 's7', nome: 'Pré-temporada 2025-2026', inicio: '2025-12-01', fim: '2025-12-25', minNoites: 3, maxNoites: null, ativa: true, precos: mkPrecos(1.4) },
   ];
   const byId = Object.fromEntries(apartamentos.map(a => [a.id, a]));
-  const mk = (aptId, ci, co, nome, sobrenome, adultos, criancas, status, origem, contacto, extras = []) => {
+  const mk = (aptId, ci, co, nome, sobrenome, adultos, criancas, status, origem, contacto, extras = [], sinalPago = false) => {
     const apt = byId[aptId];
     const bd = stayBreakdown(apt, seasons, ci, co);
     const n = Math.max(1, bd.n);
@@ -82,10 +82,11 @@ export function seedData() {
       precoNoite, precoTabela: status === 'bloqueio' ? 0 : bd.total,
       extras: extras.map(e => ({ id: uid(), ...e })), total, sinal: Math.round(total * 0.5),
       // sinalPago: separado do status — indica só se o sinal de 50% já foi
-      // recebido (hoje automático nas reservas "Site", ver BookingModal.jsx;
-      // futuramente virá confirmado pelo gateway de pagamento real). O status
-      // continua a representar o check-in/finalização, não o pagamento.
-      status, origem, sinalPago: origem === 'Site', enviarEmail: false,
+      // recebido (hoje marcado manualmente pelo gestor quando confirma o Pix/
+      // transferência; quando o gateway de pagamento real estiver ligado, o
+      // webhook dele é que vai marcar isto sozinho). O status continua a
+      // representar o check-in/finalização, não o pagamento.
+      status, origem, sinalPago, enviarEmail: false,
       nota: status === 'bloqueio' ? 'Manutenção / bloqueio interno' : '', criadoEm: ymd(today()),
     };
   };
@@ -94,7 +95,9 @@ export function seedData() {
   const reservas = [
     mk('a207', '2026-06-13', '2026-06-20', 'Carlos', 'Andrade', 5, 1, 'confirmada', 'Site', { email: 'andrade@email.com', tel: '47 99123-4567' }, [{ nome: 'Vaga de Estacionamento p/ 1 Automóvel', qtd: 1, preco: 50 }, { nome: 'Higienização e Serviços de Hospedagem', qtd: 1, preco: 175 }]),
     mk('a101', '2026-06-15', '2026-06-18', 'Mariana', 'Lopes', 3, 0, 'confirmada', 'WhatsApp', { email: 'mari.lopes@email.com', tel: '48 99888-1122' }),
-    mk('a305', '2026-06-19', '2026-06-26', 'Rui', 'Tavares', 2, 0, 'pendente', 'Site', { email: 'rui.t@email.com', tel: '21 99777-3344' }),
+    // exemplo de reserva "pendente" com o sinal já confirmado pelo gestor —
+    // é o caso que a etiqueta "💰 50% pago" existe para sinalizar
+    mk('a305', '2026-06-19', '2026-06-26', 'Rui', 'Tavares', 2, 0, 'pendente', 'Site', { email: 'rui.t@email.com', tel: '21 99777-3344' }, [], true),
     // Turnover no mesmo dia (14/06): João sai até às 10h e a Família Becker entra a partir das 13h
     mk('a204', '2026-06-12', '2026-06-14', 'João', 'Pereira', 4, 0, 'confirmada', 'Telefone', { email: 'jp@email.com', tel: '48 99555-9090' }),
     mk('a204', '2026-06-14', '2026-06-19', 'Helena', 'Becker', 3, 1, 'confirmada', 'Site', { email: 'becker@email.com', tel: '51 99444-2211' }),
