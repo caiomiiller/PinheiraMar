@@ -6,7 +6,7 @@ import { money, nights, ymd, uid, stayBreakdown, code, today, fmtShort } from '.
 import { sendConfirmationEmail } from '../lib/email';
 import { Btn, Modal, Field, TextInput, NumberInput, PhotoTile } from './ui';
 
-export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
+export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onConfirmed }) {
   const { apt, apt2, g1: initG1, g2: initG2 } = sel;
   const hasApt2 = !!apt2;
 
@@ -70,15 +70,50 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
     criadoEm: ymd(today()),
   });
 
-  const handleConfirm = () => {
+  // 'A processar…' enquanto a reserva é gravada e o pagamento (se
+  // configurado) é preparado — evita duplo clique e dá feedback ao hóspede
+  // durante o intervalo até o redirecionamento para o Mercado Pago.
+  const [paying, setPaying] = useState(false);
+
+  const handleConfirm = async () => {
+    setPaying(true);
     const r1 = buildR(apt, bd, g, [...extrasObrig, ...extrasOpc1], total1, false);
-    onConfirm(r1);
+    // espera a reserva estar mesmo gravada (Supabase, quando configurado)
+    // antes de redirecionar — sem isto, sair da página a meio da gravação
+    // podia perder a reserva.
+    await onCreate(r1);
     sendConfirmationEmail(r1, apt, data.settings);
     if (apt2 && bd2) {
       const r2 = buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true);
-      onConfirm(r2);
+      await onCreate(r2);
       sendConfirmationEmail(r2, apt2, data.settings);
     }
+
+    // tenta redirecionar para o pagamento do sinal no Mercado Pago — ver
+    // .env.example (MP_ACCESS_TOKEN). Sem isso configurado no servidor, ou
+    // se o pedido falhar por qualquer razão, cai-se no fluxo manual de
+    // sempre (ecrã de confirmação a pedir para pagar e aguardar contacto).
+    try {
+      const resp = await fetch('/api/mp-create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservaId: r1.id, codigo: r1.codigo,
+          hospede: { nome: r1.hospede, email: r1.email },
+          valor: r1.sinal,
+          descricao: `Sinal — ${data.settings.nome} — ${apt.nome}`,
+          origin: window.location.origin,
+        }),
+      });
+      if (resp.ok) {
+        const out = await resp.json();
+        if (out?.init_point) { window.location.href = out.init_point; return; }
+      }
+    } catch (err) {
+      console.warn('[pagamento] Mercado Pago indisponível — seguindo com confirmação manual do sinal.', err);
+    }
+    setPaying(false);
+    onConfirmed(r1);
   };
 
   // ── props partilhadas do Modal: seta de voltar (exceto no 1º passo) + barra de progresso ──
@@ -168,7 +203,7 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onConfirm }) {
   // ── Passo: Revisão e confirmação ───────────────────────────────────────────
   return (
     <Modal {...modalNav} title="Revisar e confirmar" subtitle={hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}
-      footer={<Btn variant="accent" disabled={!ok} style={{ width: '100%', opacity: ok ? 1 : .5 }} onClick={handleConfirm}>Confirmar reserva</Btn>}>
+      footer={<Btn variant="accent" disabled={!ok || paying} style={{ width: '100%', opacity: ok && !paying ? 1 : .5 }} onClick={handleConfirm}>{paying ? 'A processar…' : 'Confirmar reserva'}</Btn>}>
       <div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}`, marginBottom: 4 }}>
           <div style={{ width: 64, height: 64, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={64} radius={12} /></div>

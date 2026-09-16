@@ -54,7 +54,16 @@ export default function App() {
 
   // update data (globalmente) e persiste
   const update = (arg) => setData(prev => { const next = typeof arg === 'function' ? arg(prev) : { ...prev, ...arg }; saveData(next); return next; });
-  const createReservation = (r) => update(prev => ({ ...prev, reservas: [...prev.reservas, r] }));
+  // devolve a promessa de saveData (não só faz "fire and forget" como
+  // update()) — o BookingModal.jsx precisa de esperar a reserva estar
+  // mesmo gravada (idealmente já no Supabase) antes de redirecionar o
+  // hóspede para o Mercado Pago, para não arriscar perder a reserva se o
+  // navegador sair da página a meio da gravação.
+  const createReservation = (r) => {
+    const next = { ...data, reservas: [...data.reservas, r] };
+    setData(next);
+    return saveData(next);
+  };
 
   const css = `
     /* nunca deixar a página inteira deslocar-se na horizontal — qualquer

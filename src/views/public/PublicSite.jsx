@@ -80,6 +80,26 @@ export function PublicSite({ data, onCreate }) {
     try { localStorage.setItem('pm_liked', JSON.stringify(liked)); } catch { /* ignora (privado/bloqueado) */ }
   }, [liked]);
   const [detail, setDetail] = useState(null);
+
+  // Retorno do Mercado Pago (Checkout Pro): o hóspede saiu do site para
+  // pagar o sinal e volta aqui pela URL de retorno configurada em
+  // api/mp-create-preference.js (?mp=success|pending|failure&reserva=ID).
+  // A reserva já tinha sido gravada antes de sair (ver BookingModal.jsx),
+  // por isso só é preciso encontrá-la e mostrar o ecrã de confirmação —
+  // reaproveita o mesmo caminho (detail + done) do fluxo normal.
+  useEffect(() => {
+    let params;
+    try { params = new URLSearchParams(window.location.search); } catch { return; }
+    const status = params.get('mp');
+    const reservaId = params.get('reserva');
+    if (!status || !reservaId) return;
+    // limpa a URL logo — um refresh não deve reabrir o ecrã de confirmação
+    try { window.history.replaceState({}, '', window.location.pathname); } catch { /* ignora */ }
+    const reserva = data.reservas.find(r => r.id === reservaId);
+    const apt = reserva ? data.apartamentos.find(a => a.id === reserva.apartamentoId) : null;
+    if (reserva && apt) { setDetail(apt); setDone({ reserva, apt, paymentStatus: status }); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [activeCategory, setActiveCategory] = useState(null);
   const [sortMode, setSortMode] = useState('default'); // 'default' | 'price_asc' | 'price_desc'
   const [guestOpen, setGuestOpen] = useState(false);
@@ -318,8 +338,9 @@ export function PublicSite({ data, onCreate }) {
           onBack={() => setDetail(null)} onBook={(apt, apt2, g1, g2) => setBooking({ apt, apt2, g1, g2 })} tr={tr} />
         {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td, 2))} hosp={hosp || 2} data={bookingScoped}
           onClose={() => setBooking(null)}
-          onConfirm={r => { onCreate(r); setDone(d => d || { reserva: r, apt: booking.apt }); }} />}
-        {done && <ConfirmationModal info={done} settings={doneScoped.settings} onClose={() => { setDone(null); setBooking(null); setDetail(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
+          onCreate={onCreate}
+          onConfirmed={r => setDone(d => d || { reserva: r, apt: booking.apt })} />}
+        {done && <ConfirmationModal info={done} settings={doneScoped.settings} paymentStatus={done.paymentStatus} onClose={() => { setDone(null); setBooking(null); setDetail(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
       </>
     );
   }
