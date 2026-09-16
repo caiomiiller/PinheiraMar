@@ -5,7 +5,7 @@ import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy,
 import { C, F, THEMES } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
   isAvailable, stayBreakdown, nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS,
-  WD, HOLIDAY_COLORS, MS, seasonForDate, aptRates, roomFullName } from '../../lib/helpers';
+  WD, HOLIDAY_COLORS, MS, seasonForDate, aptRates, roomFullName, overlaps } from '../../lib/helpers';
 import { mkExtrasObrigatorios, buildCSV, downloadBlob, rowToReserva,
   EXTRA_PRESETS, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
@@ -497,22 +497,46 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
         const apt = data.apartamentos.find(a => a.id === quickRate.aptId);
         const startD = days[quickRate.startIdx], endD = days[quickRate.endIdx];
         const nNoites = quickRate.endIdx - quickRate.startIdx + 1;
+        const ciSel = ymd(startD), coSel = ymd(addDays(endD, 1));
+        // reservas deste apartamento que já ocupam (mesmo que só em parte) o
+        // período escolhido — a pedido do Caio, a tarifa rápida deve alterar
+        // diretamente o preço destas reservas (o mesmo campo "Preço" da edição
+        // da reserva), em vez de criar sempre uma nova temporada; só cria
+        // temporada quando não há reserva alguma no período.
+        const afetadas = data.reservas.filter(r =>
+          r.apartamentoId === apt.id && r.status !== 'cancelada' && r.status !== 'bloqueio' &&
+          overlaps(ciSel, coSel, r.checkIn, r.checkOut));
         return (
-          <QuickRateModal apt={apt} startD={startD} endD={endD} nNoites={nNoites}
+          <QuickRateModal apt={apt} startD={startD} endD={endD} nNoites={nNoites} afetadas={afetadas}
             onClose={() => setQuickRate(null)}
             onSave={preco => {
-              update(prev => ({
-                ...prev,
-                seasons: [{
-                  id: 's' + uid(),
-                  nome: `Tarifa rápida — ${apt.nome}`,
-                  inicio: ymd(startD),
-                  fim: ymd(endD),
-                  ativa: true,
-                  minNoites: 1,
-                  precos: { [apt.id]: { diaSemana: preco, fimSemana: preco } },
-                }, ...(prev.seasons || [])],
-              }));
+              update(prev => {
+                if (afetadas.length > 0) {
+                  const idsAfetadas = new Set(afetadas.map(r => r.id));
+                  return {
+                    ...prev,
+                    reservas: prev.reservas.map(r => {
+                      if (!idsAfetadas.has(r.id)) return r;
+                      const nr = Math.max(1, nights(r.checkIn, r.checkOut));
+                      const extrasVal = (r.extras || []).reduce((s, e) => s + (Number(e.qtd) || 0) * (Number(e.preco) || 0), 0);
+                      const acomod = Math.round(preco * nr);
+                      return { ...r, precoNoite: preco, total: acomod + extrasVal };
+                    }),
+                  };
+                }
+                return {
+                  ...prev,
+                  seasons: [{
+                    id: 's' + uid(),
+                    nome: `Tarifa rápida — ${apt.nome}`,
+                    inicio: ymd(startD),
+                    fim: ymd(endD),
+                    ativa: true,
+                    minNoites: 1,
+                    precos: { [apt.id]: { diaSemana: preco, fimSemana: preco } },
+                  }, ...(prev.seasons || [])],
+                };
+              });
               setQuickRate(null);
             }} />
         );
@@ -635,11 +659,17 @@ export const MoneyInput = ({ value, onChange, style }) => (
 );
 
 // Modal simples usado pela opção "Adicionar tarifa rápida" do menu de
-// arrastar no calendário — cria uma temporada pontual (só para este
-// apartamento e este período) em vez de reaproveitar o editor completo de
-// Opções de preços, para manter a ação de um único ecrã.
-function QuickRateModal({ apt, startD, endD, nNoites, onClose, onSave }) {
-  const [preco, setPreco] = useState(apt?.preco || 0);
+// arrastar no calendário. Quando o período escolhido já tem reserva(s) deste
+// apartamento, altera diretamente o preço por noite dessa(s) reserva(s) — o
+// mesmo campo "Preço" editável na edição da reserva — sem mexer nas datas.
+// Só quando não há reserva nenhuma no período é que cria uma temporada
+// pontual (para que uma futura reserva ali já nasça com este preço), em vez
+// de reaproveitar o editor completo de Opções de preços, para manter a ação
+// de um único ecrã.
+function QuickRateModal({ apt, startD, endD, nNoites, afetadas, onClose, onSave }) {
+  const temReservas = afetadas && afetadas.length > 0;
+  const umaReserva = afetadas && afetadas.length === 1 ? afetadas[0] : null;
+  const [preco, setPreco] = useState(() => (umaReserva ? umaReserva.precoNoite : (apt?.preco || 0)));
   return (
     <Modal title="Tarifa rápida"
       subtitle={`${apt?.nome} · ${fmtShort(ymd(startD))} → ${fmtShort(ymd(addDays(endD, 1)))} · ${nNoites} noite${nNoites > 1 ? 's' : ''}`}
@@ -649,7 +679,9 @@ function QuickRateModal({ apt, startD, endD, nNoites, onClose, onSave }) {
         <Btn variant="primary" onClick={() => onSave(Number(preco) || 0)}>Guardar tarifa</Btn>
       </>}>
       <Field label="Preço por noite neste período"
-        hint="Aplicado a todas as noites do período selecionado, só para este apartamento — substitui a tarifa normal enquanto durar. Pode ajustar ou remover depois em Opções de preços.">
+        hint={temReservas
+          ? `Este período já tem ${afetadas.length > 1 ? `${afetadas.length} reservas` : 'uma reserva'} deste apartamento — vai alterar diretamente o preço por noite ${afetadas.length > 1 ? 'delas' : 'dela'} (o mesmo campo "Preço" da edição da reserva), sem mexer nas datas.`
+          : 'Sem reservas neste período — cria uma tarifa especial só para este apartamento e este período, para que uma futura reserva aqui já nasça com este preço. Pode ajustar ou remover depois em Opções de preços.'}>
         <MoneyInput value={preco} onChange={e => setPreco(e.target.value)} />
       </Field>
     </Modal>

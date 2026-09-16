@@ -34,6 +34,13 @@ export default async function handler(req, res) {
   // falha do nosso lado) para não entrar num ciclo de reenvios automáticos
   // dele; os detalhes ficam só nos logs da função, para diagnóstico.
   try {
+    // Log mínimo de cada chamada recebida (método, query e o tipo indicado no
+    // corpo) — antes de qualquer "return" — para que, se o Mercado Pago um
+    // dia não avançar uma reserva, dê para confirmar nos logs da função da
+    // Vercel se o aviso chegou sequer (e com que forma), em vez de ter de
+    // adivinhar entre "nunca chegou" e "chegou mas foi ignorado/falhou".
+    console.log('[mp-webhook] recebido:', req.method, JSON.stringify(req.query || {}), 'body.type=', req.body && req.body.type);
+
     const token = process.env.MP_ACCESS_TOKEN;
     const supabaseUrl = process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -48,6 +55,7 @@ export default async function handler(req, res) {
     const paymentId = q['data.id'] || q.id || bodyId;
     const type = q.type || q.topic || (req.body && req.body.type);
     if (!paymentId || (type && type !== 'payment')) {
+      console.log('[mp-webhook] ignorado — sem paymentId ou tipo != payment (type=', type, ', paymentId=', paymentId, ')');
       res.status(200).json({ ok: true, ignored: true });
       return;
     }
