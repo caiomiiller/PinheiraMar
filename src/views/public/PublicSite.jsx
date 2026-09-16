@@ -6,7 +6,7 @@ import { C, F, WHATSAPP_URL } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
   stayBreakdown, nights, fmtShort, pad, WD } from '../../lib/helpers';
 import { useT } from '../../lib/translations';
-import { Btn, PhotoTile, Field } from '../../components/ui';
+import { Btn, PhotoTile, Field, Modal } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
 import { DestinoSection } from './DestinoSection';
@@ -104,6 +104,12 @@ export function PublicSite({ data, onCreate }) {
   const [sortMode, setSortMode] = useState('default'); // 'default' | 'price_asc' | 'price_desc'
   const [guestOpen, setGuestOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
+  // apartamento cujo calendário de disponibilidade está aberto num popover —
+  // mostrado quando o cartão está "indisponível" para as datas pesquisadas,
+  // para o visitante ver logo ali quais os dias livres desse apartamento.
+  const [calApt, setCalApt] = useState(null);
+  const [calCi, setCalCi] = useState('');
+  const [calCo, setCalCo] = useState('');
   const resultsRef = useRef(null);
   const headerRef = useRef(null);
   const groupRefs = useRef({});
@@ -214,7 +220,11 @@ export function PublicSite({ data, onCreate }) {
           </button>
           {!available && (
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.55)', display: 'grid', placeItems: 'center' }}>
-              <span style={{ background: WHITE, padding: '6px 14px', fontSize: 12, fontWeight: 600, letterSpacing: '.06em', color: GREY, border: `1px solid ${BORDER}` }}>INDISPONÍVEL</span>
+              <button onClick={e => { e.stopPropagation(); setCalCi(''); setCalCo(''); setCalApt(apt); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: WHITE, padding: '7px 14px', border: `1px solid ${BORDER}`, cursor: 'pointer', fontFamily: F.sans }}>
+                <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', color: GREY }}>INDISPONÍVEL</span>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: ACCENT }}>Ver datas livres</span>
+              </button>
             </div>
           )}
           {apt.vista === 'Frente Mar' && (
@@ -595,6 +605,17 @@ export function PublicSite({ data, onCreate }) {
           © {new Date().getFullYear()} PINHEIRA HOSPEDAGENS — TODOS OS DIREITOS RESERVADOS
         </div>
       </footer>
+      {calApt && (
+        <Modal title={`Datas livres · ${calApt.nome}`}
+          subtitle="Escolha um período livre para ver este apartamento nos resultados."
+          onClose={() => setCalApt(null)}>
+          <AvailabilityCalendar apt={calApt} reservas={data.reservas} ci={calCi} co={calCo}
+            onChange={(nci, nco) => {
+              setCalCi(nci); setCalCo(nco);
+              if (nci && nco) { setCi(nci); setCo(nco); setCalApt(null); }
+            }} />
+        </Modal>
+      )}
     </div>
   );
 }

@@ -6,6 +6,13 @@ import { ymd, parseYMD, addDays, today, isAvailable, fmtShort, WD } from '../lib
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho',
   'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
+// Cor de fundo por defeito de cada dia (antes de qualquer seleção): verde
+// claro para disponível, vermelho claro para indisponível — mesma paleta
+// usada no estado das reservas em ui.jsx (STATUS.confirmado/cancelada), para
+// manter a mesma linguagem visual entre o site público e o painel.
+const DIA_DISPONIVEL = '#E1F0EC';
+const DIA_INDISPONIVEL = '#F3E3E3';
+
 function buildMonthCells(year, month) {
   const startWeekday = new Date(year, month, 1).getDay(); // 0=Dom
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -95,6 +102,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange }) {
                 const isStart = selCi && ymd(d) === ymd(selCi);
                 const isEnd = rangeEnd && ymd(d) === ymd(rangeEnd);
                 const within = inRange(d);
+                const baseBg = past ? 'transparent' : (blocked ? DIA_INDISPONIVEL : DIA_DISPONIVEL);
                 return (
                   <button key={i}
                     disabled={disabled && !isStart && !isEnd}
@@ -104,7 +112,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange }) {
                     style={{
                       aspectRatio: '1', border: 'none', borderRadius: '50%', padding: 0,
                       fontSize: 11.5, cursor: disabled ? 'default' : 'pointer',
-                      background: (isStart || isEnd) ? C.ocean : (within ? C.espuma : 'transparent'),
+                      background: (isStart || isEnd) ? C.ocean : (within ? C.espuma : baseBg),
                       color: (isStart || isEnd) ? '#fff' : (disabled ? '#C7CFCC' : C.ink),
                       textDecoration: blocked ? 'line-through' : 'none',
                       fontWeight: (isStart || isEnd) ? 700 : 500,
@@ -122,10 +130,10 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange }) {
         {apt && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: C.inkSoft }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.espuma, border: `1px solid ${C.line}`, display: 'inline-block' }} /> disponível
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: DIA_DISPONIVEL, border: `1px solid ${C.line}`, display: 'inline-block' }} /> disponível
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff', border: `1px solid ${C.line}`, textDecoration: 'line-through', display: 'inline-block' }} /> ocupado
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: DIA_INDISPONIVEL, border: `1px solid ${C.line}`, display: 'inline-block' }} /> ocupado
             </span>
           </div>
         )}
