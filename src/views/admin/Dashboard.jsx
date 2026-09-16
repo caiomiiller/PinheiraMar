@@ -2,7 +2,7 @@ import React from 'react';
 import { CalendarDays, Users, Wallet, BedDouble, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong } from '../../lib/helpers';
-import { Card, PageHead, Badge, Btn, SinalPagoBadge } from '../../components/ui';
+import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge } from '../../components/ui';
 
 export function Dashboard({ data, go, openReservation }) {
   const t = today();
@@ -31,7 +31,7 @@ export function Dashboard({ data, go, openReservation }) {
   const totalAtivos = data.apartamentos.filter(a => a.ativo).length;
 
   const stats = [
-    { label: 'Reservas ativas',        value: ativas.length,          icon: CalendarDays, sub: `${data.reservas.filter(r => r.status === 'pendente').length} pendentes`,              click: () => go('reservas') },
+    { label: 'Reservas ativas',        value: ativas.length,          icon: CalendarDays, sub: `${data.reservas.filter(r => r.status === 'pendente').length} pendentes · ${data.reservas.filter(r => r.status === 'reservado').length} reservadas`,              click: () => go('reservas') },
     { label: 'Ocupação (30 dias)',      value: ocup + '%',             icon: Home,         sub: `${ocupadas} de ${totalNoites} noites`,                                               click: null },
     { label: 'Temporada atual',         value: season ? season.nome : 'Tarifa base', icon: Tag, sub: season ? `${fmtShort(season.inicio)} – ${fmtShort(season.fim)}` : '—',          click: () => go('temporadas') },
     { label: 'Disponíveis hoje',        value: `${disponiveisHoje} / ${totalAtivos}`, icon: Building2, sub: `${totalAtivos - disponiveisHoje} ocupado(s) agora`,                   click: () => go('reservas') },
@@ -53,7 +53,8 @@ export function Dashboard({ data, go, openReservation }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.status === 'bloqueio' ? 'Bloqueio' : (r.hospede || '—')}</span>
-            {r.status === 'pendente' && r.sinalPago && <SinalPagoBadge compact />}
+            {r.checkinRealizado && <CheckinBadge compact />}
+            {r.checkoutRealizado && <CheckoutBadge compact />}
           </div>
           <div style={{ fontSize: 12, color: C.inkSoft }}>{aptName(r.apartamentoId)} · {nights(r.checkIn, r.checkOut)} noite(s)</div>
         </div>

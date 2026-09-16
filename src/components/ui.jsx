@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, X, ChevronLeft, ChevronRight, Waves, MapPin, GripVertical,
-  AlertCircle, BedDouble, Wifi, Car, Minus, Plus, Info } from 'lucide-react';
+  AlertCircle, BedDouble, Wifi, Car, Minus, Plus, Info, LogIn, LogOut } from 'lucide-react';
 import { C, F } from '../lib/constants';
 
 const inputStyle = { width: '100%', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontSize: '14px', outline: 'none', fontFamily: F.sans };
@@ -75,10 +75,22 @@ export const Field = ({ label, children, hint, required }) => (
   </label>
 );
 
+// Modelo de 5 estados (a pedido do Caio, 2026-09-16): a cor representa só o
+// pagamento/disponibilidade, nunca o check-in físico — isso agora é
+// registado à parte pelos checkboxes "Check-in realizado"/"Check-out
+// realizado" (ver CheckinBadge/CheckoutBadge abaixo e Reservations.jsx).
+//   pendente   (cinza)          — nenhum pagamento registado ainda
+//   reservado  (amarelo)        — sinal de 50% confirmado (automático via
+//                                 Mercado Pago, ou marcado manualmente para
+//                                 reservas por telefone/WhatsApp)
+//   confirmado (verde)          — pagamento dos 100% confirmado
+//   bloqueio   (cinza riscado)  — período bloqueado, não disponível
+//   cancelada  (vermelho)       — reserva cancelada, período liberto
 export const STATUS = {
-  confirmada: { label: 'Confirmada', bg: '#E1F0EC', fg: '#1C7A5B', bar: '#2E9E78' },
-  pendente: { label: 'Pendente', bg: '#FBEFD9', fg: '#9A6A14', bar: '#E0A23A' },
-  bloqueio: { label: 'Bloqueio', bg: '#E9ECEC', fg: '#5C6B6A', bar: '#8A9896' },
+  pendente: { label: 'Pendente', bg: '#EDEFEF', fg: '#5C6B6A', bar: '#AEB8B7' },
+  reservado: { label: 'Reservado', bg: '#FBEFD9', fg: '#9A6A14', bar: '#E0A23A' },
+  confirmado: { label: 'Confirmado', bg: '#E1F0EC', fg: '#1C7A5B', bar: '#2E9E78' },
+  bloqueio: { label: 'Bloqueio', bg: '#E9ECEC', fg: '#5C6B6A', bar: '#8A9896', hatch: true },
   cancelada: { label: 'Cancelada', bg: '#F3E3E3', fg: '#A24C4C', bar: '#C98B8B' },
 };
 export const Badge = ({ status }) => {
@@ -86,15 +98,29 @@ export const Badge = ({ status }) => {
   return <span style={{ background: s.bg, color: s.fg, fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999 }}>{s.label}</span>;
 };
 
-// Etiqueta "50% pago" — sinaliza que o sinal já foi recebido (automaticamente
-// pelo site/gateway, ou marcado manualmente), SEM mexer no estado da reserva
-// nem na sua cor. É um dado independente do check-in: o estado (Pendente →
-// Reservado/Confirmada) continua a representar o check-in/finalização, esta
-// etiqueta representa só o pagamento. Ver Reservations.jsx e Dashboard.jsx.
-export const SinalPagoBadge = ({ compact }) => (
-  <span title="Sinal de 50% já recebido — falta o saldo no check-in"
+// Fundo da barra no calendário/legenda: bloqueio ganha um risco diagonal
+// ("riscos", a pedido do Caio) para se distinguir à primeira vista mesmo
+// sendo também acinzentado — os outros estados usam a cor sólida normal.
+export const barBackground = (status) => {
+  const s = STATUS[status] || STATUS.pendente;
+  return s.hatch
+    ? `repeating-linear-gradient(45deg, ${s.bar} 0px, ${s.bar} 6px, ${s.bg} 6px, ${s.bg} 12px)`
+    : s.bar;
+};
+
+// Etiquetas de check-in/check-out realizados — independentes do status (que
+// agora representa só o pagamento): marcam se o hóspede já chegou/saiu de
+// facto. Ver Reservations.jsx (checkboxes) e Dashboard.jsx.
+export const CheckinBadge = ({ compact }) => (
+  <span title="Check-in já realizado"
     style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: compact ? 10 : 10.5, fontWeight: 700, color: '#065F46', background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 999, padding: compact ? '1px 5px' : '2px 8px', whiteSpace: 'nowrap', lineHeight: 1.4 }}>
-    💰{!compact && ' 50% pago'}
+    <LogIn size={compact ? 10 : 11} />{!compact && ' Check-in'}
+  </span>
+);
+export const CheckoutBadge = ({ compact }) => (
+  <span title="Check-out já realizado"
+    style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: compact ? 10 : 10.5, fontWeight: 700, color: '#8A2E2E', background: '#FBE3E3', border: '1px solid #EFB3B3', borderRadius: 999, padding: compact ? '1px 5px' : '2px 8px', whiteSpace: 'nowrap', lineHeight: 1.4 }}>
+    <LogOut size={compact ? 10 : 11} />{!compact && ' Check-out'}
   </span>
 );
 

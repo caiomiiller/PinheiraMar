@@ -52,14 +52,17 @@ export function Financeiro({ data, go }) {
   };
 
   const filtradas = data.reservas.filter(r => r.status !== 'cancelada' && inPeriodo(r));
-  const confirmadas = filtradas.filter(r => r.status === 'confirmada');
+  const confirmadas = filtradas.filter(r => r.status === 'confirmado');
+  const reservadas  = filtradas.filter(r => r.status === 'reservado');
   const pendentes   = filtradas.filter(r => r.status === 'pendente');
   const bloqueios   = filtradas.filter(r => r.status === 'bloqueio');
 
   const recConf  = confirmadas.reduce((s, r) => s + r.total, 0);
-  const recPend  = pendentes.reduce((s, r)   => s + r.total, 0);
+  // "prevista" junta reservado (50% já confirmado) + pendente (ainda sem
+  // pagamento) — ambos ainda não são receita 100% garantida.
+  const recPend  = [...reservadas, ...pendentes].reduce((s, r) => s + r.total, 0);
   const recTotal = recConf + recPend;
-  const ticketMedio = (confirmadas.length + pendentes.length) > 0 ? Math.round(recTotal / (confirmadas.length + pendentes.length)) : 0;
+  const ticketMedio = (confirmadas.length + reservadas.length + pendentes.length) > 0 ? Math.round(recTotal / (confirmadas.length + reservadas.length + pendentes.length)) : 0;
   const mediaNoites = filtradas.length > 0 ? (filtradas.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0) / filtradas.length).toFixed(1) : '—';
 
   // receita por apartamento
@@ -76,7 +79,7 @@ export function Financeiro({ data, go }) {
   for (let i = 11; i >= 0; i--) {
     const d = new Date(t.getFullYear(), t.getMonth() - i, 1);
     const y = d.getFullYear(), m = d.getMonth();
-    const rs = data.reservas.filter(r => r.status === 'confirmada' && parseYMD(r.checkIn).getFullYear() === y && parseYMD(r.checkIn).getMonth() === m);
+    const rs = data.reservas.filter(r => r.status === 'confirmado' && parseYMD(r.checkIn).getFullYear() === y && parseYMD(r.checkIn).getMonth() === m);
     porMes.push({ label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }), v: rs.reduce((s, r) => s + r.total, 0) });
   }
   const maxMes = Math.max(...porMes.map(m => m.v), 1);
@@ -127,7 +130,7 @@ export function Financeiro({ data, go }) {
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 22 }}>
         <KPI label="Receita confirmada" value={money(recConf)} sub={`${confirmadas.length} reservas`} accent />
-        <KPI label="Receita prevista" value={money(recPend)} sub={`${pendentes.length} pendentes`} />
+        <KPI label="Receita prevista" value={money(recPend)} sub={`${reservadas.length} reservadas · ${pendentes.length} pendentes`} />
         <KPI label="Receita total" value={money(recTotal)} sub="confirmada + prevista" />
         <KPI label="Ticket médio" value={ticketMedio > 0 ? money(ticketMedio) : '—'} sub="por reserva" />
         <KPI label="Média de noites" value={mediaNoites} sub="por estadia" />
@@ -215,7 +218,7 @@ export function Financeiro({ data, go }) {
 
           <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 18, paddingTop: 14 }}>
             <h4 style={{ fontFamily: F.disp, fontSize: 15, margin: '0 0 10px', color: C.inkSoft }}>Reservas por status</h4>
-            {[['confirmada', 'Confirmadas'], ['pendente', 'Pendentes'], ['bloqueio', 'Bloqueios']].map(([st, label]) => {
+            {[['confirmado', 'Confirmadas'], ['reservado', 'Reservadas'], ['pendente', 'Pendentes'], ['bloqueio', 'Bloqueios']].map(([st, label]) => {
               const n = filtradas.filter(r => r.status === st).length;
               return (
                 <div key={st} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>

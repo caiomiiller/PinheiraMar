@@ -65,7 +65,7 @@ export function seedData() {
     { id: 's7', nome: 'Pré-temporada 2025-2026', inicio: '2025-12-01', fim: '2025-12-25', minNoites: 3, maxNoites: null, ativa: true, precos: mkPrecos(1.4) },
   ];
   const byId = Object.fromEntries(apartamentos.map(a => [a.id, a]));
-  const mk = (aptId, ci, co, nome, sobrenome, adultos, criancas, status, origem, contacto, extras = [], sinalPago = false) => {
+  const mk = (aptId, ci, co, nome, sobrenome, adultos, criancas, status, origem, contacto, extras = [], checkinRealizado = false, checkoutRealizado = false) => {
     const apt = byId[aptId];
     const bd = stayBreakdown(apt, seasons, ci, co);
     const n = Math.max(1, bd.n);
@@ -81,27 +81,27 @@ export function seedData() {
       hospedes: status === 'bloqueio' ? 0 : adultos + criancas,
       precoNoite, precoTabela: status === 'bloqueio' ? 0 : bd.total,
       extras: extras.map(e => ({ id: uid(), ...e })), total, sinal: Math.round(total * 0.5),
-      // sinalPago: separado do status — indica só se o sinal de 50% já foi
-      // recebido (hoje marcado manualmente pelo gestor quando confirma o Pix/
-      // transferência; quando o gateway de pagamento real estiver ligado, o
-      // webhook dele é que vai marcar isto sozinho). O status continua a
-      // representar o check-in/finalização, não o pagamento.
-      status, origem, sinalPago, enviarEmail: false,
+      // checkinRealizado/checkoutRealizado: independentes do status (que
+      // agora representa só o pagamento — pendente/reservado/confirmado) —
+      // marcam se o hóspede já chegou/saiu de facto.
+      status, origem, checkinRealizado, checkoutRealizado, enviarEmail: false,
       nota: status === 'bloqueio' ? 'Manutenção / bloqueio interno' : '', criadoEm: ymd(today()),
     };
   };
   // Todas as reservas-seed são do PinheiraMar (o Novo Residencial começa sem
   // histórico — é normal, é um imóvel que acabou de ser adquirido).
   const reservas = [
-    mk('a207', '2026-06-13', '2026-06-20', 'Carlos', 'Andrade', 5, 1, 'confirmada', 'Site', { email: 'andrade@email.com', tel: '47 99123-4567' }, [{ nome: 'Vaga de Estacionamento p/ 1 Automóvel', qtd: 1, preco: 50 }, { nome: 'Higienização e Serviços de Hospedagem', qtd: 1, preco: 175 }]),
-    mk('a101', '2026-06-15', '2026-06-18', 'Mariana', 'Lopes', 3, 0, 'confirmada', 'WhatsApp', { email: 'mari.lopes@email.com', tel: '48 99888-1122' }),
-    // exemplo de reserva "pendente" com o sinal já confirmado pelo gestor —
-    // é o caso que a etiqueta "💰 50% pago" existe para sinalizar
-    mk('a305', '2026-06-19', '2026-06-26', 'Rui', 'Tavares', 2, 0, 'pendente', 'Site', { email: 'rui.t@email.com', tel: '21 99777-3344' }, [], true),
+    // checkinRealizado: true — exemplo de hóspede já chegado (etiqueta verde)
+    mk('a207', '2026-06-13', '2026-06-20', 'Carlos', 'Andrade', 5, 1, 'confirmado', 'Site', { email: 'andrade@email.com', tel: '47 99123-4567' }, [{ nome: 'Vaga de Estacionamento p/ 1 Automóvel', qtd: 1, preco: 50 }, { nome: 'Higienização e Serviços de Hospedagem', qtd: 1, preco: 175 }], true),
+    mk('a101', '2026-06-15', '2026-06-18', 'Mariana', 'Lopes', 3, 0, 'confirmado', 'WhatsApp', { email: 'mari.lopes@email.com', tel: '48 99888-1122' }),
+    // exemplo de reserva "Reservado" — sinal de 50% já confirmado, falta o
+    // saldo/check-in (é o caso que a cor amarela existe para sinalizar)
+    mk('a305', '2026-06-19', '2026-06-26', 'Rui', 'Tavares', 2, 0, 'reservado', 'Site', { email: 'rui.t@email.com', tel: '21 99777-3344' }),
     // Turnover no mesmo dia (14/06): João sai até às 10h e a Família Becker entra a partir das 13h
-    mk('a204', '2026-06-12', '2026-06-14', 'João', 'Pereira', 4, 0, 'confirmada', 'Telefone', { email: 'jp@email.com', tel: '48 99555-9090' }),
-    mk('a204', '2026-06-14', '2026-06-19', 'Helena', 'Becker', 3, 1, 'confirmada', 'Site', { email: 'becker@email.com', tel: '51 99444-2211' }),
-    mk('a206', '2026-06-16', '2026-06-21', 'Diego', 'Martins', 4, 2, 'confirmada', 'Booking', { email: 'diego.m@email.com', tel: '48 99222-7788', pais: 'Argentina' }, [{ nome: 'Desconto de negociação', qtd: 1, preco: -150 }]),
+    // checkoutRealizado: true — exemplo de estadia já finalizada (etiqueta vermelha)
+    mk('a204', '2026-06-12', '2026-06-14', 'João', 'Pereira', 4, 0, 'confirmado', 'Telefone', { email: 'jp@email.com', tel: '48 99555-9090' }, [], true, true),
+    mk('a204', '2026-06-14', '2026-06-19', 'Helena', 'Becker', 3, 1, 'confirmado', 'Site', { email: 'becker@email.com', tel: '51 99444-2211' }),
+    mk('a206', '2026-06-16', '2026-06-21', 'Diego', 'Martins', 4, 2, 'confirmado', 'Booking', { email: 'diego.m@email.com', tel: '48 99222-7788', pais: 'Argentina' }, [{ nome: 'Desconto de negociação', qtd: 1, preco: -150 }]),
     mk('a102', '2026-06-22', '2026-06-25', '', '', 0, 0, 'bloqueio', 'Manual', {}),
   ];
 

@@ -6,8 +6,9 @@
 //
 // O que faz: recebe o aviso, busca o pagamento de verdade na API do Mercado
 // Pago (usando o MP_ACCESS_TOKEN — nunca confiar nos dados que vêm só na
-// notificação, podem ser forjados), e se estiver aprovado, marca
-// sinalPago:true na reserva correspondente (localizada por external_reference,
+// notificação, podem ser forjados), e se estiver aprovado, avança o status
+// da reserva correspondente de 'pendente' para 'reservado' (50% pago —
+// ver STATUS em src/components/ui.jsx), localizada por external_reference,
 // que é o id da reserva — ver BookingModal.jsx/api/mp-create-preference.js).
 //
 // Configuração: MP_ACCESS_TOKEN (ver mp-create-preference.js) + as mesmas
@@ -68,8 +69,8 @@ export default async function handler(req, res) {
     }
 
     if (payment.status !== 'approved') {
-      // pendente, rejeitado, estornado, etc. — não marcamos sinalPago; a
-      // reserva fica como está (o gestor vê pelo status/sinalPago que ainda
+      // pendente, rejeitado, estornado, etc. — não avançamos o status; a
+      // reserva fica como está (o gestor vê pelo Estado no admin que ainda
       // não há confirmação e pode acompanhar manualmente se precisar).
       res.status(200).json({ ok: true, status: payment.status });
       return;
@@ -92,11 +93,13 @@ export default async function handler(req, res) {
       return;
     }
 
-    // idempotente: se um reenvio do mesmo aviso chegar depois, não faz nada.
-    if (!state.reservas[idx].sinalPago) {
+    // idempotente: só avança 'pendente' → 'reservado'. Se um reenvio do
+    // mesmo aviso chegar depois (ou o gestor já tiver avançado o status
+    // manualmente para 'confirmado'/'cancelada'), não mexe em nada.
+    if (state.reservas[idx].status === 'pendente') {
       state.reservas[idx] = {
         ...state.reservas[idx],
-        sinalPago: true,
+        status: 'reservado',
         pagamentoMpId: String(payment.id),
         pagamentoConfirmadoEm: new Date().toISOString(),
       };
@@ -104,7 +107,7 @@ export default async function handler(req, res) {
         .from('app_state')
         .update({ data: state, updated_at: new Date().toISOString() })
         .eq('id', 'main');
-      if (writeErr) console.error('[mp-webhook] Falha ao gravar sinalPago:', writeErr);
+      if (writeErr) console.error('[mp-webhook] Falha ao gravar status reservado:', writeErr);
     }
 
     res.status(200).json({ ok: true });

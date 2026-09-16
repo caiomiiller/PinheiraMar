@@ -58,14 +58,13 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
     adultos: guests, criancas: 0, hospedes: guests,
     precoNoite: Math.round(bdX.total / Math.max(1, bdX.n)), precoTabela: bdX.total,
     extras: allExtras, total: totalVal, sinal: isB ? 0 : sinal,
-    // sinalPago começa false: hoje, ao concluir este passo, o hóspede ainda
-    // não pagou nada de facto — o texto de confirmação (ConfirmationModal)
-    // pede para efetuar o sinal, e é a equipa que confirma manualmente
-    // depois (marcando o checkbox "Sinal já foi pago" no admin) quando vê o
-    // Pix/transferência cair. Quando o gateway de pagamento real estiver
-    // ligado, isto passa a ser confirmado automaticamente pelo webhook dele
-    // assim que o pagamento for aprovado — não neste passo do formulário.
-    status: 'pendente', origem: 'Site', sinalPago: false, enviarEmail: true,
+    // status começa 'pendente' (cinza, sem pagamento): hoje, ao concluir
+    // este passo, o hóspede ainda não pagou nada de facto — o texto de
+    // confirmação (ConfirmationModal) pede para efetuar o sinal. Quando o
+    // Mercado Pago confirma o pagamento (api/mp-webhook.js), o status passa
+    // automaticamente a 'reservado' (amarelo, 50% pago); para reservas por
+    // telefone/WhatsApp a equipa muda o Estado manualmente no admin.
+    status: 'pendente', origem: 'Site', checkinRealizado: false, checkoutRealizado: false, enviarEmail: true,
     nota: isB ? `Reserva conjunta com ${apt.nome}` : hasApt2 ? `Reserva conjunta com ${apt2.nome}` : '',
     criadoEm: ymd(today()),
   });

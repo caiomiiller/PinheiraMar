@@ -103,7 +103,7 @@ export function rowToReserva(row, apartamentos) {
     pais: String(get('Country') || '').trim() || 'Brasil',
     adultos: 2, criancas: 0, hospedes: 2,
     precoNoite: Math.round(rev / n), precoTabela: sub || rev, extras: [], total: rev,
-    sinal: Math.round(rev * 0.5), status: 'confirmada', origem: 'Importado', enviarEmail: false,
+    sinal: Math.round(rev * 0.5), status: 'confirmado', origem: 'Importado', enviarEmail: false,
     nota: '', criadoEm: parseAnyDate(get('Create Date')) || ymd(today()),
   };
 }
