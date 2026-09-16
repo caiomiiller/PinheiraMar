@@ -2,7 +2,7 @@ import React from 'react';
 import { CalendarDays, Users, Wallet, BedDouble, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong } from '../../lib/helpers';
-import { Card, PageHead, Badge, Btn } from '../../components/ui';
+import { Card, PageHead, Badge, Btn, SinalPagoBadge } from '../../components/ui';
 
 export function Dashboard({ data, go, openReservation }) {
   const t = today();
@@ -51,7 +51,10 @@ export function Dashboard({ data, go, openReservation }) {
           {isToday && <div style={{ fontSize: 9, fontWeight: 700, color: C.coralDeep }}>HOJE</div>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.status === 'bloqueio' ? 'Bloqueio' : (r.hospede || '—')}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.status === 'bloqueio' ? 'Bloqueio' : (r.hospede || '—')}</span>
+            {r.status === 'pendente' && r.sinalPago && <SinalPagoBadge compact />}
+          </div>
           <div style={{ fontSize: 12, color: C.inkSoft }}>{aptName(r.apartamentoId)} · {nights(r.checkIn, r.checkOut)} noite(s)</div>
         </div>
         <Badge status={r.status} />

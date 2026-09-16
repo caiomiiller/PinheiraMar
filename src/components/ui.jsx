@@ -86,6 +86,18 @@ export const Badge = ({ status }) => {
   return <span style={{ background: s.bg, color: s.fg, fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999 }}>{s.label}</span>;
 };
 
+// Etiqueta "50% pago" — sinaliza que o sinal já foi recebido (automaticamente
+// pelo site/gateway, ou marcado manualmente), SEM mexer no estado da reserva
+// nem na sua cor. É um dado independente do check-in: o estado (Pendente →
+// Reservado/Confirmada) continua a representar o check-in/finalização, esta
+// etiqueta representa só o pagamento. Ver Reservations.jsx e Dashboard.jsx.
+export const SinalPagoBadge = ({ compact }) => (
+  <span title="Sinal de 50% já recebido — falta o saldo no check-in"
+    style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: compact ? 10 : 10.5, fontWeight: 700, color: '#065F46', background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 999, padding: compact ? '1px 5px' : '2px 8px', whiteSpace: 'nowrap', lineHeight: 1.4 }}>
+    💰{!compact && ' 50% pago'}
+  </span>
+);
+
 export function PhotoTile({ apt, h = 184, radius = 14 }) {
   if (apt.foto) {
     // Usa <img> em vez de background-image: os browsers aplicam um

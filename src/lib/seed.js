@@ -81,7 +81,11 @@ export function seedData() {
       hospedes: status === 'bloqueio' ? 0 : adultos + criancas,
       precoNoite, precoTabela: status === 'bloqueio' ? 0 : bd.total,
       extras: extras.map(e => ({ id: uid(), ...e })), total, sinal: Math.round(total * 0.5),
-      status, origem, enviarEmail: false,
+      // sinalPago: separado do status — indica só se o sinal de 50% já foi
+      // recebido (hoje automático nas reservas "Site", ver BookingModal.jsx;
+      // futuramente virá confirmado pelo gateway de pagamento real). O status
+      // continua a representar o check-in/finalização, não o pagamento.
+      status, origem, sinalPago: origem === 'Site', enviarEmail: false,
       nota: status === 'bloqueio' ? 'Manutenção / bloqueio interno' : '', criadoEm: ymd(today()),
     };
   };

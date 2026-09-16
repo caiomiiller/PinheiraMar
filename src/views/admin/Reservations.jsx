@@ -9,7 +9,7 @@ import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
 import { mkExtrasObrigatorios, buildCSV, downloadBlob, rowToReserva,
   EXTRA_PRESETS, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
-  NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS, ConfirmDialog } from '../../components/ui';
+  NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS, ConfirmDialog, SinalPagoBadge } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
 import { sendConfirmationEmail } from '../../lib/email';
 import * as XLSX from 'xlsx';
@@ -408,9 +408,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       {segs.map(({ r, left, right }) => {
                         const st = STATUS[r.status];
                         return (
-                          <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)`}
+                          <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)${r.status === 'pendente' && r.sinalPago ? ' · Sinal de 50% já pago — falta o saldo no check-in' : ''}`}
                             style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: st.bar, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
-                            {r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || 'Reserva')}
+                            {r.status === 'bloqueio' ? '⛔ Bloqueio' : `${r.status === 'pendente' && r.sinalPago ? '💰 ' : ''}${r.hospede || 'Reserva'}`}
                           </button>
                         );
                       })}
@@ -423,6 +423,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
           <div className="pm-res-legend" style={{ display: 'flex', gap: 16, padding: '12px 16px', fontSize: 12.5, color: C.inkSoft, flexWrap: 'wrap', alignItems: 'center', borderTop: `1px solid ${C.line}` }}>
             {Object.entries(STATUS).filter(([k]) => k !== 'cancelada').map(([k, s]) =>
               <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: s.bar }} /> {s.label}</span>)}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>💰 Sinal de 50% já pago (falta o saldo no check-in)</span>
             <span className="pm-hide-sm" style={{ width: 1, height: 16, background: C.line }} />
             {Object.entries(HOLIDAY_LABELS).map(([tp, label]) =>
               <span key={tp} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} /> {label}</span>)}
@@ -527,7 +528,14 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', fontFamily: F.disp, color: C.ocean }}>{r.codigo}</td>
                     <td style={{ padding: '11px 14px' }}><ResPill residencial={aptResidencial(r.apartamentoId)} /></td>
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{aptName(r.apartamentoId)}</td>
-                    <td style={{ padding: '11px 14px' }}>{r.status === 'bloqueio' ? <span style={{ color: C.inkSoft }}>—</span> : r.hospede}</td>
+                    <td style={{ padding: '11px 14px' }}>
+                      {r.status === 'bloqueio' ? <span style={{ color: C.inkSoft }}>—</span> : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                          {r.hospede}
+                          {r.status === 'pendente' && r.sinalPago && <SinalPagoBadge compact />}
+                        </span>
+                      )}
+                    </td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{r.origem}</td>
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
@@ -553,7 +561,10 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                   <span style={{ fontFamily: F.disp, fontSize: 12.5, color: C.ocean }}>{r.codigo}</span>
                   <Badge status={r.status} />
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 15.5, marginBottom: 3 }}>{r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || '—')}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 700, fontSize: 15.5, marginBottom: 3 }}>
+                  {r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || '—')}
+                  {r.status === 'pendente' && r.sinalPago && <SinalPagoBadge compact />}
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 12.5, color: C.inkSoft, marginBottom: 6 }}>
                   <ResPill residencial={aptResidencial(r.apartamentoId)} /> <span>{aptName(r.apartamentoId)}</span>
                 </div>
@@ -647,6 +658,10 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const [pais, setPais] = useState(i.pais || 'Brasil');
   const [email, setEmail] = useState(i.email || '');
   const [enviarEmail, setEnviarEmail] = useState(i.enviarEmail || false);
+  // sinalPago: separado do status — diz só se o sinal de 50% já entrou (hoje
+  // automático nas reservas do site, ver BookingModal.jsx/seed.js). O status
+  // continua a controlar o check-in/finalização, não o pagamento.
+  const [sinalPago, setSinalPago] = useState(i.sinalPago || false);
   const [nota, setNota] = useState(i.nota || '');
   const [extras, setExtras] = useState(() => {
     if (!isNew && i.extras && i.extras.length > 0) {
@@ -732,7 +747,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
               precoTabela: status === 'bloqueio' ? 0 : bd.total,
               extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
-              total, sinal, enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
+              total, sinal, sinalPago: status === 'bloqueio' ? false : sinalPago, enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
             };
             onSave(r);
             // só envia ao CRIAR a reserva — reeditar uma reserva existente com a
@@ -919,6 +934,11 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                 </button>
               ))}
             </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 16px', borderTop: `1px solid ${C.line}`, background: sinalPago ? '#EAFBF4' : C.espuma, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: sinalPago ? '#0B6B4F' : C.ink }}>
+              <input type="checkbox" checked={sinalPago} onChange={e => setSinalPago(e.target.checked)} />
+              💰 Sinal de {residencial.sinalPct}% ({money(sinal)}) já foi pago
+              <span style={{ fontWeight: 400, color: C.inkSoft, fontSize: 12 }}>— automático nas reservas do Site; marque manualmente para reservas por telefone/WhatsApp.</span>
+            </label>
             <div style={{ background: C.oceanDeep, color: '#fff', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Sinal {residencial.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
