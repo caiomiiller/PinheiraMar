@@ -160,7 +160,21 @@ export function PublicSite({ data, onCreate }) {
     }
   }, []); // eslint-disable-line
 
-  const openDetail = (apt) => { setDetail(apt); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const openDetail = (apt) => {
+    try { window.history.pushState({ pmView: 'detail' }, ''); } catch { /* ignora */ }
+    setDetail(apt);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Botão "Voltar" do navegador: fecha o que estiver aberto por cima da
+  // pesquisa (detalhe do apartamento, reserva, confirmação) e devolve o
+  // visitante à página principal, em vez de sair do site — consome a
+  // entrada de histórico criada em openDetail() acima.
+  useEffect(() => {
+    const handlePopState = () => { setDone(null); setBooking(null); setDetail(null); };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   /* ── tokens ── */
   const BLACK  = '#0D0D0D';
@@ -345,7 +359,7 @@ export function PublicSite({ data, onCreate }) {
         <AptDetailPage apt={detail} data={scoped} ci={ci} co={co} hosp={hosp} valid={valid}
           setCi={setCi} setCo={setCo} setHosp={setHosp}
           liked={liked} setLiked={setLiked}
-          onBack={() => setDetail(null)} onBook={(apt, apt2, g1, g2) => setBooking({ apt, apt2, g1, g2 })} tr={tr} />
+          onBack={() => window.history.back()} onBook={(apt, apt2, g1, g2) => setBooking({ apt, apt2, g1, g2 })} tr={tr} />
         {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td, 2))} hosp={hosp || 2} data={bookingScoped}
           onClose={() => setBooking(null)}
           onCreate={onCreate}

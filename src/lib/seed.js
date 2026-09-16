@@ -35,17 +35,17 @@ export function seedData() {
     { id: 'a316', residencialId: 'pinheiramar', nome: 'Apto 316', tipo: 'Apto 316 - 2°Piso à beira mar, 6 pessoas', piso: '2º Piso', vista: 'Beira-mar', capacidade: 6, preco: 340, foto: '/fotos/a316/2.jpg', fotos: ['/fotos/a316/2.jpg', '/fotos/a316/1.jpg', '/fotos/a316/3.jpg', '/fotos/a316/4.jpg', '/fotos/a316/5.jpg', '/fotos/a316/6.jpg', '/fotos/a316/7.jpg', '/fotos/a316/8.jpg', '/fotos/a316/9.jpg', '/fotos/a316/10.jpg'], ativo: true },
     { id: 'a317', residencialId: 'pinheiramar', nome: 'Apto 317', tipo: 'Apto 317 - 2°Piso à beira mar, 6 pessoas', piso: '2º Piso', vista: 'Beira-mar', capacidade: 6, preco: 340, foto: '/fotos/a317/2.jpg', fotos: ['/fotos/a317/2.jpg', '/fotos/a317/1.jpg', '/fotos/a317/3.jpg', '/fotos/a317/4.jpg', '/fotos/a317/5.jpg', '/fotos/a317/6.jpg'], ativo: true },
 
-    // ── Novo Residencial (a 150m da Praia da Pinheira) ──────────────────
+    // ── Novo Residencial (a 50m da Praia da Pinheira) ──────────────────
     // Preços de arranque estimados a partir da tabela do PinheiraMar por
     // capacidade/piso (não há "Frente Mar" aqui — usa a faixa "à beira-mar"
     // como referência, com um pequeno acréscimo por piso, tal como no
     // PinheiraMar). Ajusta livremente em Admin → Apartamentos.
-    { id: 'n01', residencialId: 'novoimovel', nome: 'Apto 01', tipo: 'Apto 01 - Térreo, a 150m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 150m da praia', capacidade: 6, preco: 320, foto: '/fotos/n01/1.jpg', fotos: ['/fotos/n01/1.jpg', '/fotos/n01/2.jpg', '/fotos/n01/3.jpg', '/fotos/n01/4.jpg', '/fotos/n01/5.jpg', '/fotos/n01/6.jpg', '/fotos/n01/7.jpg'], ativo: true },
-    { id: 'n02', residencialId: 'novoimovel', nome: 'Apto 02', tipo: 'Apto 02 - Térreo, a 150m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 150m da praia', capacidade: 6, preco: 320, foto: '/fotos/n02/1.jpg', fotos: ['/fotos/n02/1.jpg', '/fotos/n02/2.jpg', '/fotos/n02/3.jpg', '/fotos/n02/4.jpg', '/fotos/n02/5.jpg', '/fotos/n02/6.jpg', '/fotos/n02/7.jpg'], ativo: true },
-    { id: 'n03', residencialId: 'novoimovel', nome: 'Apto 03', tipo: 'Apto 03 - 2º Piso, a 150m da praia, 4 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 4, preco: 260, foto: '/fotos/n03/1.jpg', fotos: ['/fotos/n03/1.jpg', '/fotos/n03/2.jpg', '/fotos/n03/3.jpg', '/fotos/n03/4.jpg', '/fotos/n03/5.jpg', '/fotos/n03/6.jpg'], ativo: true },
-    { id: 'n04', residencialId: 'novoimovel', nome: 'Apto 04', tipo: 'Apto 04 - 2º Piso, a 150m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 9, preco: 440, foto: '/fotos/n04/1.jpg', fotos: ['/fotos/n04/1.jpg', '/fotos/n04/2.jpg', '/fotos/n04/3.jpg', '/fotos/n04/4.jpg', '/fotos/n04/5.jpg', '/fotos/n04/6.jpg', '/fotos/n04/7.jpg', '/fotos/n04/8.jpg'], ativo: true },
-    { id: 'n05', residencialId: 'novoimovel', nome: 'Apto 05', tipo: 'Apto 05 - 2º Piso, a 150m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 150m da praia', capacidade: 9, preco: 440, foto: '/fotos/n05/1.jpg', fotos: ['/fotos/n05/1.jpg', '/fotos/n05/2.jpg', '/fotos/n05/3.jpg', '/fotos/n05/4.jpg', '/fotos/n05/5.jpg', '/fotos/n05/6.jpg', '/fotos/n05/7.jpg', '/fotos/n05/8.jpg', '/fotos/n05/9.jpg', '/fotos/n05/10.jpg', '/fotos/n05/11.jpg', '/fotos/n05/12.jpg', '/fotos/n05/13.jpg', '/fotos/n05/14.jpg', '/fotos/n05/15.jpg', '/fotos/n05/16.jpg', '/fotos/n05/17.jpg', '/fotos/n05/18.jpg', '/fotos/n05/19.jpg'], ativo: true },
-    { id: 'n06', residencialId: 'novoimovel', nome: 'Apto 06', tipo: 'Apto 06 - Cobertura (3º Piso), a 150m da praia, 6 pessoas', piso: 'Cobertura', vista: 'A 150m da praia', capacidade: 6, preco: 380, foto: '', ativo: true },
+    { id: 'n01', residencialId: 'novoimovel', nome: 'Apto 01', tipo: 'Apto 01 - Térreo, a 50m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 50m da praia', capacidade: 6, preco: 320, foto: '/fotos/n01/1.jpg', fotos: ['/fotos/n01/1.jpg', '/fotos/n01/2.jpg', '/fotos/n01/3.jpg', '/fotos/n01/4.jpg', '/fotos/n01/5.jpg', '/fotos/n01/6.jpg', '/fotos/n01/7.jpg'], ativo: true },
+    { id: 'n02', residencialId: 'novoimovel', nome: 'Apto 02', tipo: 'Apto 02 - Térreo, a 50m da praia, 6 pessoas', piso: 'Térreo', vista: 'A 50m da praia', capacidade: 6, preco: 320, foto: '/fotos/n02/1.jpg', fotos: ['/fotos/n02/1.jpg', '/fotos/n02/2.jpg', '/fotos/n02/3.jpg', '/fotos/n02/4.jpg', '/fotos/n02/5.jpg', '/fotos/n02/6.jpg', '/fotos/n02/7.jpg'], ativo: true },
+    { id: 'n03', residencialId: 'novoimovel', nome: 'Apto 03', tipo: 'Apto 03 - 2º Piso, a 50m da praia, 4 pessoas', piso: '2º Piso', vista: 'A 50m da praia', capacidade: 4, preco: 260, foto: '/fotos/n03/1.jpg', fotos: ['/fotos/n03/1.jpg', '/fotos/n03/2.jpg', '/fotos/n03/3.jpg', '/fotos/n03/4.jpg', '/fotos/n03/5.jpg', '/fotos/n03/6.jpg'], ativo: true },
+    { id: 'n04', residencialId: 'novoimovel', nome: 'Apto 04', tipo: 'Apto 04 - 2º Piso, a 50m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 50m da praia', capacidade: 9, preco: 440, foto: '/fotos/n04/1.jpg', fotos: ['/fotos/n04/1.jpg', '/fotos/n04/2.jpg', '/fotos/n04/3.jpg', '/fotos/n04/4.jpg', '/fotos/n04/5.jpg', '/fotos/n04/6.jpg', '/fotos/n04/7.jpg', '/fotos/n04/8.jpg'], ativo: true },
+    { id: 'n05', residencialId: 'novoimovel', nome: 'Apto 05', tipo: 'Apto 05 - 2º Piso, a 50m da praia, 9 pessoas', piso: '2º Piso', vista: 'A 50m da praia', capacidade: 9, preco: 440, foto: '/fotos/n05/1.jpg', fotos: ['/fotos/n05/1.jpg', '/fotos/n05/2.jpg', '/fotos/n05/3.jpg', '/fotos/n05/4.jpg', '/fotos/n05/5.jpg', '/fotos/n05/6.jpg', '/fotos/n05/7.jpg', '/fotos/n05/8.jpg', '/fotos/n05/9.jpg', '/fotos/n05/10.jpg', '/fotos/n05/11.jpg', '/fotos/n05/12.jpg', '/fotos/n05/13.jpg', '/fotos/n05/14.jpg', '/fotos/n05/15.jpg', '/fotos/n05/16.jpg', '/fotos/n05/17.jpg', '/fotos/n05/18.jpg', '/fotos/n05/19.jpg'], ativo: true },
+    { id: 'n06', residencialId: 'novoimovel', nome: 'Apto 06', tipo: 'Apto 06 - Cobertura (3º Piso), a 50m da praia, 6 pessoas', piso: 'Cobertura', vista: 'A 50m da praia', capacidade: 6, preco: 380, foto: '', ativo: true },
   ];
 
   // Gera preços por apartamento para uma temporada: diária × fator, fim de semana com acréscimo.
@@ -242,9 +242,9 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       },
       idiomas,
       site: '',
-      regiaoLabel: 'a 150m da Praia da Pinheira',
-      heroEyebrow: 'A 150m da Praia da Pinheira · Palhoça · Santa Catarina',
-      heroLine1: 'Apartamentos', heroLine2: 'a 150m da praia,', heroAccent: 'do jeito certo.',
+      regiaoLabel: 'a 50m da Praia da Pinheira',
+      heroEyebrow: 'A 50m da Praia da Pinheira · Palhoça · Santa Catarina',
+      heroLine1: 'Apartamentos', heroLine2: 'a 50m da praia,', heroAccent: 'do jeito certo.',
       heroSubtext: 'Apartamentos residenciais completos, a poucos passos da Praia da Pinheira.',
       heroImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1800&q=85&auto=format&fit=crop',
     },
