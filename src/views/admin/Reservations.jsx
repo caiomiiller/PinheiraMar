@@ -62,8 +62,11 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   }, [openReservationId]);
 
   const COLW = 38, NAMEW = 170; // reduzido para mostrar mais dias do mês sem rolar tanto
-  // mostra sempre o mês inteiro (28-31 dias, conforme o mês de `start`, que é
-  // sempre o dia 1 do mês exibido) em vez de uma janela fixa de dias
+  // Número de dias mostrados = dias no mês de `start`. Ao escolher um mês no
+  // seletor, `start` fica no dia 1 desse mês, logo mostra 1 a 28-31 (mês
+  // inteiro). Ao navegar pelas setas < > (shiftWeek, 7 em 7 dias), `start`
+  // deixa de ser sempre o dia 1 — a janela desliza em blocos de 7 dias e pode
+  // atravessar a fronteira do mês (o monthLabel abaixo já trata esse caso).
   const DAYS = useMemo(() => new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(), [start]);
   const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => addDays(start, i)), [start, DAYS]);
   const aptName = (id) => data.apartamentos.find(a => a.id === id)?.nome || '—';
@@ -83,10 +86,11 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     setStart(new Date(year, month, 1));
     setMonthPickerOpen(false);
   };
-  /* advance/retreat by whole months */
-  const shiftMonth = (delta) => {
-    const d = new Date(start.getFullYear(), start.getMonth() + delta, 1);
-    setStart(d);
+  /* avança/recua a janela do calendário de 7 em 7 dias (a pedido do Caio) —
+     a escolha de mês no seletor continua a mostrar o mês inteiro (1 a 31),
+     isto só afeta as setas < > ao lado do botão "Hoje". */
+  const shiftWeek = (delta) => {
+    setStart(d => addDays(d, 7 * delta));
   };
 
   /* close picker on outside click */
@@ -316,12 +320,12 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             )}
           </div>
 
-          {/* ── navegação — o calendário mostra sempre o mês inteiro, por isso só há
-                 avanço/recuo de mês (a navegação por semana foi removida) ── */}
+          {/* ── navegação: setas avançam/recuam 7 dias; o seletor de mês (acima)
+                 continua a mostrar o mês inteiro quando um mês é escolhido ── */}
           <div className="pm-res-navrow" style={{ display: 'flex', alignItems: 'center', gap: 16, marginLeft: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {/* mês anterior */}
-              <button onClick={() => shiftMonth(-1)} title="Mês anterior"
+              {/* 7 dias atrás */}
+              <button onClick={() => shiftWeek(-1)} title="Recuar 7 dias"
                 style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: '8px 0 0 8px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
                 <ChevronLeft size={14} />
               </button>
@@ -330,8 +334,8 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                 style={{ height: 32, padding: '0 12px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                 Hoje
               </button>
-              {/* próximo mês */}
-              <button onClick={() => shiftMonth(1)} title="Próximo mês"
+              {/* 7 dias à frente */}
+              <button onClick={() => shiftWeek(1)} title="Avançar 7 dias"
                 style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderLeft: 'none', borderRadius: '0 8px 8px 0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
                 <ChevronRight size={14} />
               </button>
