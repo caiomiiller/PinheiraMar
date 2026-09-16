@@ -107,19 +107,23 @@ export const STATUS = {
 // lê/grava no formulário.
 export const displayStatus = (r) => (r.status === 'confirmado' && r.checkoutRealizado ? 'checkout' : r.status);
 
-export const Badge = ({ status }) => {
-  const s = STATUS[status] || STATUS.pendente;
-  return <span style={{ background: s.bg, color: s.fg, fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999 }}>{s.label}</span>;
-};
-
 // Fundo da barra no calendário/legenda: bloqueio ganha um risco diagonal
 // ("riscos", a pedido do Caio) para se distinguir à primeira vista mesmo
 // sendo também acinzentado — os outros estados usam a cor sólida normal.
+const hatchPattern = (base, stripe) => `repeating-linear-gradient(45deg, ${base} 0px, ${base} 6px, ${stripe} 6px, ${stripe} 12px)`;
 export const barBackground = (status) => {
   const s = STATUS[status] || STATUS.pendente;
-  return s.hatch
-    ? `repeating-linear-gradient(45deg, ${s.bar} 0px, ${s.bar} 6px, ${s.bg} 6px, ${s.bg} 12px)`
-    : s.bar;
+  return s.hatch ? hatchPattern(s.bar, s.bg) : s.bar;
+};
+
+// Tag de estado — mesmo sistema de cores do calendário (a pedido do Caio,
+// para a tela de Lista ficar tão legível quanto o calendário à primeira
+// vista): fundo sólido na cor "forte" do estado (`fg`, já pensada para bom
+// contraste) com texto branco, em vez do estilo pastel anterior.
+export const Badge = ({ status }) => {
+  const s = STATUS[status] || STATUS.pendente;
+  const bg = s.hatch ? hatchPattern(s.fg, s.bar) : s.fg;
+  return <span style={{ background: bg, color: '#fff', fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999, ...(s.hatch ? { textShadow: '0 1px 2px rgba(0,0,0,.45)' } : {}) }}>{s.label}</span>;
 };
 
 // Etiquetas de check-in/check-out realizados — independentes do status (que
