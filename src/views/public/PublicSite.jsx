@@ -398,7 +398,7 @@ export function PublicSite({ data, onCreate }) {
           <a href="/" className="pm-pubsite-brand" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
             {/* horizontal no desktop (cabe melhor numa barra estreita); vertical, maior e
                 centrado no telemóvel — trocados por CSS na media query mobile em App.jsx */}
-            <img src="/logo-horizontal.png" alt="PinheiraMar" className="pm-pubsite-brand-desktop" style={{ height: 56, width: 'auto', display: 'block' }} />
+            <img src="/logo-horizontal.png" alt="PinheiraMar" className="pm-pubsite-brand-desktop" style={{ height: 60, width: 'auto', display: 'block' }} />
             <img src="/logo-vertical-pinheiramar.png" alt="PinheiraMar" className="pm-pubsite-brand-mobile" style={{ height: 40, width: 'auto', display: 'none' }} />
           </a>
 
