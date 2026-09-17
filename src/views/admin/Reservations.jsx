@@ -20,11 +20,30 @@ import * as XLSX from 'xlsx';
 const residencialOf = (data, apt) => (data.residenciais || []).find(r => r.id === apt?.residencialId) || (data.residenciais || [])[0];
 const residencialCor = (residencialId) => (THEMES[residencialId] || THEMES.pinheiramar).ocean;
 
+// Verde-pastel a marcar o dia de hoje no calendário. É a única coloração de
+// fundo que resta: as faixas de fim-de-semana e de feriado foram retiradas
+// porque cortavam as barras das reservas em fatias e davam a impressão de
+// estarem partidas ou fora de sítio. Os feriados continuam assinalados pelos
+// pontinhos e pela dica do cabeçalho, que não passam por cima de nada.
+const HOJE_CABECALHO = '#CDEBCF';
+const HOJE_CELULA = '#EDF7EE';
+const HOJE_TEXTO = '#1C7A4B';
+
 const residencialSigla = (nome = '') => nome.replace(/^Residencial\s+/i, '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '—';
 
-// monograma compacto (usado onde o espaço é apertado, ex.: calendário)
+// Marca de cada residencial — o galo do PinheiraMar, as ondas do Caminho do
+// Mar. Reconhece-se de relance, ao contrário do monograma ("P"/"CD"), que
+// obrigava a decifrar. Um residencial sem marca própria cai no monograma.
+const RESIDENCIAL_ICONE = { pinheiramar: '/logo-icon-pinheiramar.png', novoimovel: '/logo-icon-caminho.png' };
+
 function ResBadge({ residencial }) {
   if (!residencial) return null;
+  const icone = RESIDENCIAL_ICONE[residencial.id];
+  if (icone) return (
+    <img src={icone} alt="" title={residencial.nome}
+      style={{ width: 20, height: 20, objectFit: 'contain', flexShrink: 0, display: 'block' }}
+      onError={e => { e.target.style.display = 'none'; }} />
+  );
   return (
     <span title={residencial.nome} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', fontSize: 9.5, fontWeight: 800, color: '#fff', background: residencialCor(residencial.id), flexShrink: 0 }}>
       {residencialSigla(residencial.nome)}
@@ -356,14 +375,13 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               <div style={{ display: 'flex', borderBottom: `1px solid ${C.line}`, background: C.espuma, position: 'sticky', top: 0 }}>
                 <div style={{ width: NAMEW, flexShrink: 0, padding: '10px 14px', fontSize: 12.5, fontWeight: 700, color: C.inkSoft, borderRight: `1px solid ${C.line}` }}>Apartamento</div>
                 {days.map((d, i) => {
-                  const we = d.getDay() === 0 || d.getDay() === 6;
                   const isToday = ymd(d) === ymd(today());
                   const hol = holidaysOn(d);
                   return (
                     <div key={i} title={hol ? hol.map(h => `${h.nome} — ${HOLIDAY_LABELS[h.tipo]}`).join(' · ') : ''}
-                      style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px', background: isToday ? '#DCEBE9' : (hol ? 'rgba(62,124,177,.10)' : (we ? 'rgba(231,215,182,.25)' : 'transparent')) }}>
+                      style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px', background: isToday ? HOJE_CABECALHO : 'transparent' }}>
                       <div style={{ fontSize: 10.5, color: C.inkSoft, textTransform: 'uppercase' }}>{WD[d.getDay()]}</div>
-                      <div style={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: isToday ? C.ocean : C.ink }}>{d.getDate()}</div>
+                      <div style={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: isToday ? HOJE_TEXTO : C.ink }}>{d.getDate()}</div>
                       <div style={{ height: 6, marginTop: 1, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         {hol && [...new Set(hol.map(h => h.tipo))].map(tp => <span key={tp} style={{ width: 5, height: 5, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} />)}
                       </div>
@@ -398,15 +416,14 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       {/* day cells */}
                       <div style={{ display: 'flex', height: '100%' }}>
                         {days.map((d, i) => {
-                          const we = d.getDay() === 0 || d.getDay() === 6;
-                          const hol = holidaysOn(d);
+                          const isToday = ymd(d) === ymd(today());
                           const inDrag = dragSel && dragSel.aptId === apt.id && i >= Math.min(dragSel.startIdx, dragSel.endIdx) && i <= Math.max(dragSel.startIdx, dragSel.endIdx);
                           return (
                             <div key={i}
                               onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
                               onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
                               title="Clique para criar uma reserva, ou arraste para escolher um período"
-                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (hol ? 'rgba(62,124,177,.07)' : (we ? 'rgba(231,215,182,.13)' : '#fff')), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
+                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE_CELULA : '#fff'), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
                               {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
                             </div>
                           );
@@ -704,6 +721,10 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const [pais, setPais] = useState(i.pais || 'Brasil');
   const [email, setEmail] = useState(i.email || '');
   const [enviarEmail, setEnviarEmail] = useState(i.enviarEmail || false);
+  // quando saiu o último e-mail de confirmação (guardado na reserva) e o
+  // estado do envio manual em curso: null | 'a-enviar' | 'enviado' | 'falhou'
+  const [emailEnviadoEm, setEmailEnviadoEm] = useState(i.emailEnviadoEm || null);
+  const [envio, setEnvio] = useState(null);
   // checkinRealizado/checkoutRealizado: independentes do status (que agora
   // representa só o pagamento) — marcam se o hóspede já chegou/saiu de facto.
   // Ver ui.jsx (CheckinBadge/CheckoutBadge) e Dashboard.jsx.
@@ -774,6 +795,27 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const delExtra = (id) => setExtras(x => x.filter(e => e.id !== id));
   const ORIGENS = [...new Set([origem, 'Manual', 'Site', 'Telefone', 'WhatsApp', 'Booking', 'Airbnb'])];
 
+  // A reserva tal como está no ecrã. Serve tanto para gravar como para o envio
+  // manual do e-mail — assim o e-mail vai sempre com os mesmos dados que o
+  // botão "Guardar" gravaria, sem haver duas montagens a poderem divergir.
+  const montarReserva = () => ({
+    id: i.id || uid(), codigo: i.codigo || code(), apartamentoId: aptId, checkIn: ci, checkOut: co,
+    status, origem,
+    nome: status === 'bloqueio' ? '' : nome.trim(), sobrenome: status === 'bloqueio' ? '' : sobrenome.trim(),
+    hospede: status === 'bloqueio' ? '' : `${nome.trim()} ${sobrenome.trim()}`.trim(),
+    email: email.trim(), telefone: tel.trim(), pais,
+    adultos: status === 'bloqueio' ? 0 : adultos, criancas: status === 'bloqueio' ? 0 : criancas,
+    hospedes: status === 'bloqueio' ? 0 : totalGuests,
+    precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
+    precoTabela: status === 'bloqueio' ? 0 : bd.total,
+    extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
+    total, sinal,
+    checkinRealizado: status === 'bloqueio' ? false : checkinRealizado,
+    checkoutRealizado: status === 'bloqueio' ? false : checkoutRealizado,
+    enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
+    ...(emailEnviadoEm ? { emailEnviadoEm } : {}),
+  });
+
   return (
     <>
     <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${residencial.nome} · ${apt.nome} · ${apt.piso} · ${apt.vista}`} onClose={onClose} wide
@@ -788,22 +830,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
         <Btn variant="primary" disabled={!canSave} style={{ opacity: canSave ? 1 : .5 }}
           onClick={() => {
-            const r = {
-              id: i.id || uid(), codigo: i.codigo || code(), apartamentoId: aptId, checkIn: ci, checkOut: co,
-              status, origem,
-              nome: status === 'bloqueio' ? '' : nome.trim(), sobrenome: status === 'bloqueio' ? '' : sobrenome.trim(),
-              hospede: status === 'bloqueio' ? '' : `${nome.trim()} ${sobrenome.trim()}`.trim(),
-              email: email.trim(), telefone: tel.trim(), pais,
-              adultos: status === 'bloqueio' ? 0 : adultos, criancas: status === 'bloqueio' ? 0 : criancas,
-              hospedes: status === 'bloqueio' ? 0 : totalGuests,
-              precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
-              precoTabela: status === 'bloqueio' ? 0 : bd.total,
-              extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
-              total, sinal,
-              checkinRealizado: status === 'bloqueio' ? false : checkinRealizado,
-              checkoutRealizado: status === 'bloqueio' ? false : checkoutRealizado,
-              enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
-            };
+            const r = montarReserva();
             onSave(r);
             // só envia ao CRIAR a reserva — reeditar uma reserva existente com a
             // caixa ainda marcada não reenvia o e-mail.
@@ -817,7 +844,11 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
           <div style={secTitle}><Tag size={16} color={C.brisa} /> Status da reserva</div>
           <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Field label="Estado" hint={!isNew ? 'Marque como Cancelada para manter no histórico sem bloquear as datas, ou use "Eliminar" abaixo para remover definitivamente.' : undefined}>
-              <Select value={status} onChange={e => setStatus(e.target.value)}>
+              {/* Pintado com a cor do estado escolhido (a mesma do calendário
+                  e das etiquetas): confirma de relance o que está seleccionado,
+                  sem ser preciso ler. */}
+              <Select value={status} onChange={e => setStatus(e.target.value)}
+                style={{ background: (STATUS[status] || STATUS.pendente).bg, color: (STATUS[status] || STATUS.pendente).fg, borderColor: (STATUS[status] || STATUS.pendente).bar, fontWeight: 700 }}>
                 <option value="pendente">Pendente (sem pagamento)</option>
                 <option value="reservado">Reservado (50% pago)</option>
                 <option value="confirmado">Confirmado (100% pago)</option>
@@ -849,8 +880,12 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
             <Field label="Check-in" required><DateInput value={ci} onChange={e => { setCi(e.target.value); if (nights(e.target.value, co) < 1) setCo(ymd(addDays(parseYMD(e.target.value), 1))); }} /></Field>
             <Field label="Check-out" required><DateInput value={co} min={ymd(addDays(parseYMD(ci), 1))} onChange={e => setCo(e.target.value)} /></Field>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: C.inkSoft, margin: '8px 2px 0' }}>
-            <Clock size={14} color={C.brisa} /> Check-in a partir das <b style={{ color: C.ink }}>{residencial.checkInHora}</b> · check-out até às <b style={{ color: C.ink }}>{residencial.checkOutHora}</b> ({residencial.nome}). Pode terminar e iniciar reservas no mesmo dia.
+          {/* O ícone é o único item flex; a frase inteira vai num só <span>.
+              Antes cada pedaço de texto era um item flex à parte, e as horas
+              alinhavam-se em colunas em vez de correrem dentro da frase. */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12.5, color: C.inkSoft, margin: '8px 2px 0', lineHeight: 1.5 }}>
+            <Clock size={14} color={C.brisa} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>Check-in a partir das <b style={{ color: C.ink }}>{residencial.checkInHora}</b> · check-out até às <b style={{ color: C.ink }}>{residencial.checkOutHora}</b> ({residencial.nome}). Pode terminar e iniciar reservas no mesmo dia.</span>
           </div>
           {status !== 'bloqueio' && (
             <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
@@ -888,9 +923,37 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               <Field label="País"><Select value={pais} onChange={e => setPais(e.target.value)}>{[...new Set([pais, ...PAISES])].map(p => <option key={p}>{p}</option>)}</Select></Field>
             </div>
             <Field label="Email"><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: C.ink, cursor: 'pointer' }}>
-              <input type="checkbox" checked={enviarEmail} onChange={e => setEnviarEmail(e.target.checked)} /> Enviar um email de confirmação para o hóspede
-            </label>
+            {/* Ao CRIAR, a caixa manda o e-mail no momento de gravar. Ao EDITAR
+                ela não fazia nada (o envio só acontecia na criação), o que era
+                enganador — passa a ser um botão que envia mesmo, na hora, e diz
+                quando foi o último envio. Vai com os dados que estão no ecrã. */}
+            {isNew ? (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: C.ink, cursor: 'pointer' }}>
+                <input type="checkbox" checked={enviarEmail} onChange={e => setEnviarEmail(e.target.checked)} /> Enviar um email de confirmação para o hóspede
+              </label>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <Btn size="sm" variant="ghost" disabled={!email.trim() || envio === 'a-enviar'}
+                  onClick={async () => {
+                    setEnvio('a-enviar');
+                    const agora = new Date().toISOString();
+                    const okEnvio = await sendConfirmationEmail(
+                      { ...montarReserva(), enviarEmail: true }, apt, data.settings);
+                    setEnvio(okEnvio ? 'enviado' : 'falhou');
+                    if (okEnvio) setEmailEnviadoEm(agora);
+                  }}>
+                  {emailEnviadoEm ? 'Reenviar e-mail de confirmação' : 'Enviar e-mail de confirmação'}
+                </Btn>
+                <span style={{ fontSize: 12.5, color: envio === 'falhou' ? '#A24C4C' : C.inkSoft }}>
+                  {envio === 'a-enviar' ? 'A enviar…'
+                    : envio === 'enviado' ? 'Enviado agora.'
+                    : envio === 'falhou' ? 'Não foi possível enviar — ver a configuração do EmailJS.'
+                    : !email.trim() ? 'Preencha o e-mail para poder enviar.'
+                    : emailEnviadoEm ? `Último envio: ${fmtShort(emailEnviadoEm.slice(0, 10))}.`
+                    : 'Ainda não foi enviado nenhum e-mail para este hóspede.'}
+                </span>
+              </div>
+            )}
             <Field label="Notas">
               <Textarea value={nota} maxLength={250} onChange={e => setNota(e.target.value)} placeholder="Observações internas (não visível para o hóspede)" />
               <span style={{ display: 'block', textAlign: 'right', fontSize: 11.5, color: C.inkSoft, marginTop: 4 }}>{nota.length}/250</span>
