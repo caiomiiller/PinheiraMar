@@ -79,7 +79,14 @@ export const overlaps = (aCi, aCo, bCi, bCo) => parseYMD(aCi) < parseYMD(bCo) &&
    caminho: as criadas no painel (telefone/WhatsApp) nunca o têm, e editar
    uma reserva no painel também o descarta — o formulário reconstrói o
    objeto — o que a promove a reserva normal, sem prazo. */
-export const MIN_HOLD_PAGAMENTO = 30;
+// 5 minutos, a pedido do Caio: muita gente chega ao checkout só para ver o
+// valor final, desiste, e quer reservar a sério minutos depois — com um prazo
+// longo essa pessoa ficava barrada pela sua própria reserva provisória. O
+// risco do prazo curto (o pagamento demorar mais do que isto e as datas serem
+// entretanto levadas por outra pessoa) está coberto: o webhook confirma a
+// reserva paga de qualquer forma e marca o conflito para o gestor resolver,
+// em vez de deixar duas reservas sobrepostas sem ninguém saber.
+export const MIN_HOLD_PAGAMENTO = 5;
 export const novoPrazoPagamento = (min = MIN_HOLD_PAGAMENTO) => new Date(Date.now() + min * 60000).toISOString();
 
 // Uma reserva provisória cujo prazo passou nunca chegou a ser uma reserva:

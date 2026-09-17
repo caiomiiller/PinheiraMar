@@ -113,13 +113,19 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
     // espera a reserva estar mesmo gravada (Supabase, quando configurado)
     // antes de redirecionar — sem isto, sair da página a meio da gravação
     // podia perder a reserva.
+    // O e-mail de confirmação só sai daqui quando NÃO há pagamento online:
+    // nesse fluxo a reserva vale desde já e a equipa entra em contacto. Com
+    // checkout pelo Mercado Pago, quem envia é o webhook, depois de o
+    // pagamento ser aprovado (api/mp-webhook.js) — senão um hóspede com o
+    // pagamento recusado recebia um e-mail a confirmar uma reserva que ia
+    // ser libertada minutos depois.
     const r1 = provisoria(base1);
     await onCreate(r1);
-    sendConfirmationEmail(r1, apt, data.settings);
+    if (!initPoint) sendConfirmationEmail(r1, apt, data.settings);
     if (apt2 && bd2) {
       const r2 = provisoria(buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true));
       await onCreate(r2);
-      sendConfirmationEmail(r2, apt2, data.settings);
+      if (!initPoint) sendConfirmationEmail(r2, apt2, data.settings);
     }
 
     if (initPoint) { window.location.href = initPoint; return; }

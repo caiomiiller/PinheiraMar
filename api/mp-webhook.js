@@ -27,6 +27,72 @@
 // "reservas" para uma tabela própria no Supabase) se o volume crescer.
 
 import { createClient } from '@supabase/supabase-js';
+import { overlaps } from '../src/lib/helpers.js';
+
+// Envia o e-mail de confirmação da reserva pelo EmailJS. Aqui, no servidor,
+// não se pode usar o SDK do navegador (src/lib/email.js) — usa-se a API REST,
+// que fora do navegador exige a chave privada e que o envio por API esteja
+// ligado em Account → Security na conta EmailJS (ver .env.example).
+//
+// Falhar aqui nunca põe em causa o pagamento nem a reserva: fica um aviso no
+// log e a reserva continua confirmada — o e-mail é um reforço, não o registo.
+async function enviarEmailConfirmacao(reserva, apt, residencial) {
+  const publicKey = process.env.VITE_EMAILJS_PUBLIC_KEY;
+  const serviceId = process.env.VITE_EMAILJS_SERVICE_ID;
+  const templateId = process.env.VITE_EMAILJS_TEMPLATE_ID;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+  if (!publicKey || !serviceId || !templateId || !privateKey) {
+    console.warn('[mp-webhook] EmailJS não configurado no servidor — e-mail de confirmação não enviado (ver .env.example).');
+    return false;
+  }
+  if (!reserva?.email) return false;
+  try {
+    // Mesmas variáveis que o template já usa no envio pelo navegador
+    // (buildParams em src/lib/email.js) — o template é o mesmo.
+    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: serviceId,
+        template_id: templateId,
+        user_id: publicKey,
+        accessToken: privateKey,
+        template_params: {
+          to_email: reserva.email,
+          to_name: reserva.hospede || reserva.nome || '',
+          codigo_reserva: reserva.codigo,
+          nome_propriedade: residencial?.nome || '',
+          apartamento: apt?.nome || '',
+          check_in: reserva.checkIn,
+          check_out: reserva.checkOut,
+          total: reserva.total,
+          sinal: reserva.sinal,
+          sinal_pct: residencial?.sinalPct,
+          endereco: residencial?.endereco || '',
+          whatsapp: residencial?.telefone || '',
+        },
+      }),
+    });
+    if (!resp.ok) {
+      console.warn('[mp-webhook] EmailJS recusou o envio:', resp.status, await resp.text().catch(() => ''));
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[mp-webhook] Falha ao enviar o e-mail de confirmação:', err);
+    return false;
+  }
+}
+
+// As datas desta reserva continuam livres? Conta qualquer outra reserva que
+// as ocupe e não esteja cancelada — incluindo uma provisória de outra pessoa
+// ainda dentro do prazo. Usado só para marcar conflitos, nunca para recusar
+// um pagamento já feito.
+export function datasEmConflito(reservas, reserva) {
+  return (reservas || []).some(o =>
+    o.id !== reserva.id && o.apartamentoId === reserva.apartamentoId && o.status !== 'cancelada'
+    && overlaps(reserva.checkIn, reserva.checkOut, o.checkIn, o.checkOut));
+}
 
 // Decide o que fazer com as reservas ligadas a um pagamento. Isolada de
 // propósito — sem rede nem base de dados — para poder ser testada a sério:
@@ -136,12 +202,37 @@ export default async function handler(req, res) {
     }
     state.reservas = reservas;
 
+    // Confirmar um pagamento pode chegar depois de o prazo da provisória ter
+    // expirado e outra pessoa ter ficado com as mesmas noites. O hóspede
+    // pagou, por isso a reserva mantém-se — mas fica marcada, para o gestor
+    // ver no painel e resolver, em vez de ficarem duas reservas sobrepostas
+    // sem ninguém dar por isso.
+    if (aprovado && mudou) {
+      state.reservas = state.reservas.map(r => {
+        if (!alvos.includes(r.id) || r.status !== 'reservado') return r;
+        return datasEmConflito(state.reservas, r) ? { ...r, conflitoDatas: true } : r;
+      });
+    }
+
     if (mudou) {
       const { error: writeErr } = await supabase
         .from('app_state')
         .update({ data: state, updated_at: new Date().toISOString() })
         .eq('id', 'main');
       if (writeErr) console.error('[mp-webhook] Falha ao gravar o desfecho do pagamento:', writeErr);
+    }
+
+    // Só agora, com o pagamento aprovado e a reserva gravada, é que o hóspede
+    // recebe o e-mail de confirmação — antes saía assim que ele preenchia o
+    // formulário, mesmo que o pagamento viesse a ser recusado.
+    if (aprovado && mudou) {
+      for (const id of alvos) {
+        const r = state.reservas.find(x => x.id === id);
+        if (!r || r.status !== 'reservado') continue;
+        const apt = (state.apartamentos || []).find(a => a.id === r.apartamentoId);
+        const residencial = (state.residenciais || []).find(x => x.id === apt?.residencialId);
+        await enviarEmailConfirmacao(r, apt, residencial);
+      }
     }
 
     res.status(200).json({ ok: true, status: payment.status, reservas: alvos.length });

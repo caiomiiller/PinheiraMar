@@ -1,40 +1,82 @@
 import React from 'react';
 import { CalendarDays, Users, Wallet, BedDouble, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong } from '../../lib/helpers';
+import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong, holdExpirado } from '../../lib/helpers';
 import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge, displayStatus } from '../../components/ui';
 
 export function Dashboard({ data, go, openReservation }) {
   const t = today();
-  const ativas = data.reservas.filter(r => r.status !== 'cancelada');
+  const hojeY = ymd(t);
+  const agoraMs = Date.now();
   const horizon = 30;
-  const totalNoites = data.apartamentos.filter(a => a.ativo).length * horizon;
-  let ocupadas = 0;
-  data.apartamentos.filter(a => a.ativo).forEach(a => {
-    for (let i = 0; i < horizon; i++) { const d = addDays(t, i); if (ativas.some(r => r.apartamentoId === a.id && parseYMD(r.checkIn) <= d && d < parseYMD(r.checkOut))) ocupadas++; }
+
+  // Uma reserva só conta enquanto for real: canceladas nunca contam, e uma
+  // reserva do site à espera de pagamento cujo prazo já passou também não
+  // (holdExpirado) — senão o painel mostrava como ocupadas datas que o site
+  // já está a oferecer como livres.
+  const reais = data.reservas.filter(r => r.status !== 'cancelada' && !holdExpirado(r, agoraMs));
+  const estadias = reais.filter(r => r.status !== 'bloqueio');   // hóspedes
+  const bloqueios = reais.filter(r => r.status === 'bloqueio');  // indisponibilizados pela casa
+
+  // "Ativas" são as que ainda estão por acontecer ou a decorrer (check-out de
+  // hoje em diante). O arquivo histórico completo tem cartão próprio: somar
+  // tudo num número só fazia "Reservas ativas" mostrar milhares de estadias
+  // terminadas há anos, escondendo o que é preciso acompanhar esta semana.
+  const ativasFuturas = estadias.filter(r => (r.checkOut || '') >= hojeY);
+
+  // Procura nova que entrou nos últimos 30 dias. A importação do sistema
+  // antigo fica de fora de propósito: é um arquivo carregado todo de uma vez,
+  // não são reservas novas, e contá-las mostrava milhares no primeiro mês.
+  const desdeY = ymd(addDays(t, -horizon));
+  const novas = estadias.filter(r => r.origem !== 'Importado' && (r.criadoEm || '') >= desdeY);
+
+  const aptsAtivos = data.apartamentos.filter(a => a.ativo);
+  const cobre = (lista, aptId, d) => lista.some(r => r.apartamentoId === aptId && parseYMD(r.checkIn) <= d && d < parseYMD(r.checkOut));
+
+  // Ocupação hoteleira: noites vendidas sobre as noites que estavam mesmo à
+  // venda. Uma noite bloqueada (manutenção, uso da família) nunca esteve
+  // disponível, por isso sai das duas pontas da conta — antes entrava como
+  // "ocupada", o que inflacionava a ocupação sempre que houvesse bloqueios.
+  let noitesVendidas = 0, noitesBloqueadas = 0;
+  const porApt = aptsAtivos.map(a => {
+    let vend = 0, bloq = 0;
+    for (let i = 0; i < horizon; i++) {
+      const d = addDays(t, i);
+      if (cobre(estadias, a.id, d)) vend++;
+      else if (cobre(bloqueios, a.id, d)) bloq++;
+    }
+    noitesVendidas += vend; noitesBloqueadas += bloq;
+    const disponiveis = horizon - bloq;
+    return { nome: a.nome, capacidade: a.capacidade || 0, n: vend, pct: disponiveis > 0 ? Math.round((vend / disponiveis) * 100) : 0 };
   });
-  const ocup = totalNoites ? Math.round((ocupadas / totalNoites) * 100) : 0;
+  const noitesDisponiveis = aptsAtivos.length * horizon - noitesBloqueadas;
+  const ocup = noitesDisponiveis > 0 ? Math.round((noitesVendidas / noitesDisponiveis) * 100) : 0;
+
+  // Ordenado por lotação (e depois por nome): põe lado a lado os
+  // apartamentos que acomodam o mesmo número de pessoas, que é como se
+  // compara o desempenho de unidades equivalentes.
+  const perApt = [...porApt].sort((a, b) => (a.capacidade - b.capacidade) || a.nome.localeCompare(b.nome, 'pt'));
+
   const aptName = (id) => data.apartamentos.find(a => a.id === id)?.nome || '—';
   const season = seasonForDate(data.seasons, t);
 
-  const proxCheckins  = ativas.filter(r => parseYMD(r.checkIn)  >= t).sort((a, b) => parseYMD(a.checkIn)  - parseYMD(b.checkIn)).slice(0, 6);
-  const proxCheckouts = ativas.filter(r => parseYMD(r.checkOut) >= t).sort((a, b) => parseYMD(a.checkOut) - parseYMD(b.checkOut)).slice(0, 6);
+  const proxCheckins  = reais.filter(r => parseYMD(r.checkIn)  >= t).sort((a, b) => parseYMD(a.checkIn)  - parseYMD(b.checkIn)).slice(0, 6);
+  const proxCheckouts = reais.filter(r => parseYMD(r.checkOut) >= t).sort((a, b) => parseYMD(a.checkOut) - parseYMD(b.checkOut)).slice(0, 6);
 
-  const perApt = data.apartamentos.filter(a => a.ativo).map(a => {
-    let n = 0; for (let i = 0; i < horizon; i++) { const d = addDays(t, i); if (ativas.some(r => r.apartamentoId === a.id && parseYMD(r.checkIn) <= d && d < parseYMD(r.checkOut))) n++; }
-    return { nome: a.nome, n, pct: Math.round((n / horizon) * 100) };
-  }).sort((a, b) => b.n - a.n);
+  const disponiveisHoje = aptsAtivos.filter(a => !cobre(reais, a.id, t)).length;
+  const totalAtivos = aptsAtivos.length;
 
-  const disponiveisHoje = data.apartamentos.filter(a => a.ativo).filter(a =>
-    !ativas.some(r => r.apartamentoId === a.id && parseYMD(r.checkIn) <= t && t < parseYMD(r.checkOut))
-  ).length;
-  const totalAtivos = data.apartamentos.filter(a => a.ativo).length;
+  // Pagamento aprovado para datas que entretanto já tinham sido ocupadas por
+  // outra reserva (ver api/mp-webhook.js) — precisa de decisão humana.
+  const conflitos = data.reservas.filter(r => r.conflitoDatas && r.status !== 'cancelada');
 
   const stats = [
-    { label: 'Reservas ativas',        value: ativas.length,          icon: CalendarDays, sub: `${data.reservas.filter(r => r.status === 'pendente').length} pendentes · ${data.reservas.filter(r => r.status === 'reservado').length} reservadas`,              click: () => go('reservas') },
-    { label: 'Ocupação (30 dias)',      value: ocup + '%',             icon: Home,         sub: `${ocupadas} de ${totalNoites} noites`,                                               click: null },
-    { label: 'Temporada atual',         value: season ? season.nome : 'Tarifa base', icon: Tag, sub: season ? `${fmtShort(season.inicio)} – ${fmtShort(season.fim)}` : '—',          click: () => go('temporadas') },
-    { label: 'Disponíveis hoje',        value: `${disponiveisHoje} / ${totalAtivos}`, icon: Building2, sub: `${totalAtivos - disponiveisHoje} ocupado(s) agora`,                   click: () => go('reservas') },
+    { label: 'Reservas ativas',   value: ativasFuturas.length,   icon: CalendarDays, sub: `${ativasFuturas.filter(r => r.status === 'pendente').length} pendentes · ${ativasFuturas.filter(r => r.status === 'reservado').length} reservadas`, click: () => go('reservas') },
+    { label: `Novas reservas (${horizon} dias)`, value: novas.length, icon: Users,  sub: novas.length ? `entraram desde ${fmtShort(desdeY)}` : 'nenhuma no período',                                  click: () => go('reservas') },
+    { label: `Ocupação (${horizon} dias)`, value: ocup + '%',     icon: Home,         sub: `${noitesVendidas} de ${noitesDisponiveis} noites à venda${noitesBloqueadas ? ` · ${noitesBloqueadas} bloqueadas` : ''}`, click: null },
+    { label: 'Disponíveis hoje',  value: `${disponiveisHoje} / ${totalAtivos}`, icon: Building2, sub: `${totalAtivos - disponiveisHoje} ocupado(s) agora`,                                            click: () => go('reservas') },
+    { label: 'Temporada atual',   value: season ? season.nome : 'Tarifa base', icon: Tag, sub: season ? `${fmtShort(season.inicio)} – ${fmtShort(season.fim)}` : '—',                                  click: () => go('temporadas') },
+    { label: 'Total de reservas', value: estadias.length,        icon: Wallet,       sub: 'arquivo completo, desde sempre',                                                                            click: () => go('reservas') },
   ];
 
   const EventRow = ({ r, dateField }) => {
@@ -66,6 +108,18 @@ export function Dashboard({ data, go, openReservation }) {
   return (
     <div>
       <PageHead title="Painel de controle" sub={`Hoje, ${fmtLong(ymd(t))}`} />
+
+      {conflitos.length > 0 && (
+        <Card style={{ padding: 16, marginBottom: 18, background: '#FBEFD9', border: '1px solid #EBD9C0' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#9A6A14', marginBottom: 4 }}>
+            {conflitos.length} reserva(s) paga(s) para datas que já estavam ocupadas
+          </div>
+          <div style={{ fontSize: 13, color: C.inkSoft }}>
+            O pagamento foi aprovado depois de o prazo da reserva provisória expirar e outra pessoa ter ficado com as mesmas noites.
+            O hóspede pagou, por isso a reserva foi mantida — {conflitos.map(r => r.codigo).join(', ')} — mas precisa de ser resolvida à mão.
+          </div>
+        </Card>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 16, marginBottom: 22 }}>
         {stats.map((s, i) => (
@@ -111,14 +165,16 @@ export function Dashboard({ data, go, openReservation }) {
       <Card style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0 }}>
-            Ocupação por apartamento <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· próx. {horizon} dias</span>
+            Ocupação por apartamento <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· próx. {horizon} dias · por lotação</span>
           </h3>
           <Btn size="sm" variant="ghost" onClick={() => go('financeiro')}>Relatório financeiro</Btn>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px 28px' }}>
           {perApt.map((p, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 64, fontSize: 13, color: C.inkSoft, flexShrink: 0 }}>{p.nome}</div>
+              <div style={{ width: 104, fontSize: 13, color: C.inkSoft, flexShrink: 0 }}>
+                {p.nome}{p.capacidade ? <span style={{ opacity: .65 }}> · {p.capacidade}p</span> : null}
+              </div>
               <div style={{ flex: 1, height: 10, background: C.espuma, borderRadius: 6, overflow: 'hidden' }}>
                 <div style={{ width: `${p.pct}%`, height: '100%', borderRadius: 6, background: p.pct >= 70 ? `linear-gradient(90deg,${C.coral},${C.coralDeep})` : `linear-gradient(90deg,${C.brisa},${C.ocean})` }} />
               </div>
