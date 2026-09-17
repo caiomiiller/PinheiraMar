@@ -18,6 +18,15 @@ import { ConfirmationModal } from '../../components/ConfirmationModal';
 // apartamentos (substitui o ícone + nome em texto que havia antes).
 const RESIDENCIAL_LOGOS = { pinheiramar: '/logo-vertical-pinheiramar.png', novoimovel: '/logo-vertical-caminho.png' };
 
+// Nome do residencial escrito por extenso ao lado da logo, no mesmo espírito
+// tipográfico dela (serifada, maiúsculas, mesmas cores) — a logo sozinha, em
+// tamanho de cabeçalho, não é suficiente para diferenciar rapidamente os dois
+// residenciais, então o nome reforça a distinção por escrito.
+const RESIDENCIAL_BRAND_TEXT = {
+  pinheiramar: [{ t: 'Pinheira', c: '#0B1B42' }, { t: 'Mar', c: '#D80000' }],
+  novoimovel: [{ t: 'Caminho do Mar', c: '#0B1B42' }],
+};
+
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 // Extrai {dia, mês, dia da semana} de uma data 'yyyy-mm-dd' para o cartão de data grande da busca mobile.
 function bigDateParts(s) {
@@ -315,9 +324,15 @@ export function PublicSite({ data, onCreate }) {
       <div ref={el => { groupRefs.current[r.id] = el; }} style={{ marginBottom: 72, scrollMarginTop: 140 }}>
         <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
           <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} className="pm-pubsite-group-logo"
-            style={{ height: 84, width: 'auto', maxWidth: 260, flexShrink: 0, display: 'block', objectFit: 'contain' }}
+            style={{ height: 128, width: 'auto', maxWidth: 230, flexShrink: 0, display: 'block', objectFit: 'contain' }}
             onError={e => { e.target.style.display = 'none'; }} />
-          <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center' }}>
+          <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="pm-pubsite-group-brand" style={{ fontFamily: F.disp, fontWeight: 700, fontSize: 23, lineHeight: 1.1, letterSpacing: '.01em' }}>
+              {(RESIDENCIAL_BRAND_TEXT[r.id] || [{ t: r.nome, c: BLACK }]).map((p, i) => (
+                <span key={i} style={{ color: p.c }}>{p.t}</span>
+              ))}
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.3em', textTransform: 'uppercase', color: GREY }}>Residencial</div>
             <div style={{ fontSize: 13.5, color: GREY, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
           </div>
           <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
