@@ -67,23 +67,37 @@ export function Financeiro({ data, go }) {
 
   const reservasEfetivas = data.reservas.filter(r => r.status !== 'cancelada').map(comoRealizada);
   const filtradas = reservasEfetivas.filter(inPeriodo);
-  const confirmadas = filtradas.filter(r => r.status === 'confirmado');
-  const reservadas  = filtradas.filter(r => r.status === 'reservado');
-  const pendentes   = filtradas.filter(r => r.status === 'pendente');
-  const bloqueios   = filtradas.filter(r => r.status === 'bloqueio');
+  const bloqueios = filtradas.filter(r => r.status === 'bloqueio');
 
-  const recConf  = confirmadas.reduce((s, r) => s + r.total, 0);
-  // "prevista" junta reservado (50% já confirmado) + pendente (ainda sem
-  // pagamento) — ambos ainda não são receita 100% garantida.
-  const recPend  = [...reservadas, ...pendentes].reduce((s, r) => s + r.total, 0);
-  const recTotal = recConf + recPend;
-  const ticketMedio = (confirmadas.length + reservadas.length + pendentes.length) > 0 ? Math.round(recTotal / (confirmadas.length + reservadas.length + pendentes.length)) : 0;
-  const mediaNoites = filtradas.length > 0 ? (filtradas.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0) / filtradas.length).toFixed(1) : '—';
+  // Base única de tudo o que gera receita no período: as canceladas já
+  // ficaram de fora acima, aqui saem os bloqueios (não são estadias nem
+  // dinheiro). "Receita total", ticket médio, média de noites, tabela por
+  // apartamento e origens partem TODOS deste mesmo conjunto — quando cada
+  // número olhava para um conjunto diferente, uma reserva com um status
+  // inesperado entrava na tabela mas não no total, e a participação
+  // disparava para milhares de por cento.
+  const comReceita = filtradas.filter(r => r.status !== 'bloqueio');
+  const confirmadas = comReceita.filter(r => r.status === 'confirmado');
+  const reservadas  = comReceita.filter(r => r.status === 'reservado');
+  const pendentes   = comReceita.filter(r => r.status === 'pendente');
+  // Rede de segurança: qualquer status fora do modelo atual (dados antigos
+  // por converter, uma importação futura) cai aqui e continua a contar na
+  // receita, em vez de desaparecer silenciosamente das contas.
+  const outras = comReceita.filter(r => !['confirmado', 'reservado', 'pendente'].includes(r.status));
+
+  const soma = (rs) => rs.reduce((s, r) => s + (Number(r.total) || 0), 0);
+  const recConf  = soma(confirmadas);
+  const recTotal = soma(comReceita);
+  // "prevista" é tudo o que ainda não é receita garantida: reservado (50%
+  // confirmado), pendente (sem pagamento) e o que caia em `outras`.
+  const recPend  = recTotal - recConf;
+  const ticketMedio = comReceita.length > 0 ? Math.round(recTotal / comReceita.length) : 0;
+  const mediaNoites = comReceita.length > 0 ? (comReceita.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0) / comReceita.length).toFixed(1) : '—';
 
   // receita por apartamento
   const porApt = data.apartamentos.map(a => {
-    const rs = filtradas.filter(r => r.apartamentoId === a.id && r.status !== 'bloqueio');
-    const receita = rs.reduce((s, r) => s + r.total, 0);
+    const rs = comReceita.filter(r => r.apartamentoId === a.id);
+    const receita = soma(rs);
     const qtd = rs.length;
     const noites = rs.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0);
     return { nome: a.nome, receita, qtd, noites };
@@ -95,13 +109,13 @@ export function Financeiro({ data, go }) {
     const d = new Date(t.getFullYear(), t.getMonth() - i, 1);
     const y = d.getFullYear(), m = d.getMonth();
     const rs = reservasEfetivas.filter(r => r.status === 'confirmado' && parseYMD(r.checkIn).getFullYear() === y && parseYMD(r.checkIn).getMonth() === m);
-    porMes.push({ label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }), v: rs.reduce((s, r) => s + r.total, 0) });
+    porMes.push({ label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }), v: soma(rs) });
   }
   const maxMes = Math.max(...porMes.map(m => m.v), 1);
 
   // reservas por origem
   const origens = {};
-  filtradas.filter(r => r.status !== 'bloqueio').forEach(r => { const o = r.origem || 'Direto'; origens[o] = (origens[o] || 0) + 1; });
+  comReceita.forEach(r => { const o = r.origem || 'Direto'; origens[o] = (origens[o] || 0) + 1; });
   const origensList = Object.entries(origens).sort((a, b) => b[1] - a[1]);
   const totalOrig = origensList.reduce((s, [, v]) => s + v, 0);
 
@@ -145,7 +159,7 @@ export function Financeiro({ data, go }) {
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 22 }}>
         <KPI label="Receita confirmada" value={money(recConf)} sub={`${confirmadas.length} reservas`} accent />
-        <KPI label="Receita prevista" value={money(recPend)} sub={`${reservadas.length} reservadas · ${pendentes.length} pendentes`} />
+        <KPI label="Receita prevista" value={money(recPend)} sub={`${reservadas.length} reservadas · ${pendentes.length} pendentes${outras.length ? ` · ${outras.length} sem estado` : ''}`} />
         <KPI label="Receita total" value={money(recTotal)} sub="confirmada + prevista" />
         <KPI label="Ticket médio" value={ticketMedio > 0 ? money(ticketMedio) : '—'} sub="por reserva" />
         <KPI label="Média de noites" value={mediaNoites} sub="por estadia" />
@@ -201,8 +215,8 @@ export function Financeiro({ data, go }) {
                 <tfoot>
                   <tr style={{ background: C.espuma }}>
                     <td style={{ padding: '9px 10px', fontWeight: 700 }}>Total</td>
-                    <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{filtradas.filter(r => r.status !== 'bloqueio').length}</td>
-                    <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{filtradas.filter(r => r.status !== 'bloqueio').reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0)}</td>
+                    <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{comReceita.length}</td>
+                    <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{comReceita.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0)}</td>
                     <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700, color: C.coralDeep }}>{money(recTotal)}</td>
                     <td />
                   </tr>
@@ -250,7 +264,7 @@ export function Financeiro({ data, go }) {
       {/* tabela de reservas recentes */}
       <Card style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0 }}>Reservas no período <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· {filtradas.filter(r => r.status !== 'bloqueio').length} registos</span></h3>
+          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0 }}>Reservas no período <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· {comReceita.length} registos</span></h3>
           <Btn size="sm" variant="ghost" onClick={() => go('reservas')}>Gerir reservas</Btn>
         </div>
         <div style={{ overflowX: 'auto' }}>
@@ -263,7 +277,7 @@ export function Financeiro({ data, go }) {
               </tr>
             </thead>
             <tbody>
-              {filtradas.filter(r => r.status !== 'bloqueio').sort((a, b) => parseYMD(b.checkIn) - parseYMD(a.checkIn)).slice(0, 40).map(r => (
+              {[...comReceita].sort((a, b) => parseYMD(b.checkIn) - parseYMD(a.checkIn)).slice(0, 40).map(r => (
                 <tr key={r.id} style={{ borderBottom: `1px solid ${C.line}` }}>
                   <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, color: C.inkSoft }}>{r.codigo}</td>
                   <td style={{ padding: '8px 10px', fontWeight: 600 }}>{r.hospede || '—'}</td>
@@ -277,8 +291,8 @@ export function Financeiro({ data, go }) {
               ))}
             </tbody>
           </table>
-          {filtradas.filter(r => r.status !== 'bloqueio').length > 40 && (
-            <div style={{ padding: '12px 10px', fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>A mostrar 40 de {filtradas.filter(r => r.status !== 'bloqueio').length} registos. Use filtros de período para refinar.</div>
+          {comReceita.length > 40 && (
+            <div style={{ padding: '12px 10px', fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>A mostrar 40 de {comReceita.length} registos. Use filtros de período para refinar.</div>
           )}
         </div>
       </Card>

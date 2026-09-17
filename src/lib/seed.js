@@ -348,7 +348,53 @@ function readLocalStorage() {
   return null;
 }
 
+/* ───────────────────── Migração de dados já gravados ─────────────────────
+   O modelo de estados da reserva passou de 4 para 5 valores no commit
+   "Reformular status da reserva em 5 estados" (2026-09-16), mas os dados
+   que já estavam gravados nunca foram convertidos. Resultado: as reservas
+   antigas — incluindo as milhares importadas do sistema anterior — ficaram
+   com `status: 'confirmada'`, um valor que já não existe no vocabulário da
+   aplicação. Como nenhum ecrã o reconhecia, elas continuavam a bloquear
+   datas (isAvailable só exclui 'cancelada') mas desapareciam de todas as
+   contas: no Financeiro não entravam em "Receita confirmada" nem em
+   "prevista", embora a tabela por apartamento as somasse — daí a
+   participação absurda de milhares de por cento; e nas etiquetas apareciam
+   como "Pendente", porque Badge faz STATUS[status] || STATUS.pendente.
+
+   O mapa é o mesmo descrito nesse commit:
+     'confirmada'                   → 'confirmado'  (100% pago)
+     'pendente' + sinalPago: true   → 'reservado'   (sinal de 50% pago)
+     restantes                      → inalterados
+
+   É idempotente — correr sobre dados já convertidos devolve o mesmo objeto
+   e `alteradas: 0`. O campo antigo `sinalPago` fica onde está (já não é
+   lido por ninguém): converter é reversível, apagar não. */
+export function migrarStatusReservas(d) {
+  if (!d || !Array.isArray(d.reservas)) return { data: d, alteradas: 0 };
+  let alteradas = 0;
+  const reservas = d.reservas.map(r => {
+    if (r.status === 'confirmada') { alteradas++; return { ...r, status: 'confirmado' }; }
+    if (r.status === 'pendente' && r.sinalPago === true) { alteradas++; return { ...r, status: 'reservado' }; }
+    return r;
+  });
+  return { data: alteradas ? { ...d, reservas } : d, alteradas };
+}
+
+// Carrega e converte para o modelo de dados atual. A conversão é gravada
+// logo de seguida para que os outros dispositivos já partam do modelo novo
+// (e para não se repetir a cada arranque).
 export async function loadData() {
+  const bruto = await loadRaw();
+  if (!bruto) return bruto;
+  const { data: d, alteradas } = migrarStatusReservas(bruto);
+  if (alteradas) {
+    console.info(`[pinheiramar] ${alteradas} reserva(s) convertidas para o modelo de estados atual.`);
+    await saveData(d);
+  }
+  return d;
+}
+
+async function loadRaw() {
   // Fonte de verdade partilhada, quando configurada — ver supabaseClient.js.
   if (supabaseConfigured) {
     try {

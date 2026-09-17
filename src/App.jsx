@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Home, Settings, Waves } from 'lucide-react';
 import { C, F, applyTheme } from './lib/constants';
-import { loadData, saveData, STORE_KEY, seedData } from './lib/seed';
+import { loadData, saveData, STORE_KEY, seedData, migrarStatusReservas } from './lib/seed';
 import { supabase, supabaseConfigured, APP_STATE_TABLE, APP_STATE_ROW_ID } from './lib/supabaseClient';
 import { PublicSite } from './views/public/PublicSite';
 import { Admin } from './views/admin/Admin';
@@ -42,7 +42,7 @@ export default function App() {
       .channel('app_state_sync')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: APP_STATE_TABLE, filter: `id=eq.${APP_STATE_ROW_ID}` },
-        (payload) => { if (payload.new?.data) setData(payload.new.data); })
+        (payload) => { if (payload.new?.data) setData(migrarStatusReservas(payload.new.data).data); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
