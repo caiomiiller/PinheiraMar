@@ -34,7 +34,7 @@ export const TRANSLATIONS = {
     card_combine_hint: (n) => `Para ${n} pessoas, combine com outra unidade`,
     card_night: 'noite', card_total: 'Total:',
     /* category pills */
-    cat1: 'Frente Mar', cat2: 'Apartamento', cat3: 'Estacionamento',
+    cat1: 'Frente Mar', cat2: 'Apartamentos', cat3: 'Estacionamento',
     cat4: 'Wi-Fi', cat5: 'Famílias', cat6: 'Vista Mar', cat7: 'Praia', cat8: '2-8 pessoas',
     cat_cap2: 'Até 2', cat_cap4: 'Até 4', cat_cap6: 'Até 6', cat_cap8: 'Até 8',
     /* booking modal */
@@ -72,7 +72,7 @@ export const TRANSLATIONS = {
     card_guests: (n) => `${n} huéspedes · apartamento completo`,
     card_combine_hint: (n) => `Para ${n} personas, combina con otra unidad`,
     card_night: 'noche', card_total: 'Total:',
-    cat1: 'Frente al mar', cat2: 'Apartamento', cat3: 'Estacionamiento',
+    cat1: 'Frente al mar', cat2: 'Apartamentos', cat3: 'Estacionamiento',
     cat4: 'Wi-Fi', cat5: 'Familias', cat6: 'Vista al mar', cat7: 'Playa', cat8: '2-8 personas',
     cat_cap2: 'Hasta 2', cat_cap4: 'Hasta 4', cat_cap6: 'Hasta 6', cat_cap8: 'Hasta 8',
     book_title: (nome) => `Reservar ${nome}`, book_name: 'Nombre completo',
@@ -108,7 +108,7 @@ export const TRANSLATIONS = {
     card_guests: (n) => `${n} guests · full apartment`,
     card_combine_hint: (n) => `For ${n} people, combine with another unit`,
     card_night: 'night', card_total: 'Total:',
-    cat1: 'Oceanfront', cat2: 'Apartment', cat3: 'Parking',
+    cat1: 'Oceanfront', cat2: 'Apartments', cat3: 'Parking',
     cat4: 'Wi-Fi', cat5: 'Families', cat6: 'Ocean view', cat7: 'Beach', cat8: '2-8 guests',
     cat_cap2: 'Up to 2', cat_cap4: 'Up to 4', cat_cap6: 'Up to 6', cat_cap8: 'Up to 8',
     book_title: (nome) => `Book ${nome}`, book_name: 'Full name',

@@ -22,10 +22,25 @@ const RESIDENCIAL_LOGOS = { pinheiramar: '/logo-vertical-pinheiramar.png', novoi
 // tipográfico dela (serifada, maiúsculas, mesmas cores) — a logo sozinha, em
 // tamanho de cabeçalho, não é suficiente para diferenciar rapidamente os dois
 // residenciais, então o nome reforça a distinção por escrito.
+// Cores lidas das próprias logos: as duas partilham o azul-marinho do
+// lettering e cada uma tem o seu acento em "Mar" — vermelho no PinheiraMar,
+// azul-petróleo no Caminho do Mar.
 const RESIDENCIAL_BRAND_TEXT = {
   pinheiramar: [{ t: 'Pinheira', c: '#0B1B42' }, { t: 'Mar', c: '#D80000' }],
-  novoimovel: [{ t: 'Caminho do Mar', c: '#0B1B42' }],
+  novoimovel: [{ t: 'Caminho do ', c: '#0B1B42' }, { t: 'Mar', c: '#287898' }],
 };
+
+// Só o símbolo da marca de cada residencial — a logo completa não cabe num
+// botão da barra de filtros, que trabalha com ícones de ~20px.
+const RESIDENCIAL_ICONS = { pinheiramar: '/logo-icon-pinheiramar.png', novoimovel: '/logo-icon-caminho.png' };
+
+// Nome curto (sem o prefixo "Residencial"), montado das mesmas partes que o
+// cabeçalho de cada grupo usa — assim a barra e o cabeçalho nunca divergem.
+const nomeCurtoResidencial = (r) => (RESIDENCIAL_BRAND_TEXT[r.id] || []).map(x => x.t).join('').trim() || r.nome;
+
+// Chave de categoria que representa "só os apartamentos deste imóvel".
+const catIsResidencial = (k) => typeof k === 'string' && k.startsWith('res:');
+const catResidencialId = (k) => (catIsResidencial(k) ? k.slice(4) : null);
 
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 // Extrai {dia, mês, dia da semana} de uma data 'yyyy-mm-dd' para o cartão de data grande da busca mobile.
@@ -139,7 +154,7 @@ export function PublicSite({ data, onCreate }) {
       return (Number(y.available) - Number(x.available)) ||
         (Number(y.fits) - Number(x.fits)) ||
         // sem ordenação explícita nem filtro de categoria, os apartamentos Frente Mar aparecem primeiro
-        (sortMode === 'default' && !activeCategory ? (Number(y.apt.vista === 'Frente Mar') - Number(x.apt.vista === 'Frente Mar')) : 0) ||
+        (sortMode === 'default' && (!activeCategory || catIsResidencial(activeCategory)) ? (Number(y.apt.vista === 'Frente Mar') - Number(x.apt.vista === 'Frente Mar')) : 0) ||
         priceDiff;
     });
     const availableApts = withInfo.filter(w => w.available).map(w => w.apt);
@@ -150,8 +165,20 @@ export function PublicSite({ data, onCreate }) {
 
   const hasFrenteMar = data.apartamentos.some(a => a.ativo && a.vista === 'Frente Mar');
 
+  // Filtrar por imóvel só faz sentido havendo mais do que um: com um só,
+  // "Apartamentos" já mostra exactamente o mesmo conjunto.
+  const residenciaisComApt = data.residenciais.filter(r => data.apartamentos.some(a => a.ativo && a.residencialId === r.id));
+  const mostrarFiltroResidencial = residenciaisComApt.length > 1;
+  const residencialAtivo = data.residenciais.find(r => r.id === catResidencialId(activeCategory)) || null;
+  const subtituloDisponibilidade = residencialAtivo
+    ? `Disponibilidade no ${residencialAtivo.nome} para estas datas.`
+    : mostrarFiltroResidencial
+      ? `Disponibilidade nos ${residenciaisComApt.length === 2 ? 'dois ' : ''}residenciais para estas datas.`
+      : 'Disponibilidade para estas datas.';
+
   const catFilter = (apt) => {
     if (!activeCategory) return true;
+    if (catIsResidencial(activeCategory)) return apt.residencialId === catResidencialId(activeCategory);
     if (activeCategory === 'frente_mar') return apt.vista === 'Frente Mar';
     if (activeCategory === 'cap2') return apt.capacidade === 2;
     if (activeCategory === 'cap4') return apt.capacidade === 4;
@@ -549,12 +576,30 @@ export function PublicSite({ data, onCreate }) {
         <div className="pm-pubsite-catstrip" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {[
             { key: null,         icon: <Home size={16} />,  label: tr('cat2') },
+            // um botão por residencial, com a sua logo — mostra só os
+            // apartamentos daquele imóvel (ficam antes dos filtros de vista
+            // e de lotação por serem o corte mais largo)
+            ...(mostrarFiltroResidencial ? [
+              ...residenciaisComApt.map(r => ({
+                key: `res:${r.id}`,
+                icon: RESIDENCIAL_ICONS[r.id]
+                  ? <img src={RESIDENCIAL_ICONS[r.id]} alt="" style={{ width: 22, height: 22, objectFit: 'contain', display: 'block' }}
+                      onError={e => { e.target.style.display = 'none'; }} />
+                  : <Home size={16} />,
+                label: nomeCurtoResidencial(r),
+              })),
+              // separa "que imóvel" de "que tipo de apartamento": são dois
+              // cortes diferentes, e sem isto a marca do Caminho do Mar (ondas)
+              // fica colada ao ícone de "Frente Mar" (também ondas)
+              { sep: true },
+            ] : []),
             { key: 'frente_mar', icon: <Waves size={16} />, label: tr('cat1') },
             { key: 'cap2',       icon: <Users size={16} />, label: tr('cat_cap2') },
             { key: 'cap4',       icon: <Users size={16} />, label: tr('cat_cap4') },
             { key: 'cap6',       icon: <Users size={16} />, label: tr('cat_cap6') },
             { key: 'cap8',       icon: <Users size={16} />, label: tr('cat_cap8') },
-          ].filter(cat => cat.key !== 'frente_mar' || hasFrenteMar).map(cat => {
+          ].filter(cat => cat.key !== 'frente_mar' || hasFrenteMar).map((cat, i) => {
+            if (cat.sep) return <div key={`sep${i}`} aria-hidden style={{ alignSelf: 'center', width: 1, height: 26, background: BORDER, margin: '0 10px', flexShrink: 0 }} />;
             const on = activeCategory === cat.key;
             return (
               <button key={String(cat.key)} className="pm-cat-btn" data-active={on ? 'true' : 'false'} onClick={() => setActiveCategory(on ? null : cat.key)}
@@ -580,7 +625,7 @@ export function PublicSite({ data, onCreate }) {
               <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em' }}>
                 {fmtShort(ci)} — {fmtShort(co)} · {nights(ci, co)} noite{nights(ci,co) > 1 ? 's' : ''}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}
               </div>
-              <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>Disponibilidade nos dois residenciais para estas datas.</div>
+              <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>{subtituloDisponibilidade}</div>
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: GREY, flexShrink: 0 }}>
               Ordenar por
