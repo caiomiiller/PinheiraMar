@@ -33,11 +33,16 @@ const navBtnStyle = {
 // reserva aparece sempre disponível, mesmo que no mesmo dia entre outra reserva
 // (ex.: sai às 10h, entra às 13h) — o intervalo é meia-aberto, à semelhança do
 // resto da aplicação (ver isAvailable em lib/helpers.js).
-export function AvailabilityCalendar({ apt, reservas, ci, co, onChange }) {
+export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialMonth }) {
   // apt/reservas são opcionais: sem um apartamento concreto (ex.: pesquisa
   // inicial, antes de escolher unidade) o calendário não bloqueia nenhum dia.
   const td = today();
-  const base = ci ? parseYMD(ci) : td;
+  // initialMonth abre o calendário no mês pesquisado pelo hóspede (ex.: ao
+  // clicar "Ver datas livres" num apartamento indisponível nas datas
+  // buscadas) mesmo sem pré-selecionar nenhum dia — ci/co continuam a
+  // controlar apenas a seleção em si, para não marcar como "escolhido" um
+  // período que nem sequer foi clicado neste calendário.
+  const base = initialMonth ? parseYMD(initialMonth) : (ci ? parseYMD(ci) : td);
   const [viewYear, setViewYear] = useState(base.getFullYear());
   const [viewMonth, setViewMonth] = useState(base.getMonth());
   const [hoverDay, setHoverDay] = useState(null);

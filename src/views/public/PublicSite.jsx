@@ -638,7 +638,7 @@ export function PublicSite({ data, onCreate }) {
         <Modal title={`Datas livres · ${calApt.nome}`}
           subtitle="Escolha um período livre para ver este apartamento nos resultados."
           onClose={() => setCalApt(null)}>
-          <AvailabilityCalendar apt={calApt} reservas={data.reservas} ci={calCi} co={calCo}
+          <AvailabilityCalendar apt={calApt} reservas={data.reservas} ci={calCi} co={calCo} initialMonth={ci}
             onChange={(nci, nco) => {
               setCalCi(nci); setCalCo(nco);
               if (nci && nco) { setCi(nci); setCo(nco); setCalApt(null); }
