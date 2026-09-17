@@ -340,7 +340,7 @@ Acesse www.pinheiramar.com.br ou entre em contacto via WhatsApp/redes sociais.
 
 5. ESTACIONAMENTO
 
-• Cada apartamento tem direito a 1 vaga de garagem.
+• Vaga de garagem mediante taxa única obrigatória.
 • Vaga adicional: taxa única de R$ 50,00 por automóvel (sujeito a disponibilidade).
 
 ---
@@ -1474,7 +1474,7 @@ function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, setHosp, 
               <PolicyItem icon="🚪" title="Check-out" text={`Até às ${data.settings.checkOutHora || '10:00'}`} />
               <PolicyItem icon="🔇" title="Lei do silêncio" text="Das 22h às 7h, excepto Réveillon e Carnaval." />
               <PolicyItem icon="🐾" title="Animais de estimação" text="Permitidos mediante taxa única de R$ 200,00 por pet (até 10 kg, máx. 2)." />
-              <PolicyItem icon="🚗" title="Estacionamento" text="1 vaga gratuita incluída. Vaga adicional: R$ 50,00 (sujeito a disponibilidade)." />
+              <PolicyItem icon="🚗" title="Estacionamento" text="Vaga de garagem mediante taxa única obrigatória. Vaga adicional: R$ 50,00 (sujeito a disponibilidade)." />
               <PolicyItem icon="🚭" title="Fumar" text="Proibido em todas as áreas internas e comuns." />
             </section>
 
@@ -4147,7 +4147,7 @@ CHECK-IN: 13h00 | CHECK-OUT: 10h00
 
 4. ESTACIONAMENTO
 
-• Cada apartamento tem direito a 1 vaga de garagem.
+• Vaga de garagem mediante taxa única obrigatória.
 • Vaga adicional: taxa única de R$ 50,00 por automóvel (sujeito a disponibilidade).
 
 ---
