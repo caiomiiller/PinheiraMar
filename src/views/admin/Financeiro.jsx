@@ -51,7 +51,22 @@ export function Financeiro({ data, go }) {
     return true;
   };
 
-  const filtradas = data.reservas.filter(r => r.status !== 'cancelada' && inPeriodo(r));
+  // Para o Financeiro refletir a realidade, uma reserva cujo check-out já
+  // passou é tratada aqui como concluída — Confirmado + Check-out realizado —
+  // mesmo que ninguém tenha atualizado manualmente o status. Isto é só um
+  // cálculo de exibição nesta página (mesmo princípio do displayStatus em
+  // ui.jsx): não altera o status nem o checkoutRealizado guardados na
+  // reserva, então o resto do sistema (calendário, lista de reservas, etc.)
+  // continua mostrando o status real até alguém atualizá-lo lá.
+  const comoRealizada = (r) => {
+    if ((r.status === 'reservado' || r.status === 'pendente') && parseYMD(r.checkOut) < t) {
+      return { ...r, status: 'confirmado', checkoutRealizado: true };
+    }
+    return r;
+  };
+
+  const reservasEfetivas = data.reservas.filter(r => r.status !== 'cancelada').map(comoRealizada);
+  const filtradas = reservasEfetivas.filter(inPeriodo);
   const confirmadas = filtradas.filter(r => r.status === 'confirmado');
   const reservadas  = filtradas.filter(r => r.status === 'reservado');
   const pendentes   = filtradas.filter(r => r.status === 'pendente');
@@ -79,7 +94,7 @@ export function Financeiro({ data, go }) {
   for (let i = 11; i >= 0; i--) {
     const d = new Date(t.getFullYear(), t.getMonth() - i, 1);
     const y = d.getFullYear(), m = d.getMonth();
-    const rs = data.reservas.filter(r => r.status === 'confirmado' && parseYMD(r.checkIn).getFullYear() === y && parseYMD(r.checkIn).getMonth() === m);
+    const rs = reservasEfetivas.filter(r => r.status === 'confirmado' && parseYMD(r.checkIn).getFullYear() === y && parseYMD(r.checkIn).getMonth() === m);
     porMes.push({ label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }), v: rs.reduce((s, r) => s + r.total, 0) });
   }
   const maxMes = Math.max(...porMes.map(m => m.v), 1);
