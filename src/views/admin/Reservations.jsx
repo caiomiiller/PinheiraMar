@@ -20,11 +20,15 @@ import * as XLSX from 'xlsx';
 const residencialOf = (data, apt) => (data.residenciais || []).find(r => r.id === apt?.residencialId) || (data.residenciais || [])[0];
 const residencialCor = (residencialId) => (THEMES[residencialId] || THEMES.pinheiramar).ocean;
 
-// Verde-pastel a marcar o dia de hoje no calendário. É a única coloração de
-// fundo que resta: as faixas de fim-de-semana e de feriado foram retiradas
-// porque cortavam as barras das reservas em fatias e davam a impressão de
-// estarem partidas ou fora de sítio. Os feriados continuam assinalados pelos
-// pontinhos e pela dica do cabeçalho, que não passam por cima de nada.
+// Cores de fundo das colunas do calendário. As faixas de fim-de-semana e de
+// feriado ajudam a ler o mês de relance e ficam como sempre estiveram; o dia
+// de hoje ganha verde-pastel e tem precedência sobre as duas, que é o que
+// faltava distingui-lo. As barras das reservas são opacas e desenhadas por
+// cima, portanto nenhuma destas faixas as corta.
+const FIM_DE_SEMANA_CABECALHO = 'rgba(231,215,182,.25)';
+const FIM_DE_SEMANA_CELULA = 'rgba(231,215,182,.13)';
+const FERIADO_CABECALHO = 'rgba(62,124,177,.10)';
+const FERIADO_CELULA = 'rgba(62,124,177,.07)';
 const HOJE_CABECALHO = '#CDEBCF';
 const HOJE_CELULA = '#EDF7EE';
 const HOJE_TEXTO = '#1C7A4B';
@@ -375,11 +379,12 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               <div style={{ display: 'flex', borderBottom: `1px solid ${C.line}`, background: C.espuma, position: 'sticky', top: 0 }}>
                 <div style={{ width: NAMEW, flexShrink: 0, padding: '10px 14px', fontSize: 12.5, fontWeight: 700, color: C.inkSoft, borderRight: `1px solid ${C.line}` }}>Apartamento</div>
                 {days.map((d, i) => {
+                  const we = d.getDay() === 0 || d.getDay() === 6;
                   const isToday = ymd(d) === ymd(today());
                   const hol = holidaysOn(d);
                   return (
                     <div key={i} title={hol ? hol.map(h => `${h.nome} — ${HOLIDAY_LABELS[h.tipo]}`).join(' · ') : ''}
-                      style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px', background: isToday ? HOJE_CABECALHO : 'transparent' }}>
+                      style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px', background: isToday ? HOJE_CABECALHO : (hol ? FERIADO_CABECALHO : (we ? FIM_DE_SEMANA_CABECALHO : 'transparent')) }}>
                       <div style={{ fontSize: 10.5, color: C.inkSoft, textTransform: 'uppercase' }}>{WD[d.getDay()]}</div>
                       <div style={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: isToday ? HOJE_TEXTO : C.ink }}>{d.getDate()}</div>
                       <div style={{ height: 6, marginTop: 1, display: 'flex', justifyContent: 'center', gap: 2 }}>
@@ -416,6 +421,8 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       {/* day cells */}
                       <div style={{ display: 'flex', height: '100%' }}>
                         {days.map((d, i) => {
+                          const we = d.getDay() === 0 || d.getDay() === 6;
+                          const hol = holidaysOn(d);
                           const isToday = ymd(d) === ymd(today());
                           const inDrag = dragSel && dragSel.aptId === apt.id && i >= Math.min(dragSel.startIdx, dragSel.endIdx) && i <= Math.max(dragSel.startIdx, dragSel.endIdx);
                           return (
@@ -423,7 +430,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                               onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
                               onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
                               title="Clique para criar uma reserva, ou arraste para escolher um período"
-                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE_CELULA : '#fff'), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
+                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE_CELULA : (hol ? FERIADO_CELULA : (we ? FIM_DE_SEMANA_CELULA : '#fff'))), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
                               {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
                             </div>
                           );
