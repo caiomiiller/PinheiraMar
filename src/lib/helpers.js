@@ -79,14 +79,32 @@ export const overlaps = (aCi, aCo, bCi, bCo) => parseYMD(aCi) < parseYMD(bCo) &&
    caminho: as criadas no painel (telefone/WhatsApp) nunca o têm, e editar
    uma reserva no painel também o descarta — o formulário reconstrói o
    objeto — o que a promove a reserva normal, sem prazo. */
-// 5 minutos, a pedido do Caio: muita gente chega ao checkout só para ver o
-// valor final, desiste, e quer reservar a sério minutos depois — com um prazo
-// longo essa pessoa ficava barrada pela sua própria reserva provisória. O
-// risco do prazo curto (o pagamento demorar mais do que isto e as datas serem
-// entretanto levadas por outra pessoa) está coberto: o webhook confirma a
-// reserva paga de qualquer forma e marca o conflito para o gestor resolver,
-// em vez de deixar duas reservas sobrepostas sem ninguém saber.
-export const MIN_HOLD_PAGAMENTO = 5;
+/* Dois prazos, e é a relação entre eles que evita conflitos — não o valor de
+   nenhum deles isoladamente:
+
+   JANELA: quanto tempo o link de pagamento do Mercado Pago aceita pagamento.
+   É imposto no próprio Mercado Pago (`expires`/`expiration_date_to` em
+   api/mp-create-preference.js), não só do nosso lado — passado esse tempo,
+   ele deixa de aceitar, e um pagamento feito à mesma é devolvido ao pagador.
+
+   HOLD: quanto tempo a reserva provisória segura as datas.
+
+   O HOLD é maior do que a JANELA de propósito. Era este o buraco real: antes,
+   o link não expirava nunca, por isso um pagamento podia ser aprovado horas
+   depois de as datas terem sido libertadas e já estarem com outra pessoa —
+   e nenhum valor de prazo resolvia isso sozinho. Com a janela fechada no
+   Mercado Pago, um pagamento só pode ser aprovado dentro dela, e os 10
+   minutos a mais do HOLD cobrem a folga até o aviso do webhook chegar.
+
+   Fica a detecção de conflito no webhook como última rede (ver
+   `datasEmConflito`), mas passa a ser um caso que não devia acontecer, em vez
+   de a única proteção.
+
+   O preço disto é a indisponibilidade provisória ser mais longa do que os 5
+   minutos que o Caio tinha proposto — decisão dele, depois de ver o risco:
+   não haver conflito vale mais do que libertar as datas depressa. */
+export const MIN_JANELA_PAGAMENTO = 20;
+export const MIN_HOLD_PAGAMENTO = 30;
 export const novoPrazoPagamento = (min = MIN_HOLD_PAGAMENTO) => new Date(Date.now() + min * 60000).toISOString();
 
 // Uma reserva provisória cujo prazo passou nunca chegou a ser uma reserva:
