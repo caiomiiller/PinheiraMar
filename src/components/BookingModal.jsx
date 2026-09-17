@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Check, Info, ChevronDown, Minus, Plus } from 'lucide-react';
 import { C, F } from '../lib/constants';
 import { mkExtrasObrigatorios } from '../lib/csvUtils';
-import { money, nights, ymd, uid, stayBreakdown, code, today, fmtShort } from '../lib/helpers';
+import { money, nights, ymd, uid, stayBreakdown, code, today, fmtShort, novoPrazoPagamento } from '../lib/helpers';
 import { sendConfirmationEmail } from '../lib/email';
 import { Btn, Modal, Field, TextInput, NumberInput, PhotoTile } from './ui';
 
@@ -79,41 +79,50 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
 
   const handleConfirm = async () => {
     setPaying(true);
-    const r1 = buildR(apt, bd, g, [...extrasObrig, ...extrasOpc1], total1, false);
-    // espera a reserva estar mesmo gravada (Supabase, quando configurado)
-    // antes de redirecionar — sem isto, sair da página a meio da gravação
-    // podia perder a reserva.
-    await onCreate(r1);
-    sendConfirmationEmail(r1, apt, data.settings);
-    if (apt2 && bd2) {
-      const r2 = buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true);
-      await onCreate(r2);
-      sendConfirmationEmail(r2, apt2, data.settings);
-    }
+    const base1 = buildR(apt, bd, g, [...extrasObrig, ...extrasOpc1], total1, false);
 
-    // tenta redirecionar para o pagamento do sinal no Mercado Pago — ver
-    // .env.example (MP_ACCESS_TOKEN). Sem isso configurado no servidor, ou
-    // se o pedido falhar por qualquer razão, cai-se no fluxo manual de
-    // sempre (ecrã de confirmação a pedir para pagar e aguardar contacto).
+    // O link de pagamento é pedido ANTES de gravar, para se saber se esta
+    // reserva vai mesmo passar pelo checkout: só nesse caso ela nasce
+    // provisória (com prazo), porque só nesse caso pode ficar pendurada por
+    // um pagamento que falha. Sem o Mercado Pago configurado — ou se ele
+    // recusar o pedido — segue o fluxo manual de sempre e a reserva nasce
+    // sem prazo, à espera do contacto da equipa.
+    let initPoint = null;
     try {
       const resp = await fetch('/api/mp-create-preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reservaId: r1.id, codigo: r1.codigo,
-          hospede: { nome: r1.hospede, email: r1.email },
-          valor: r1.sinal,
+          reservaId: base1.id, codigo: base1.codigo,
+          hospede: { nome: base1.hospede, email: base1.email },
+          valor: base1.sinal,
           descricao: `Sinal — ${data.settings.nome} — ${apt.nome}`,
           origin: window.location.origin,
         }),
       });
-      if (resp.ok) {
-        const out = await resp.json();
-        if (out?.init_point) { window.location.href = out.init_point; return; }
-      }
+      if (resp.ok) initPoint = (await resp.json())?.init_point || null;
     } catch (err) {
       console.warn('[pagamento] Mercado Pago indisponível — seguindo com confirmação manual do sinal.', err);
     }
+
+    // `pagamentoRef` prende as duas metades de uma reserva conjunta ao mesmo
+    // pagamento, para o webhook confirmar (ou libertar) as duas de uma vez —
+    // sem isto, a segunda unidade expirava mesmo com o sinal pago.
+    const provisoria = (r) => (initPoint ? { ...r, expiraEm: novoPrazoPagamento(), pagamentoRef: base1.id } : r);
+
+    // espera a reserva estar mesmo gravada (Supabase, quando configurado)
+    // antes de redirecionar — sem isto, sair da página a meio da gravação
+    // podia perder a reserva.
+    const r1 = provisoria(base1);
+    await onCreate(r1);
+    sendConfirmationEmail(r1, apt, data.settings);
+    if (apt2 && bd2) {
+      const r2 = provisoria(buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true));
+      await onCreate(r2);
+      sendConfirmationEmail(r2, apt2, data.settings);
+    }
+
+    if (initPoint) { window.location.href = initPoint; return; }
     setPaying(false);
     onConfirmed(r1);
   };

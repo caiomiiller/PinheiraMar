@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Download, CreditCard, Wallet, ChevronDown } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { money, nights, parseYMD, ymd, today, fmtLong, fmtShort } from '../../lib/helpers';
+import { money, nights, parseYMD, ymd, today, fmtLong, fmtShort, holdExpirado } from '../../lib/helpers';
 import { buildCSV, downloadBlob } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Select, Field, Btn, DateInput } from '../../components/ui';
 import * as XLSX from 'xlsx';
@@ -65,7 +65,13 @@ export function Financeiro({ data, go }) {
     return r;
   };
 
-  const reservasEfetivas = data.reservas.filter(r => r.status !== 'cancelada').map(comoRealizada);
+  // Fora as canceladas e as reservas provisórias que expiraram sem pagamento
+  // (ver holdExpirado): essas nunca chegaram a ser reservas, não podem
+  // aparecer como receita prevista.
+  const agoraMs = Date.now();
+  const reservasEfetivas = data.reservas
+    .filter(r => r.status !== 'cancelada' && !holdExpirado(r, agoraMs))
+    .map(comoRealizada);
   const filtradas = reservasEfetivas.filter(inPeriodo);
   const bloqueios = filtradas.filter(r => r.status === 'bloqueio');
 

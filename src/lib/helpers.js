@@ -63,9 +63,36 @@ export function stayBreakdown(apt, seasons, ci, co, guests) {
 // pode coincidir com o dia de check-in de outra reserva (entrada a partir das 13h),
 // permitindo terminar e iniciar reservas no mesmo dia sem conflito.
 export const overlaps = (aCi, aCo, bCi, bCo) => parseYMD(aCi) < parseYMD(bCo) && parseYMD(aCo) > parseYMD(bCi);
+
+/* ── Reservas provisórias (à espera do pagamento) ──────────────────────────
+   Uma reserva feita pelo site nasce provisória: segura as datas enquanto o
+   hóspede paga o sinal no Mercado Pago, e larga-as sozinha se o pagamento
+   falhar ou se ele desistir a meio do checkout. Sem este prazo, qualquer
+   pagamento recusado ou separador fechado deixava as datas presas para
+   sempre — e o pagamento recusado nem sequer dá sinal nenhum de volta.
+
+   Segurar as datas durante o checkout é de propósito: sem isso, dois
+   hóspedes podiam pagar o mesmo apartamento para as mesmas noites ao mesmo
+   tempo, o que é bem pior do que umas datas presas por meia hora.
+
+   `expiraEm` só existe em reservas nascidas do site com pagamento a
+   caminho: as criadas no painel (telefone/WhatsApp) nunca o têm, e editar
+   uma reserva no painel também o descarta — o formulário reconstrói o
+   objeto — o que a promove a reserva normal, sem prazo. */
+export const MIN_HOLD_PAGAMENTO = 30;
+export const novoPrazoPagamento = (min = MIN_HOLD_PAGAMENTO) => new Date(Date.now() + min * 60000).toISOString();
+
+// Uma reserva provisória cujo prazo passou nunca chegou a ser uma reserva:
+// não bloqueia datas nem entra nas contas do Financeiro. Data inválida ou
+// ausente conta como "não expirada", para nunca libertar datas por engano.
+export const holdExpirado = (r, agora = Date.now()) =>
+  r.status === 'pendente' && !!r.expiraEm && Date.parse(r.expiraEm) <= agora;
+
 export function isAvailable(reservations, aptId, ci, co, ignoreId) {
+  const agora = Date.now();
   return !reservations.some(r =>
-    r.apartamentoId === aptId && r.status !== 'cancelada' && r.id !== ignoreId && overlaps(ci, co, r.checkIn, r.checkOut));
+    r.apartamentoId === aptId && r.status !== 'cancelada' && !holdExpirado(r, agora)
+    && r.id !== ignoreId && overlaps(ci, co, r.checkIn, r.checkOut));
 }
 
 /* ───────────────────────── Feriados (nacionais + SC + RS) ───────────────────────── */

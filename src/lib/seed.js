@@ -417,17 +417,43 @@ export function migrarDados(d) {
   return { data: { ...d, reservas, versaoDados: DATA_VERSION }, migrou: true, alteradas };
 }
 
-// Carrega e converte para o modelo de dados atual. A conversão é gravada
-// logo de seguida para que os outros dispositivos já partam do modelo novo
-// (e para não se repetir a cada arranque).
+/* ── Limpeza das reservas provisórias que caducaram ───────────────────────
+   Uma reserva do site que ficou à espera do pagamento e nunca foi paga
+   deixa de bloquear datas mal o prazo passa (holdExpirado, em helpers.js) —
+   isso é imediato e não depende desta limpeza. Isto aqui é só arrumação:
+   passado um tempo, o registo sai de vez, para a lista do painel não encher
+   de tentativas falhadas que nunca foram reservas.
+
+   As 24 horas de folga são de propósito: o Mercado Pago reenvia avisos
+   durante horas se o primeiro não passar, e enquanto o registo existir esse
+   aviso atrasado ainda consegue confirmar a reserva. Apagar mais cedo seria
+   arriscar perder uma reserva efectivamente paga.
+
+   Ao contrário de migrarDados, isto não é um passo de versão — corre em
+   todos os arranques, porque há sempre provisórias novas a caducar. */
+const HORAS_ATE_LIMPAR_PROVISORIA = 24;
+
+export function limparProvisoriasCaducadas(d, agora = Date.now()) {
+  if (!d || !Array.isArray(d.reservas)) return { data: d, removidas: 0 };
+  const limite = agora - HORAS_ATE_LIMPAR_PROVISORIA * 3600 * 1000;
+  // data inválida ou ausente nunca é apagada — na dúvida, guarda-se.
+  const reservas = d.reservas.filter(r => !(r.status === 'pendente' && r.expiraEm && Date.parse(r.expiraEm) <= limite));
+  const removidas = d.reservas.length - reservas.length;
+  return { data: removidas ? { ...d, reservas } : d, removidas };
+}
+
+// Carrega, converte para o modelo de dados atual e arruma as provisórias
+// caducadas. O resultado é gravado logo de seguida para que os outros
+// dispositivos já partam do mesmo ponto (e para não se repetir a cada
+// arranque).
 export async function loadData() {
   const bruto = await loadRaw();
   if (!bruto) return bruto;
-  const { data: d, migrou, alteradas } = migrarDados(bruto);
-  if (migrou) {
-    console.info(`[pinheiramar] dados migrados para a versão ${DATA_VERSION} — ${alteradas} reserva(s) alteradas.`);
-    await saveData(d);
-  }
+  const { data: migrado, migrou, alteradas } = migrarDados(bruto);
+  const { data: d, removidas } = limparProvisoriasCaducadas(migrado);
+  if (migrou) console.info(`[pinheiramar] dados migrados para a versão ${DATA_VERSION} — ${alteradas} reserva(s) alteradas.`);
+  if (removidas) console.info(`[pinheiramar] ${removidas} reserva(s) provisórias caducadas removidas.`);
+  if (migrou || removidas) await saveData(d);
   return d;
 }
 

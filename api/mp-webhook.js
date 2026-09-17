@@ -28,6 +28,36 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+// Decide o que fazer com as reservas ligadas a um pagamento. Isolada de
+// propósito — sem rede nem base de dados — para poder ser testada a sério:
+// é a parte onde um engano custa dinheiro ou uma reserva perdida.
+//
+// `alvos` são a reserva do pagamento e, numa reserva conjunta (dois
+// apartamentos), a outra metade, ligada pelo mesmo `pagamentoRef`.
+// Só mexe em reservas ainda 'pendente': um reenvio do mesmo aviso, ou um
+// gestor que já tenha avançado o estado à mão, não é desfeito aqui.
+export function aplicarDesfechoPagamento(reservas, reservaId, payment, agoraISO = new Date().toISOString()) {
+  const aprovado = payment.status === 'approved';
+  const alvos = [];
+  let mudou = false;
+  const saida = (reservas || []).map(r => {
+    if (r.id !== reservaId && r.pagamentoRef !== reservaId) return r;
+    alvos.push(r.id);
+    if (r.status !== 'pendente') return r;
+    mudou = true;
+    return aprovado
+      // pago: deixa de ser provisória (sem prazo) e passa a Reservado.
+      ? { ...r, status: 'reservado', expiraEm: null, pagamentoMpId: String(payment.id), pagamentoConfirmadoEm: agoraISO }
+      // recusado: o prazo passa a agora, portanto as datas ficam livres
+      // imediatamente para novas consultas. Mantém-se 'pendente' de
+      // propósito, em vez de apagar: o hóspede pode tentar pagar outra vez
+      // no mesmo checkout, e aí este mesmo webhook ainda a encontra para
+      // confirmar. Se ninguém pagar, é limpa depois (ver seed.js).
+      : { ...r, expiraEm: agoraISO, pagamentoMpId: String(payment.id), pagamentoStatus: payment.status };
+  });
+  return { reservas: saida, alvos, mudou };
+}
+
 export default async function handler(req, res) {
   // O Mercado Pago não espera um corpo de resposta específico, só um 200
   // rápido — respondemos sempre 200 (mesmo quando ignoramos o aviso ou algo
@@ -76,10 +106,14 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (payment.status !== 'approved') {
-      // pendente, rejeitado, estornado, etc. — não avançamos o status; a
-      // reserva fica como está (o gestor vê pelo Estado no admin que ainda
-      // não há confirmação e pode acompanhar manualmente se precisar).
+    // 'approved' confirma; 'rejected'/'cancelled' são desfechos negativos e
+    // definitivos daquela tentativa — aí a reserva provisória tem de largar
+    // as datas já, sem esperar pelo prazo. Os estados intermédios
+    // ('pending', 'in_process', 'authorized') não são desfecho nenhum: a
+    // reserva continua provisória até ao prazo dela.
+    const aprovado = payment.status === 'approved';
+    const recusado = payment.status === 'rejected' || payment.status === 'cancelled';
+    if (!aprovado && !recusado) {
       res.status(200).json({ ok: true, status: payment.status });
       return;
     }
@@ -94,31 +128,23 @@ export default async function handler(req, res) {
     }
 
     const state = row.data;
-    const idx = (state.reservas || []).findIndex(r => r.id === reservaId);
-    if (idx === -1) {
+    const { reservas, alvos, mudou } = aplicarDesfechoPagamento(state.reservas, reservaId, payment);
+    if (!alvos.length) {
       console.warn('[mp-webhook] Reserva não encontrada para external_reference', reservaId);
       res.status(200).json({ ok: false, reason: 'reserva_not_found' });
       return;
     }
+    state.reservas = reservas;
 
-    // idempotente: só avança 'pendente' → 'reservado'. Se um reenvio do
-    // mesmo aviso chegar depois (ou o gestor já tiver avançado o status
-    // manualmente para 'confirmado'/'cancelada'), não mexe em nada.
-    if (state.reservas[idx].status === 'pendente') {
-      state.reservas[idx] = {
-        ...state.reservas[idx],
-        status: 'reservado',
-        pagamentoMpId: String(payment.id),
-        pagamentoConfirmadoEm: new Date().toISOString(),
-      };
+    if (mudou) {
       const { error: writeErr } = await supabase
         .from('app_state')
         .update({ data: state, updated_at: new Date().toISOString() })
         .eq('id', 'main');
-      if (writeErr) console.error('[mp-webhook] Falha ao gravar status reservado:', writeErr);
+      if (writeErr) console.error('[mp-webhook] Falha ao gravar o desfecho do pagamento:', writeErr);
     }
 
-    res.status(200).json({ ok: true });
+    res.status(200).json({ ok: true, status: payment.status, reservas: alvos.length });
   } catch (err) {
     console.error('[mp-webhook] erro inesperado:', err);
     res.status(200).json({ ok: false });
