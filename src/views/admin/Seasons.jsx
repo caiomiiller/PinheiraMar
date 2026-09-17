@@ -140,7 +140,7 @@ export function SeasonForm({ initial, isNew, apartamentos, onSave, onClose }) {
               </div>
             ))}
           </div>
-          <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '10px 2px 0' }}>A diária usa o valor de <b>dia da semana</b>; nas noites de sexta e sábado usa <b>fim de semana</b> (quando preenchido). Semanal, mensal e adulto extra ficam disponíveis como referência na criação da reserva.</p>
+          <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '10px 2px 0' }}>A diária usa o valor de <b>dia da semana</b>; nas noites de sexta e sábado usa <b>fim de semana</b> (quando preenchido). Semanal e mensal ficam disponíveis como referência na criação da reserva. <b>Adulto extra</b> é somado automaticamente à diária por cada hóspede acima do número incluído no preço base do apartamento (configurável em Apartamentos, 4 por defeito) — não precisa de ser adicionado manualmente na reserva.</p>
         </div>
       </div>
     </Modal>

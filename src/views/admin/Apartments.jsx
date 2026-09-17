@@ -112,6 +112,9 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
   /* ── Preço ── */
   const [preco, setPreco] = useState(i.preco || 0);
   const [precoFimSemana, setPrecoFimSemana] = useState(i.precoFimSemana || '');
+  // Hóspedes incluídos no preço base, antes de cobrar "Adulto extra" (Opções de
+  // preços) por pessoa a mais — 4 por defeito. Ver helpers.js (capacidadeBaseOf).
+  const [capacidadeBase, setCapacidadeBase] = useState(i.capacidadeBase || 4);
 
   const nome = titulo.trim().split(' ').slice(0, 2).join(' ') || 'Apto';
   const ok = titulo.trim();
@@ -170,6 +173,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
               mostrarMapa,
               preco: Number(preco) || 0,
               precoFimSemana: Number(precoFimSemana) || 0,
+              capacidadeBase: Number(capacidadeBase) || 4,
             })}>
             Salvar
           </Btn>
@@ -377,6 +381,14 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
               <Field label="Preço de fim de semana" hint="ⓘ">
                 <MoneyInput value={precoFimSemana} onChange={e => setPrecoFimSemana(e.target.value === '' ? '' : Number(e.target.value))} />
               </Field>
+            </div>
+            <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 12, alignItems: 'end' }}>
+              <Field label="Hóspedes incluídos no preço base" hint="ⓘ">
+                <NumberInput min={1} max={hospedes} value={capacidadeBase} onChange={e => setCapacidadeBase(e.target.value === '' ? '' : Number(e.target.value))} />
+              </Field>
+              <p style={{ fontSize: 12, color: C.inkSoft, margin: 0 }}>
+                Hóspedes acima deste número (até {hospedes}, o limite do apartamento) somam o valor de <b>Adulto extra</b> definido em <b>Opções de preços</b> por temporada — automaticamente, ao criar ou editar uma reserva.
+              </p>
             </div>
             <div style={{ fontSize: 12, color: C.brisa, cursor: 'pointer', fontWeight: 600 }}>+ Mais opções de preço</div>
             <p style={{ fontSize: 12, color: C.inkSoft, margin: '4px 0 0' }}>

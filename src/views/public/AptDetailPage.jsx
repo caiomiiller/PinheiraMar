@@ -70,14 +70,14 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   }, [lightboxIdx, fotos.length]);
 
   const localNights = localCi && localCo && nights(localCi, localCo) >= 1 ? nights(localCi, localCo) : 0;
-  const bd = localNights > 0 ? stayBreakdown(apt, data.seasons, localCi, localCo) : null;
+  const bd = localNights > 0 ? stayBreakdown(apt, data.seasons, localCi, localCo, localHosp) : null;
   const extrasObrig = (data.taxasAdicionais || []).filter(tx => tx.tipo === 'obrigatoria');
   const extrasTotal = extrasObrig.reduce((s, e) => s + e.preco, 0);
 
   // second apt computations
   const apt2 = useApt2 && apt2Id ? (data.apartamentos || []).find(a => a.id === apt2Id) : null;
   const isAvail2 = apt2 && localCi && localCo ? isAvailable(data.reservas, apt2.id, localCi, localCo) : false;
-  const bd2 = apt2 && localNights > 0 ? stayBreakdown(apt2, data.seasons, localCi, localCo) : null;
+  const bd2 = apt2 && localNights > 0 ? stayBreakdown(apt2, data.seasons, localCi, localCo, g2) : null;
   const total2 = apt2 && bd2 ? bd2.total + extrasTotal : 0;
   const totalComExtras = bd ? bd.total + extrasTotal + (useApt2 && apt2 ? total2 : 0) : 0;
   const sinal = Math.round(totalComExtras * (data.settings.sinalPct / 100));

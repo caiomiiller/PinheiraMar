@@ -67,7 +67,7 @@ export function seedData() {
   const byId = Object.fromEntries(apartamentos.map(a => [a.id, a]));
   const mk = (aptId, ci, co, nome, sobrenome, adultos, criancas, status, origem, contacto, extras = [], checkinRealizado = false, checkoutRealizado = false) => {
     const apt = byId[aptId];
-    const bd = stayBreakdown(apt, seasons, ci, co);
+    const bd = stayBreakdown(apt, seasons, ci, co, adultos + criancas);
     const n = Math.max(1, bd.n);
     const precoNoite = status === 'bloqueio' ? 0 : Math.round(bd.total / n);
     const extrasVal = extras.reduce((s, e) => s + e.qtd * e.preco, 0);

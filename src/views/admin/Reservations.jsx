@@ -5,7 +5,7 @@ import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy,
 import { C, F, THEMES } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
   isAvailable, stayBreakdown, nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS,
-  WD, HOLIDAY_COLORS, MS, seasonForDate, aptRates, roomFullName, overlaps } from '../../lib/helpers';
+  WD, HOLIDAY_COLORS, MS, seasonForDate, aptRates, roomFullName, overlaps, capacidadeBaseOf } from '../../lib/helpers';
 import { mkExtrasObrigatorios, buildCSV, downloadBlob, rowToReserva,
   EXTRA_PRESETS, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
@@ -727,17 +727,23 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const residencial = residencialOf(data, apt);
   const validDates = nights(ci, co) >= 1;
   const n = Math.max(1, nights(ci, co));
-  const bd = stayBreakdown(apt, data.seasons, ci, co);
+  // Precisa de vir antes do stayBreakdown abaixo — o preço já inclui
+  // automaticamente o "Adulto extra" por hóspede acima da capacidade base
+  // do apartamento (ver helpers.js/nightlyRate), a pedido do Caio, 2026-09-17.
+  const totalGuests = adultos + criancas;
+  const bd = stayBreakdown(apt, data.seasons, ci, co, totalGuests);
   const suggested = Math.round(bd.total / n);
   const ciSeason = seasonForDate(data.seasons, parseYMD(ci));
   const seasonRates = aptRates(ciSeason, apt.id) || {};
   const adultoExtra = Number(seasonRates.adultoExtra) || 0;
+  const capacidadeBase = capacidadeBaseOf(apt);
+  const hospedesExtra = status !== 'bloqueio' ? Math.max(0, Math.min(totalGuests, apt.capacidade || totalGuests) - capacidadeBase) : 0;
 
   const [precoNoite, setPrecoNoite] = useState(() => {
     // Sempre parte do valor calculado pela temporada — mesmo em edição.
     // O utilizador pode sobrepor manualmente depois.
     const a = data.apartamentos.find(x => x.id === (i.apartamentoId || firstApt.id)) || firstApt;
-    const bdi = stayBreakdown(a, data.seasons, i.checkIn || ymd(today()), i.checkOut || ymd(addDays(today(), 1)));
+    const bdi = stayBreakdown(a, data.seasons, i.checkIn || ymd(today()), i.checkOut || ymd(addDays(today(), 1)), adultos + criancas);
     const ni = Math.max(1, nights(i.checkIn || ymd(today()), i.checkOut || ymd(addDays(today(), 1))));
     return Math.round(bdi.total / ni) || (a.preco || 0);
   });
@@ -749,17 +755,16 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     if (status === 'bloqueio') { setPrecoNoite(0); return; }
     if (nights(ci, co) < 1) return;
     const a = data.apartamentos.find(x => x.id === aptId) || firstApt;
-    const newBd = stayBreakdown(a, data.seasons, ci, co);
+    const newBd = stayBreakdown(a, data.seasons, ci, co, adultos + criancas);
     setPrecoNoite(Math.round(newBd.total / Math.max(1, nights(ci, co))) || a.preco || 0);
-    setPrecoEdited(false); // reset: troca de apt/data cancela override manual
+    setPrecoEdited(false); // reset: troca de apt/data/hóspedes cancela override manual
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aptId, ci, co, status]);
+  }, [aptId, ci, co, status, adultos, criancas]);
 
   const acomod = status === 'bloqueio' ? 0 : Math.round(precoNoite * n);
   const extrasVal = status === 'bloqueio' ? 0 : extras.reduce((s, e) => s + (Number(e.qtd) || 0) * (Number(e.preco) || 0), 0);
   const total = acomod + extrasVal;
   const sinal = Math.round(total * (residencial.sinalPct / 100));
-  const totalGuests = adultos + criancas;
   const free = isAvailable(data.reservas, aptId, ci, co, i.id);
   const overCap = status !== 'bloqueio' && totalGuests > apt.capacidade;
   const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
@@ -922,6 +927,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                         <Info size={12} /> Tarifa de tabela: {money(bd.total)} ({money(suggested)}/noite)
                         {Number(seasonRates.semanal) > 0 && <span>· semanal {money(seasonRates.semanal)}</span>}
                         {Number(seasonRates.mensal) > 0 && <span>· mensal {money(seasonRates.mensal)}</span>}
+                        {hospedesExtra > 0 && <span>· inclui {hospedesExtra} hóspede{hospedesExtra > 1 ? 's' : ''} extra a {money(adultoExtra)}/noite</span>}
                         {precoEdited && <button type="button" onClick={() => { setPrecoEdited(false); setPrecoNoite(suggested); }} style={{ background: 'none', border: 'none', color: C.coralDeep, cursor: 'pointer', fontWeight: 600, fontSize: 11.5, padding: 0 }}>repor</button>}
                       </div>
                     </td>
@@ -959,6 +965,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                 <div style={{ fontWeight: 600, color: C.ink, marginBottom: 4 }}>{roomFullName(apt)}</div>
                 <div style={{ fontSize: 11.5, color: C.inkSoft, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
                   <Info size={12} /> {n} {n === 1 ? 'noite' : 'noites'} · tabela {money(bd.total)} ({money(suggested)}/noite)
+                  {hospedesExtra > 0 && <span>· inclui {hospedesExtra} extra a {money(adultoExtra)}/noite</span>}
                   {precoEdited && <button type="button" onClick={() => { setPrecoEdited(false); setPrecoNoite(suggested); }} style={{ background: 'none', border: 'none', color: C.coralDeep, cursor: 'pointer', fontWeight: 600, fontSize: 11.5, padding: 0 }}>repor</button>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -986,12 +993,6 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
 
             <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <button type="button" onClick={() => addExtra()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.ocean, fontWeight: 600, fontSize: 12.5 }}><Plus size={14} /> Adicionar item</button>
-              {adultoExtra > 0 && (
-                <button type="button" onClick={() => addExtra({ nome: 'Adulto extra', preco: adultoExtra })} title="Adicionar adulto extra (tarifa da temporada)"
-                  style={{ background: '#E1F0EC', border: '1px solid #BFE0D6', borderRadius: 999, padding: '5px 11px', cursor: 'pointer', color: '#1C7A5B', fontSize: 11.5, fontWeight: 600 }}>
-                  Adulto extra ({money(adultoExtra)})
-                </button>
-              )}
               {(data.taxasAdicionais || []).map(tx => (
                 <button key={tx.id} type="button" onClick={() => addExtra({ nome: tx.nome, preco: tx.preco })} title={`Adicionar: ${tx.nome} — ${tx.tipo === 'obrigatoria' ? 'Obrigatória' : 'Opcional'}`}
                   style={{ background: tx.tipo === 'obrigatoria' ? '#E1F0EC' : C.areiaSoft, border: `1px solid ${tx.tipo === 'obrigatoria' ? '#BFE0D6' : C.areia}`, borderRadius: 999, padding: '5px 11px', cursor: 'pointer', color: tx.tipo === 'obrigatoria' ? '#1C7A5B' : C.ink, fontSize: 11.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>

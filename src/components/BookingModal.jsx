@@ -27,8 +27,18 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
   const extrasOpc1 = taxasOpc.filter(t => extrasQty[t.id] > 0).map(t => ({ ...t, qtd: extrasQty[t.id], subtotal: t.preco * extrasQty[t.id] }));
   const extrasOpc2 = hasApt2 ? taxasOpc.filter(t => extrasQty[t.id] > 0 && extrasScope[t.id] === 'per_apt').map(t => ({ ...t, qtd: extrasQty[t.id], subtotal: t.preco * extrasQty[t.id] })) : [];
 
-  const bd = stayBreakdown(apt, data.seasons, ci, co);
-  const bd2 = apt2 ? stayBreakdown(apt2, data.seasons, ci, co) : null;
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [tel, setTel] = useState('');
+  // Precisam de vir antes do stayBreakdown abaixo — o preço já inclui
+  // automaticamente o "Adulto extra" por hóspede acima da capacidade base
+  // do apartamento (ver helpers.js/nightlyRate), a pedido do Caio, 2026-09-17.
+  const [g, setG] = useState(Math.min(initG1 || hosp, apt.capacidade));
+  const [gB, setGB] = useState(Math.min(initG2 || 1, apt2 ? apt2.capacidade : 8));
+  const ok = nome.trim() && email.trim();
+
+  const bd = stayBreakdown(apt, data.seasons, ci, co, g);
+  const bd2 = apt2 ? stayBreakdown(apt2, data.seasons, ci, co, gB) : null;
   const obrigTotal = extrasObrig.reduce((s, e) => s + e.preco * e.qtd, 0);
   const opc1Total = extrasOpc1.reduce((s, e) => s + e.subtotal, 0);
   const opc2Total = extrasOpc2.reduce((s, e) => s + e.subtotal, 0);
@@ -36,13 +46,6 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
   const total2 = apt2 && bd2 ? bd2.total + obrigTotal + opc2Total : 0;
   const totalComExtras = total1 + total2;
   const sinal = Math.round(totalComExtras * (data.settings.sinalPct / 100));
-
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [tel, setTel] = useState('');
-  const [g, setG] = useState(Math.min(initG1 || hosp, apt.capacidade));
-  const [gB, setGB] = useState(Math.min(initG2 || 1, apt2 ? apt2.capacidade : 8));
-  const ok = nome.trim() && email.trim();
 
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);

@@ -124,7 +124,7 @@ export function PublicSite({ data, onCreate }) {
       apt: a,
       available: valid ? isAvailable(data.reservas, a.id, ci, co) : true,
       fits: !hosp || a.capacidade >= hosp,
-      bd: valid ? stayBreakdown(a, data.seasons, ci, co) : null,
+      bd: valid ? stayBreakdown(a, data.seasons, ci, co, hosp || undefined) : null,
     })).sort((x, y) => {
       const priceDiff = sortMode === 'price_desc' ? (y.apt.preco - x.apt.preco) : (x.apt.preco - y.apt.preco);
       return (Number(y.available) - Number(x.available)) ||

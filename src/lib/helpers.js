@@ -20,21 +20,40 @@ export function seasonForDate(seasons, dObj) {
   return seasons.find(s => s.ativa !== false && parseYMD(s.inicio).getTime() <= t && t <= parseYMD(s.fim).getTime()) || null;
 }
 export const aptRates = (season, aptId) => (season && season.precos && season.precos[aptId]) || null;
-export function nightlyRate(apt, seasons, dObj) {
-  const p = aptRates(seasonForDate(seasons, dObj), apt.id);
+// Hóspedes incluídos na tarifa base do apartamento antes de cobrar qualquer
+// extra por pessoa (ver `guests` abaixo) — 4 por defeito, mas configurável
+// por apartamento (Apartments.jsx) para o caso de algum precisar de outro valor.
+export const capacidadeBaseOf = (apt) => Number(apt?.capacidadeBase) || 4;
+export function nightlyRate(apt, seasons, dObj, guests) {
+  const season = seasonForDate(seasons, dObj);
+  const p = aptRates(season, apt.id);
+  let rate;
   if (p) {
     const r = isWeekendNight(dObj) ? (Number(p.fimSemana) || Number(p.diaSemana) || 0) : (Number(p.diaSemana) || 0);
-    if (r > 0) return Math.round(r);
+    rate = r > 0 ? Math.round(r) : Math.round(apt.preco || 0);
+  } else {
+    rate = Math.round(apt.preco || 0); // tarifa base do apartamento (fallback)
   }
-  return Math.round(apt.preco || 0); // tarifa base do apartamento (fallback)
+  // Hóspede extra: só quando `guests` é indicado (reservas concretas — não a
+  // pré-visualização genérica do calendário, que não sabe para quantas
+  // pessoas é) soma o "Adulto extra" da temporada (Opções de preços) por
+  // cada hóspede acima da ocupação base do apartamento, respeitando sempre
+  // o limite máximo do próprio apartamento — a pedido do Caio, 2026-09-17.
+  if (guests) {
+    const extra = p ? (Number(p.adultoExtra) || 0) : 0;
+    const limite = Math.min(Number(guests) || 0, Number(apt.capacidade) || Infinity);
+    const hospedesExtra = Math.max(0, limite - capacidadeBaseOf(apt));
+    rate += hospedesExtra * extra;
+  }
+  return rate;
 }
-export function stayBreakdown(apt, seasons, ci, co) {
+export function stayBreakdown(apt, seasons, ci, co, guests) {
   const n = nights(ci, co);
   let total = 0; const perNight = [];
   for (let i = 0; i < n; i++) {
     const d = addDays(parseYMD(ci), i);
     const s = seasonForDate(seasons, d);
-    const rate = nightlyRate(apt, seasons, d);
+    const rate = nightlyRate(apt, seasons, d, guests);
     total += rate;
     perNight.push({ date: ymd(d), rate, season: s ? s.nome : 'Tarifa base', weekend: isWeekendNight(d) });
   }
