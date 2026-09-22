@@ -161,7 +161,7 @@ export function Admin({ data, update, initialResidencialId }) {
   );
 }
 
-export const ADMIN_PIN = '193987'; // altere aqui o PIN de acesso ao painel
+export const ADMIN_PIN = '150263'; // altere aqui o PIN de acesso ao painel
 
 export function LoginScreen({ onLogin }) {
   const [pin, setPin] = useState('');
