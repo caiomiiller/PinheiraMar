@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Settings, Waves } from 'lucide-react';
+import { Home, Waves } from 'lucide-react';
 import { C, F, applyTheme } from './lib/constants';
 import { loadData, saveData, STORE_KEY, seedData, migrarDados } from './lib/seed';
 import { supabase, supabaseConfigured, APP_STATE_TABLE, APP_STATE_ROW_ID } from './lib/supabaseClient';
@@ -16,9 +16,28 @@ export function residencialFromURL() {
   catch { return null; }
 }
 
+// Não há botão visível para o painel de gestão no site público — o acesso
+// é feito por um link direto (ex.: pinheiramar.com.br/?gestao), partilhado
+// apenas com quem administra o residencial.
+function modoFromURL() {
+  try { return new URLSearchParams(window.location.search).has('gestao') ? 'admin' : 'site'; }
+  catch { return 'site'; }
+}
+
+// Remove o "?gestao" da barra de endereço sem recarregar a página, para que
+// voltar ao site (ou sair do painel) não deixe o link de admin visível nem
+// reabra o painel ao atualizar a página.
+function limparURLGestao() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('gestao');
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+  } catch { /* ambiente sem window.history (SSR/teste) — ignora */ }
+}
+
 export default function App() {
   const [data, setData] = useState(null);
-  const [mode, setMode] = useState('site');   // 'site' | 'admin'
+  const [mode, setMode] = useState(modoFromURL);   // 'site' | 'admin'
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
@@ -210,25 +229,14 @@ export default function App() {
             <span style={{ fontWeight: 600, color: '#fff' }}>Painel de Gestão</span>
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => setMode('site')} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button onClick={() => { limparURLGestao(); setMode('site'); }} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Home size={13} /> Ver site
             </button>
-            <button onClick={() => { setAuthed(false); setMode('site'); }} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
+            <button onClick={() => { limparURLGestao(); setAuthed(false); setMode('site'); }} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
               Sair
             </button>
           </div>
         </div>
-      )}
-
-      {/* site: botão discreto para aceder ao painel */}
-      {mode === 'site' && (
-        <button onClick={() => setMode('admin')}
-          title="Acesso ao painel de gestão"
-          style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 999, width: 44, height: 44, borderRadius: '50%', background: C.oceanDeep, border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: '0 4px 16px rgba(0,0,0,.28)', opacity: .72, transition: 'opacity .2s' }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '.72'}>
-          <Settings size={20} color="#fff" />
-        </button>
       )}
 
       {mode === 'site'
