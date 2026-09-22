@@ -17,7 +17,16 @@ export function Seasons({ data, update }) {
   };
   const remove = (id) => { update(prev => ({ ...prev, seasons: prev.seasons.filter(x => x.id !== id) })); setEditing(null); };
   const duplicate = (id) => update(prev => ({ ...prev, seasons: duplicateInList(prev.seasons, id, s => ({ ...s, id: 's' + uid(), nome: s.nome + ' (cópia)', precos: Object.fromEntries(Object.entries(s.precos || {}).map(([k, v]) => [k, { ...v }])) })) }));
-  const dnd = useReorder(data.seasons, (arr) => update(prev => ({ ...prev, seasons: arr })));
+  // As tarifas rápidas (criadas pelo menu de arrastar no calendário de
+  // Reservas) ficam marcadas com `rapida: true` e não entram nesta lista —
+  // são um ajuste pontual de preço para um apartamento e período específico,
+  // não uma temporada para gerir aqui. Continuam a valer normalmente no
+  // cálculo do preço (helpers.js), só não poluem esta tela — a pedido do
+  // Caio, 2026-09-22. O teste pelo nome cobre também as tarifas rápidas já
+  // existentes, criadas antes desta marcação existir.
+  const isRapida = (s) => s.rapida === true || (typeof s.nome === 'string' && s.nome.startsWith('Tarifa rápida — '));
+  const visibleSeasons = data.seasons.filter(s => !isRapida(s));
+  const dnd = useReorder(visibleSeasons, (arr) => update(prev => ({ ...prev, seasons: [...prev.seasons.filter(isRapida), ...arr] })));
   const priceRange = (s) => {
     const vals = data.apartamentos.map(a => Number(s.precos?.[a.id]?.diaSemana) || 0).filter(Boolean);
     if (!vals.length) return '—';
@@ -30,7 +39,7 @@ export function Seasons({ data, update }) {
       <PageHead title="Opções de preços por temporada" sub="Defina a tarifa de cada apartamento por período · arraste para ordenar."
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Nova temporada</Btn>} />
       <div style={{ display: 'grid', gap: 10 }}>
-        {data.seasons.map((s, idx) => {
+        {visibleSeasons.map((s, idx) => {
           const ativa = s.ativa !== false && parseYMD(s.inicio) <= t && t <= parseYMD(s.fim);
           return (
             <Card key={s.id} {...dnd.zone(idx)} style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', ...dnd.deco(idx) }}>

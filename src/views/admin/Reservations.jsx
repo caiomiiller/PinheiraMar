@@ -525,8 +525,10 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
         // reservas deste apartamento que já ocupam (mesmo que só em parte) o
         // período escolhido — a pedido do Caio, a tarifa rápida deve alterar
         // diretamente o preço destas reservas (o mesmo campo "Preço" da edição
-        // da reserva), em vez de criar sempre uma nova temporada; só cria
-        // temporada quando não há reserva alguma no período.
+        // da reserva), em vez de criar sempre uma nova temporada; só cria uma
+        // temporada (oculta, marcada `rapida: true` — ver Seasons.jsx) quando
+        // não há reserva alguma no período, só para o cálculo de preço
+        // reconhecer essas datas/apartamento quando nascer uma reserva ali.
         const afetadas = data.reservas.filter(r =>
           r.apartamentoId === apt.id && r.status !== 'cancelada' && r.status !== 'bloqueio' &&
           overlaps(ciSel, coSel, r.checkIn, r.checkOut));
@@ -558,6 +560,11 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     ativa: true,
                     minNoites: 1,
                     precos: { [apt.id]: { diaSemana: preco, fimSemana: preco } },
+                    // Ajuste pontual, não uma temporada para gerir — fica de fora
+                    // de "Opções de preços por temporada" (ver Seasons.jsx), mas
+                    // continua a valer no cálculo do preço (helpers.js) igual a
+                    // qualquer outra temporada, a pedido do Caio, 2026-09-22.
+                    rapida: true,
                   }, ...(prev.seasons || [])],
                 };
               });
@@ -686,10 +693,12 @@ export const MoneyInput = ({ value, onChange, style }) => (
 // arrastar no calendário. Quando o período escolhido já tem reserva(s) deste
 // apartamento, altera diretamente o preço por noite dessa(s) reserva(s) — o
 // mesmo campo "Preço" editável na edição da reserva — sem mexer nas datas.
-// Só quando não há reserva nenhuma no período é que cria uma temporada
-// pontual (para que uma futura reserva ali já nasça com este preço), em vez
-// de reaproveitar o editor completo de Opções de preços, para manter a ação
-// de um único ecrã.
+// Só quando não há reserva nenhuma no período é que guarda uma tarifa
+// pontual (marcada `rapida: true`, para que uma futura reserva ali já nasça
+// com este preço) — nunca aparece em "Opções de preços por temporada"
+// (ver Seasons.jsx), só serve o cálculo interno de preço (helpers.js), em
+// vez de reaproveitar o editor completo de Opções de preços, para manter a
+// ação de um único ecrã.
 function QuickRateModal({ apt, startD, endD, nNoites, afetadas, onClose, onSave }) {
   const temReservas = afetadas && afetadas.length > 0;
   const umaReserva = afetadas && afetadas.length === 1 ? afetadas[0] : null;
@@ -705,7 +714,7 @@ function QuickRateModal({ apt, startD, endD, nNoites, afetadas, onClose, onSave 
       <Field label="Preço por noite neste período"
         hint={temReservas
           ? `Este período já tem ${afetadas.length > 1 ? `${afetadas.length} reservas` : 'uma reserva'} deste apartamento — vai alterar diretamente o preço por noite ${afetadas.length > 1 ? 'delas' : 'dela'} (o mesmo campo "Preço" da edição da reserva), sem mexer nas datas.`
-          : 'Sem reservas neste período — cria uma tarifa especial só para este apartamento e este período, para que uma futura reserva aqui já nasça com este preço. Pode ajustar ou remover depois em Opções de preços.'}>
+          : 'Sem reservas neste período — guarda este preço só para este apartamento e estas datas (não cria uma temporada em "Opções de preços"), para que uma futura reserva aqui já nasça com este valor.'}>
         <MoneyInput value={preco} onChange={e => setPreco(e.target.value)} />
       </Field>
     </Modal>
