@@ -161,7 +161,7 @@ export function Admin({ data, update, initialResidencialId }) {
   );
 }
 
-export const ADMIN_PIN = '1234'; // altere aqui o PIN de acesso ao painel
+export const ADMIN_PIN = '193987'; // altere aqui o PIN de acesso ao painel
 
 export function LoginScreen({ onLogin }) {
   const [pin, setPin] = useState('');
@@ -221,9 +221,7 @@ export function LoginScreen({ onLogin }) {
         </button>
 
         <div style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: C.inkSoft }}>
-          PIN padrão: <code style={{ background: C.espuma, padding: '2px 6px', borderRadius: 5, fontWeight: 700 }}>1234</code>
-          <span style={{ margin: '0 6px' }}>·</span>
-          Altere em <code style={{ background: C.espuma, padding: '2px 6px', borderRadius: 5 }}>ADMIN_PIN</code> no código
+          Esqueceu o PIN? Altere em <code style={{ background: C.espuma, padding: '2px 6px', borderRadius: 5 }}>ADMIN_PIN</code> no código
         </div>
       </div>
     </div>
