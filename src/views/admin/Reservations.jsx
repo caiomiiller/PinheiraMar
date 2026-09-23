@@ -872,11 +872,6 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Nomes das taxas obrigatórias do catálogo — usados só para ESCONDER essas
-  // linhas da tabela abaixo (continuam a contar no total normalmente).
-  const nomesObrigatorios = new Set((data.taxasAdicionais || []).filter(tx => tx.tipo === 'obrigatoria').map(tx => tx.nome));
-  const extrasVisiveis = extras.filter(e => !nomesObrigatorios.has(e.nome));
-
   const apt = data.apartamentos.find(a => a.id === aptId) || firstApt;
   // este ambiente é partilhado pelos dois residenciais — os horários/sinal
   // usados são sempre os do imóvel a que o apartamento escolhido pertence.
@@ -1179,10 +1174,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                     <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{money(acomod)}</td>
                     <td />
                   </tr>
-                  {/* Extras — taxas obrigatórias ficam de fora da lista (contam no
-                      total à mesma), a pedido do Caio: economiza espaço e não
-                      há nada para o gestor mexer nelas reserva a reserva. */}
-                  {extrasVisiveis.map(e => {
+                  {/* Extras */}
+                  {extras.map(e => {
                     const v = (Number(e.qtd) || 0) * (Number(e.preco) || 0);
                     return (
                       <tr key={e.id} style={{ borderTop: `1px solid ${C.line}` }}>
@@ -1214,7 +1207,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                   <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{money(acomod)}</span>
                 </div>
               </div>
-              {extrasVisiveis.map(e => {
+              {extras.map(e => {
                 const v = (Number(e.qtd) || 0) * (Number(e.preco) || 0);
                 return (
                   <div key={e.id} style={{ padding: 12, borderTop: `1px solid ${C.line}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1234,14 +1227,13 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
 
             <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <button type="button" onClick={() => addExtra()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.ocean, fontWeight: 600, fontSize: 12.5 }}><Plus size={14} /> Adicionar item</button>
-              {(data.taxasAdicionais || []).map(tx => {
+              {(data.taxasAdicionais || []).filter(tx => tx.tipo !== 'obrigatoria').map(tx => {
                 const Icon = iconForExtra(tx.nome);
                 return (
-                  <button key={tx.id} type="button" onClick={() => addExtra({ nome: tx.nome, preco: tx.preco })} title={`${tx.nome} — ${tx.tipo === 'obrigatoria' ? 'Obrigatória' : 'Opcional'}`}
-                    style={{ background: tx.tipo === 'obrigatoria' ? '#E1F0EC' : C.areiaSoft, border: `1px solid ${tx.tipo === 'obrigatoria' ? '#BFE0D6' : C.areia}`, borderRadius: 999, padding: '6px 12px', cursor: 'pointer', color: tx.tipo === 'obrigatoria' ? '#1C7A5B' : C.ink, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <button key={tx.id} type="button" onClick={() => addExtra({ nome: tx.nome, preco: tx.preco })} title={`${tx.nome} — Opcional`}
+                    style={{ background: C.areiaSoft, border: `1px solid ${C.areia}`, borderRadius: 999, padding: '6px 12px', cursor: 'pointer', color: C.ink, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <Icon size={14} strokeWidth={2.25} />
                     {money(tx.preco)}
-                    {tx.tipo === 'obrigatoria' && <span title="Obrigatória" style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px', marginLeft: 1 }}>OBR</span>}
                   </button>
                 );
               })}
