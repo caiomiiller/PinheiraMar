@@ -889,21 +889,31 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const capacidadeBase = capacidadeBaseOf(apt);
   const hospedesExtra = status !== 'bloqueio' ? Math.max(0, Math.min(totalGuests, apt.capacidade || totalGuests) - capacidadeBase) : 0;
 
-  const [precoNoite, setPrecoNoite] = useState(() => {
-    // Sempre parte do valor calculado pela temporada — mesmo em edição.
-    // O utilizador pode sobrepor manualmente depois.
-    const a = data.apartamentos.find(x => x.id === (i.apartamentoId || firstApt.id)) || firstApt;
-    const bdi = stayBreakdown(a, data.seasons, i.checkIn || ymd(today()), i.checkOut || ymd(addDays(today(), 1)), adultos + criancas);
-    const ni = Math.max(1, nights(i.checkIn || ymd(today()), i.checkOut || ymd(addDays(today(), 1))));
-    return Math.round(bdi.total / ni) || (a.preco || 0);
-  });
-  const [precoEdited, setPrecoEdited] = useState(false); // só true quando o gestor digita manualmente
+  // Em edição, o preço inicial é o que está GRAVADO na reserva
+  // (i.precoNoite) — nunca o valor recalculado pela tabela de temporada.
+  // Só reservas NOVAS partem do valor sugerido pela temporada.
+  const [precoNoite, setPrecoNoite] = useState(() => (
+    !isNew && i.precoNoite != null ? i.precoNoite : suggested
+  ));
+  // Em edição, se o preço gravado já é diferente do valor de temporada
+  // sugerido, mostra o link "repor" desde já — é um preço personalizado e
+  // o gestor precisa de ver isso, podendo repor o valor de tabela se quiser.
+  const [precoEdited, setPrecoEdited] = useState(() => (
+    !isNew && i.precoNoite != null && Math.round(Number(i.precoNoite)) !== suggested
+  )); // depois disto, só true quando o gestor digita manualmente
 
-  // Sempre que muda apartamento OU datas: recalcula pelo valor de temporada do apartamento escolhido.
-  // Ignora se o gestor editou manualmente E não mudou o apartamento nem as datas.
+  // Sempre que o gestor MUDA apartamento, datas, estado ou hóspedes depois
+  // de a reserva já estar aberta: recalcula pelo valor de temporada do
+  // apartamento escolhido. Ignora se o gestor editou manualmente E não
+  // mudou o apartamento nem as datas. Este efeito dispara sempre também na
+  // primeira renderização (mesmo sem nada ter mudado) — em edição, esse
+  // primeiro disparo é ignorado, porque o valor inicial já foi tratado
+  // corretamente acima (ver comentário no useState de precoNoite).
+  const skipFirstPriceReset = useRef(!isNew);
   useEffect(() => {
     if (status === 'bloqueio') { setPrecoNoite(0); return; }
     if (nights(ci, co) < 1) return;
+    if (skipFirstPriceReset.current) { skipFirstPriceReset.current = false; return; }
     const a = data.apartamentos.find(x => x.id === aptId) || firstApt;
     const newBd = stayBreakdown(a, data.seasons, ci, co, adultos + criancas);
     setPrecoNoite(Math.round(newBd.total / Math.max(1, nights(ci, co))) || a.preco || 0);
