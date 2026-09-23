@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy,
   ChevronDown, GripVertical, X, Check, AlertCircle, CalendarDays,
-  ChevronLeft, ChevronRight, Minus, Tag, Clock, Info, Users, Wallet, LogIn, LogOut } from 'lucide-react';
+  ChevronLeft, ChevronRight, Minus, Tag, Clock, Info, Users, Wallet, LogIn, LogOut,
+  Car, Sparkles, PawPrint, Umbrella, BedDouble, Baby, Percent, Wind, Waves,
+  Utensils, Wifi, Flame, Shield, Gift, Sun, Shirt, Sofa } from 'lucide-react';
 import { C, F, THEMES } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
   isAvailable, stayBreakdown, nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS,
@@ -19,6 +21,31 @@ import * as XLSX from 'xlsx';
 // para identificação visual, ver pedido do gestor).
 const residencialOf = (data, apt) => (data.residenciais || []).find(r => r.id === apt?.residencialId) || (data.residenciais || [])[0];
 const residencialCor = (residencialId) => (THEMES[residencialId] || THEMES.pinheiramar).ocean;
+
+// Ícone intuitivo por palavra-chave no nome da taxa/extra — substitui o texto
+// truncado nos botões de atalho por Ícone + valor (pedido do Caio, 2026-09-23:
+// "limpa um pouco a tela e simplifica o uso"). O nome completo e
+// Obrigatória/Opcional continuam disponíveis no title (tooltip) do botão.
+const EXTRA_ICON_RULES = [
+  [/estacionamento|vaga|carro|garagem/i, Car],
+  [/higieniz|limpeza|faxina|servi[cç]/i, Sparkles],
+  [/pet|animal|cachorro|gato/i, PawPrint],
+  [/pra(i|í)a|guarda.?sol|piscina|toalha/i, Umbrella],
+  [/beb[eê]|bab[aá]/i, Baby],
+  [/cama|colch[aã]o|ber[cç]o/i, BedDouble],
+  [/desconto|taxa [uú]nica|comiss[aã]o/i, Percent],
+  [/ar.?condicionado|climatiz|ventilad/i, Wind],
+  [/mar|vista|onda/i, Waves],
+  [/churrasco|jantar|refei[cç][aã]o|almo[cç]o|café da manhã/i, Utensils],
+  [/wifi|internet/i, Wifi],
+  [/lareira|aquecedor|aquecim/i, Flame],
+  [/seguro|garantia|prote[cç][aã]o/i, Shield],
+  [/kit|presente|brinde/i, Gift],
+  [/sol|ver[aã]o/i, Sun],
+  [/roupa|enxoval/i, Shirt],
+  [/sof[aá]/i, Sofa],
+];
+const iconForExtra = (nome = '') => (EXTRA_ICON_RULES.find(([re]) => re.test(nome)) || [])[1] || Tag;
 
 // Cores de fundo das colunas do calendário. As faixas de fim-de-semana e de
 // feriado ajudam a ler o mês de relance e ficam como sempre estiveram; o dia
@@ -792,8 +819,16 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const [checkinRealizado, setCheckinRealizado] = useState(i.checkinRealizado || false);
   const [checkoutRealizado, setCheckoutRealizado] = useState(i.checkoutRealizado || false);
   const [nota, setNota] = useState(i.nota || '');
-  const [valorPago, setValorPago] = useState(i.valorPago ?? 0);
-  const [valorPagoEdited, setValorPagoEdited] = useState(i.valorPago != null); // só true depois de o gestor tocar no campo (ou já vinha gravado) — antes disso segue o status
+  // Registo de pagamentos — substitui o antigo campo único "valor pago" por um
+  // histórico de lançamentos (descrição/data/valor), a pedido do Caio
+  // (2026-09-23). Reservas antigas só têm o escalar `valorPago`: nunca é
+  // reescrito aqui sozinho — continua a contar como 1º lançamento (legado,
+  // só em memória) até o gestor lançar um pagamento novo, momento em que é
+  // materializado sem perder nem alterar o valor original (ver commitRegistro).
+  const [registrosPagamento, setRegistrosPagamento] = useState(i.registrosPagamento || []);
+  const [novaDescricao, setNovaDescricao] = useState('');
+  const [novaData, setNovaData] = useState(ymd(today()));
+  const [novoValor, setNovoValor] = useState('');
   const [extras, setExtras] = useState(() => {
     if (!isNew && i.extras && i.extras.length > 0) {
       // Edição: preservar extras existentes (já tinham as obrigatórias quando foram criadas)
@@ -857,18 +892,31 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   // EDIÇÃO nelas — o botão "Guardar alterações" ficava sempre desativado.
   // O nome do hóspede continua obrigatório.
   const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
-  const restante = Math.max(0, Math.round((total - (Number(valorPago) || 0)) * 100) / 100);
+  const valorLegado = registrosPagamento.length === 0 ? Math.round((Number(i.valorPago) || 0) * 100) / 100 : 0;
+  const registrosExibidos = valorLegado > 0
+    ? [{ id: '__legado__', descricao: 'Valor pago anteriormente (registo antigo)', data: i.criadoEm || ymd(today()), valor: valorLegado, legado: true }, ...registrosPagamento]
+    : registrosPagamento;
+  const valorPago = Math.round(registrosExibidos.reduce((s, r) => s + (Number(r.valor) || 0), 0) * 100) / 100;
+  const restante = Math.max(0, Math.round((total - valorPago) * 100) / 100);
 
-  // Sugestão automática do valor pago a partir do status escolhido — só
-  // enquanto o gestor não tocar manualmente no campo "Valor pago" (mesmo
-  // padrão do precoEdited acima, para o preço por noite).
-  useEffect(() => {
-    if (valorPagoEdited) return;
-    if (status === 'confirmado') setValorPago(total);
-    else if (status === 'reservado') setValorPago(sinal);
-    else setValorPago(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, sinal, total]);
+  // Lança um novo pagamento no histórico. Se ainda não havia nenhum
+  // lançamento novo (só o legado em memória), o legado é gravado como 1º
+  // item — de forma exata, sem alterar o total já registado — só agora que
+  // o gestor está de facto a mexer nesta reserva.
+  const commitRegistro = (descricao, data, valor) => {
+    const v = Math.round((Number(valor) || 0) * 100) / 100;
+    if (!descricao.trim() || v <= 0) return;
+    setRegistrosPagamento(prev => {
+      const base = prev.length === 0 && valorLegado > 0
+        ? [{ id: uid(), descricao: 'Valor pago anteriormente (registo antigo)', data: i.criadoEm || ymd(today()), valor: valorLegado }]
+        : prev;
+      return [...base, { id: uid(), descricao: descricao.trim(), data, valor: v }];
+    });
+    setNovaDescricao('');
+    setNovoValor('');
+  };
+  const removeRegistro = (id) => setRegistrosPagamento(prev => prev.filter(r => r.id !== id));
+  const marcarComoPaga = () => { if (restante > 0) commitRegistro('Pagamento — saldo restante', ymd(today()), restante); };
 
   const addExtra = (preset) => setExtras(x => [...x, { id: uid(), nome: preset?.nome || '', qtd: 1, preco: preset?.preco ?? 0 }]);
   const updExtra = (id, patch) => setExtras(x => x.map(e => e.id === id ? { ...e, ...patch } : e));
@@ -889,7 +937,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
     precoTabela: status === 'bloqueio' ? 0 : bd.total,
     extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
-    total, sinal, valorPago: status === 'bloqueio' ? 0 : Math.round((Number(valorPago) || 0) * 100) / 100,
+    total, sinal, valorPago: status === 'bloqueio' ? 0 : valorPago,
+    registrosPagamento: status === 'bloqueio' ? [] : registrosPagamento,
     checkinRealizado: status === 'bloqueio' ? false : checkinRealizado,
     checkoutRealizado: status === 'bloqueio' ? false : checkoutRealizado,
     enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
@@ -1136,13 +1185,17 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
 
             <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <button type="button" onClick={() => addExtra()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.ocean, fontWeight: 600, fontSize: 12.5 }}><Plus size={14} /> Adicionar item</button>
-              {(data.taxasAdicionais || []).map(tx => (
-                <button key={tx.id} type="button" onClick={() => addExtra({ nome: tx.nome, preco: tx.preco })} title={`Adicionar: ${tx.nome} — ${tx.tipo === 'obrigatoria' ? 'Obrigatória' : 'Opcional'}`}
-                  style={{ background: tx.tipo === 'obrigatoria' ? '#E1F0EC' : C.areiaSoft, border: `1px solid ${tx.tipo === 'obrigatoria' ? '#BFE0D6' : C.areia}`, borderRadius: 999, padding: '5px 11px', cursor: 'pointer', color: tx.tipo === 'obrigatoria' ? '#1C7A5B' : C.ink, fontSize: 11.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  {tx.tipo === 'obrigatoria' && <span title="Obrigatória" style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OBR</span>}
-                  {tx.nome.length > 26 ? tx.nome.slice(0, 24) + '…' : tx.nome} · {money(tx.preco)}
-                </button>
-              ))}
+              {(data.taxasAdicionais || []).map(tx => {
+                const Icon = iconForExtra(tx.nome);
+                return (
+                  <button key={tx.id} type="button" onClick={() => addExtra({ nome: tx.nome, preco: tx.preco })} title={`${tx.nome} — ${tx.tipo === 'obrigatoria' ? 'Obrigatória' : 'Opcional'}`}
+                    style={{ background: tx.tipo === 'obrigatoria' ? '#E1F0EC' : C.areiaSoft, border: `1px solid ${tx.tipo === 'obrigatoria' ? '#BFE0D6' : C.areia}`, borderRadius: 999, padding: '6px 12px', cursor: 'pointer', color: tx.tipo === 'obrigatoria' ? '#1C7A5B' : C.ink, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Icon size={14} strokeWidth={2.25} />
+                    {money(tx.preco)}
+                    {tx.tipo === 'obrigatoria' && <span title="Obrigatória" style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px', marginLeft: 1 }}>OBR</span>}
+                  </button>
+                );
+              })}
             </div>
             <div style={{ background: C.oceanDeep, color: '#fff', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -1152,21 +1205,54 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                   <span style={{ fontSize: 24, fontWeight: 700, fontFamily: F.disp }}>{money(total)}</span>
                 </div>
               </div>
-              {/* Registo do que foi de facto recebido — distinto do sinal
-                  sugerido acima. "Restante" é sempre total - valorPago,
-                  nunca gravado à parte, para nunca desalinhar do total. */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.18)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,.82)' }}>Valor pago:</span>
-                  <MoneyInput value={valorPago} onChange={e => { setValorPago(e.target.value === '' ? '' : Number(e.target.value)); setValorPagoEdited(true); }} style={{ width: 120 }} />
+              {/* Histórico de pagamentos — registo do que foi de facto recebido,
+                  já não um valor único adivinhado a partir do status. Reservas
+                  do site entram aqui automaticamente com o valor real da
+                  transação (ver api/mp-webhook.js); reservas manuais lançam-se
+                  à mão abaixo. "Restante" é sempre total - soma dos
+                  lançamentos, nunca gravado à parte. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.18)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Pago: <b style={{ color: C.areia }}>{money(valorPago)}</b></div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Restante: <b style={{ color: restante > 0 ? '#FFB25E' : C.areia }}>{money(restante)}</b></div>
+                  {restante > 0 && (
+                    <button type="button" onClick={marcarComoPaga}
+                      style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.32)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
+                      Marcar como paga
+                    </button>
+                  )}
                 </div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Restante: <b style={{ color: restante > 0 ? '#FFB25E' : C.areia }}>{money(restante)}</b></div>
-                {restante > 0 && (
-                  <button type="button" onClick={() => { setValorPagoEdited(true); setValorPago(total); }}
-                    style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.32)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
-                    Marcar como paga
-                  </button>
+
+                {registrosExibidos.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {registrosExibidos.map(reg => (
+                      <div key={reg.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,.08)', borderRadius: 7, padding: '5px 9px', fontSize: 12 }}>
+                        <span style={{ flex: 1, color: '#fff', opacity: reg.legado ? .75 : 1, fontStyle: reg.legado ? 'italic' : 'normal' }}>{reg.descricao}</span>
+                        <span style={{ color: 'rgba(255,255,255,.7)' }}>{fmtShort(parseYMD(reg.data))}</span>
+                        <span style={{ fontWeight: 700, minWidth: 64, textAlign: 'right' }}>{money(reg.valor)}</span>
+                        {!reg.legado && (
+                          <button type="button" onClick={() => removeRegistro(reg.id)} title="Apagar lançamento"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.7)', display: 'grid', placeItems: 'center' }}>
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
+
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input className="pmf" value={novaDescricao} onChange={e => setNovaDescricao(e.target.value)} placeholder="Descrição do pagamento"
+                    style={{ ...cellInput, flex: '1 1 160px' }} />
+                  <input className="pmf" type="date" value={novaData} onChange={e => setNovaData(e.target.value)}
+                    style={{ ...cellInput, width: 140 }} />
+                  <MoneyInput value={novoValor} onChange={e => setNovoValor(e.target.value === '' ? '' : Number(e.target.value))} style={{ width: 110 }} />
+                  <button type="button" onClick={() => commitRegistro(novaDescricao, novaData, novoValor)}
+                    disabled={!novaDescricao.trim() || !(Number(novoValor) > 0)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: C.areia, border: 'none', borderRadius: 8, padding: '6px 12px', cursor: novaDescricao.trim() && Number(novoValor) > 0 ? 'pointer' : 'not-allowed', opacity: novaDescricao.trim() && Number(novoValor) > 0 ? 1 : .5, color: C.oceanDeep, fontWeight: 700, fontSize: 12.5 }}>
+                    <Plus size={14} /> Adicionar
+                  </button>
+                </div>
               </div>
             </div>
           </div>

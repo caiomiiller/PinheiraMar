@@ -27,7 +27,7 @@
 // "reservas" para uma tabela própria no Supabase) se o volume crescer.
 
 import { createClient } from '@supabase/supabase-js';
-import { overlaps } from '../src/lib/helpers.js';
+import { overlaps, uid } from '../src/lib/helpers.js';
 
 // Envia o e-mail de confirmação da reserva pelo EmailJS. Aqui, no servidor,
 // não se pode usar o SDK do navegador (src/lib/email.js) — usa-se a API REST,
@@ -112,8 +112,26 @@ export function aplicarDesfechoPagamento(reservas, reservaId, payment, agoraISO 
     if (r.status !== 'pendente') return r;
     mudou = true;
     return aprovado
-      // pago: deixa de ser provisória (sem prazo) e passa a Reservado.
-      ? { ...r, status: 'reservado', expiraEm: null, pagamentoMpId: String(payment.id), pagamentoConfirmadoEm: agoraISO }
+      // pago: deixa de ser provisória (sem prazo) e passa a Reservado — e o
+      // valor real da transação (payment.transaction_amount, não um valor
+      // "adivinhado") entra no histórico de pagamentos da reserva, a pedido
+      // do Caio (2026-09-23): "o sinal sugerido deve ser na verdade o
+      // registo do valor do pagamento realizado na reserva pelo site".
+      // Um `valorPago` legado (só possível se alguém tiver editado esta
+      // reserva manualmente antes do pagamento cair) é preservado como 1º
+      // lançamento, exatamente como no painel (ReservationForm) — nunca
+      // perdido, só materializado no histórico.
+      ? (() => {
+          const legado = (r.registrosPagamento || []).length === 0 && Number(r.valorPago) > 0
+            ? [{ id: uid(), descricao: 'Valor pago anteriormente (registo antigo)', data: r.criadoEm || agoraISO.slice(0, 10), valor: Math.round((Number(r.valorPago) || 0) * 100) / 100 }]
+            : (r.registrosPagamento || []);
+          const registrosPagamento = [...legado, {
+            id: uid(), descricao: 'Pagamento via Mercado Pago (sinal)', data: agoraISO.slice(0, 10),
+            valor: Math.round((Number(payment.transaction_amount) || 0) * 100) / 100,
+          }];
+          const valorPago = Math.round(registrosPagamento.reduce((s, x) => s + (Number(x.valor) || 0), 0) * 100) / 100;
+          return { ...r, status: 'reservado', expiraEm: null, pagamentoMpId: String(payment.id), pagamentoConfirmadoEm: agoraISO, registrosPagamento, valorPago };
+        })()
       // recusado: o prazo passa a agora, portanto as datas ficam livres
       // imediatamente para novas consultas. Mantém-se 'pendente' de
       // propósito, em vez de apagar: o hóspede pode tentar pagar outra vez
