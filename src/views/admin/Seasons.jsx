@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, X, Check, Copy, Wallet } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { uid, money, today, parseYMD, fmtLong, ymd, addDays, roomFullName } from '../../lib/helpers';
+import { uid, money, today, parseYMD, fmtLong, ymd, addDays, roomFullName, isTarifaRapida } from '../../lib/helpers';
 import { Card, PageHead, Btn, Modal, Field, TextInput, DateInput,
   NumberInput, Badge, duplicateInList, DragGrip, PhotoTile, MoneyInput, ConfirmDialog } from '../../components/ui';
 import { useReorder } from '../../hooks/useReorder';
@@ -22,11 +22,11 @@ export function Seasons({ data, update }) {
   // são um ajuste pontual de preço para um apartamento e período específico,
   // não uma temporada para gerir aqui. Continuam a valer normalmente no
   // cálculo do preço (helpers.js), só não poluem esta tela — a pedido do
-  // Caio, 2026-09-22. O teste pelo nome cobre também as tarifas rápidas já
-  // existentes, criadas antes desta marcação existir.
-  const isRapida = (s) => s.rapida === true || (typeof s.nome === 'string' && s.nome.startsWith('Tarifa rápida — '));
-  const visibleSeasons = data.seasons.filter(s => !isRapida(s));
-  const dnd = useReorder(visibleSeasons, (arr) => update(prev => ({ ...prev, seasons: [...prev.seasons.filter(isRapida), ...arr] })));
+  // Caio, 2026-09-22. `isTarifaRapida` (helpers.js) é a mesma checagem usada
+  // em `seasonForDate` para a temporada atual do Painel não "ver" essas
+  // tarifas pontuais — um só critério, partilhado pelos dois lugares.
+  const visibleSeasons = data.seasons.filter(s => !isTarifaRapida(s));
+  const dnd = useReorder(visibleSeasons, (arr) => update(prev => ({ ...prev, seasons: [...prev.seasons.filter(isTarifaRapida), ...arr] })));
   const priceRange = (s) => {
     const vals = data.apartamentos.map(a => Number(s.precos?.[a.id]?.diaSemana) || 0).filter(Boolean);
     if (!vals.length) return '—';
