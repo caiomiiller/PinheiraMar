@@ -678,7 +678,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
           <div className="pm-hide-sm" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 720 }}>
               <thead><tr style={{ background: C.espuma, textAlign: 'left', color: C.inkSoft }}>
-                {[manualOrder ? '⠿' : '', 'Código', 'Residencial', 'Apartamento', 'Hóspede', 'Estadia', 'Origem', 'Total', 'Estado', ''].map((h, i) => <th key={i} style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{h}</th>)}
+                {[manualOrder ? '⠿' : '', 'Código', 'Residencial', 'Apartamento', 'Hóspede', 'Estadia', 'Origem', 'Total', 'Valor pago', 'Estado', ''].map((h, i) => <th key={i} style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{h}</th>)}
               </tr></thead>
               <tbody>
                 {listFiltered.slice(0, listCap).map((r, idx) => (
@@ -702,6 +702,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{r.origem}</td>
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
+                    <td style={{ padding: '11px 14px', color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{r.status === 'bloqueio' ? <span style={{ color: C.inkSoft }}>—</span> : money(r.valorPago || 0)}</td>
                     <td style={{ padding: '11px 14px' }}><Badge status={displayStatus(r)} /></td>
                     <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
                       <button onClick={() => setDeleteConfirm(r)} title="Eliminar" style={iconBtn}><Trash2 size={15} /></button>
@@ -932,7 +933,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   // telefone (e muitas não têm email), o que impedia GRAVAR QUALQUER
   // EDIÇÃO nelas — o botão "Guardar alterações" ficava sempre desativado.
   // O nome do hóspede continua obrigatório.
-  const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
+  const canSave = validDates && (free || status === 'cancelada') && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
   const valorLegado = registrosPagamento.length === 0 ? Math.round((Number(i.valorPago) || 0) * 100) / 100 : 0;
   const registrosExibidos = valorLegado > 0
     ? [{ id: '__legado__', descricao: 'Valor pago anteriormente (registo antigo)', data: safeYmd(i.criadoEm), valor: valorLegado, legado: true }, ...registrosPagamento]
@@ -1055,7 +1056,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               alinhavam-se em colunas em vez de correrem dentro da frase. */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12.5, color: C.inkSoft, margin: '8px 2px 0', lineHeight: 1.5 }}>
             <Clock size={14} color={C.brisa} style={{ flexShrink: 0, marginTop: 2 }} />
-            <span>Check-in a partir das <b style={{ color: C.ink }}>{residencial.checkInHora}</b> · check-out até às <b style={{ color: C.ink }}>{residencial.checkOutHora}</b> ({residencial.nome}). Pode terminar e iniciar reservas no mesmo dia.</span>
+            <span>Check-in a partir das <b style={{ color: C.ink }}>{residencial.checkInHora}</b> · check-out até às <b style={{ color: C.ink }}>{residencial.checkOutHora}</b>.</span>
           </div>
           {status !== 'bloqueio' && (
             <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
@@ -1239,12 +1240,26 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               })}
             </div>
             <div style={{ background: C.oceanDeep, color: '#fff', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Sinal sugerido {residencial.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
+              {/* Pago/Restante em cima (a pedido do Caio, 2026-09-23) — é a
+                  informação mais consultada de relance ao abrir uma reserva. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Pago: <b style={{ color: C.areia }}>{money(valorPago)}</b></div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Restante: <b style={{ color: restante > 0 ? '#FFB25E' : C.areia }}>{money(restante)}</b></div>
+                {restante > 0 && (
+                  <button type="button" onClick={marcarComoPaga}
+                    style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.32)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
+                    Marcar como paga
+                  </button>
+                )}
+              </div>
+              {/* Total, com o valor do sinal (X%) logo abaixo — sem a
+                  palavra "Sinal sugerido", só o valor (a pedido do Caio). */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.18)' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                   <span style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Total:</span>
                   <span style={{ fontSize: 24, fontWeight: 700, fontFamily: F.disp }}>{money(total)}</span>
                 </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.68)' }}>{residencial.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
               </div>
               {/* Histórico de pagamentos — registo do que foi de facto recebido,
                   já não um valor único adivinhado a partir do status. Reservas
@@ -1253,17 +1268,6 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                   à mão abaixo. "Restante" é sempre total - soma dos
                   lançamentos, nunca gravado à parte. */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.18)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Pago: <b style={{ color: C.areia }}>{money(valorPago)}</b></div>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Restante: <b style={{ color: restante > 0 ? '#FFB25E' : C.areia }}>{money(restante)}</b></div>
-                  {restante > 0 && (
-                    <button type="button" onClick={marcarComoPaga}
-                      style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.32)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
-                      Marcar como paga
-                    </button>
-                  )}
-                </div>
-
                 {registrosExibidos.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {registrosExibidos.map(reg => (
