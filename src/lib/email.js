@@ -31,6 +31,10 @@ function ensureInit() {
 
 function buildParams(reserva, apt, settings) {
   return {
+    // O template do EmailJS usa {{email}} como destinatário (campo "To
+    // Email" do template) — mantém-se também `to_email` por precaução,
+    // caso o template venha a ser alterado para usar esse nome no futuro.
+    email: reserva.email,
     to_email: reserva.email,
     to_name: reserva.hospede || reserva.nome || '',
     codigo_reserva: reserva.codigo,
