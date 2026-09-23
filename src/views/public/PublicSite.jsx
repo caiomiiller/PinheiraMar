@@ -284,11 +284,13 @@ export function PublicSite({ data, onCreate }) {
           )}
         </div>
         <div style={{ paddingTop: 14 }}>
-          <div className="pm-card-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK }}>{apt.nome}</div>
-            <div style={{ fontSize: 13, color: GREY, whiteSpace: 'nowrap' }}>até {apt.capacidade} hóspedes</div>
-          </div>
-          <div style={{ fontSize: 13, color: GREY, marginTop: 3 }}>{apt.piso} · {apt.vista}</div>
+          {/* Título sozinho numa linha própria (em vez de dividir a linha com a
+              capacidade, que descentrava o alinhamento entre cartões de nomes
+              diferentes) — capacidade passa a fazer parte da linha de detalhes,
+              junto com piso/vista, ecoando o exemplo (título / detalhes / preço),
+              a pedido do Caio, 2026-09-23. */}
+          <div className="pm-card-title-row" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</div>
+          <div style={{ fontSize: 13, color: GREY, marginTop: 3 }}>{apt.piso} · {apt.vista} · até {apt.capacidade} hóspedes</div>
           {valid && !fits && (
             needsCombo
               ? <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: '#C0392B', fontWeight: 800, marginTop: 6, letterSpacing: '.02em' }}>
@@ -322,7 +324,7 @@ export function PublicSite({ data, onCreate }) {
           ))}
         </div>
         {items.length > 4 && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <div className="pm-row-arrows" style={{ display: 'flex', gap: 8, marginTop: 16 }}>
             <button onClick={() => shift(-1)} style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
             <button onClick={() => shift(1)}  style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
           </div>
@@ -348,7 +350,7 @@ export function PublicSite({ data, onCreate }) {
       : `${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} ${r.regiaoLabel}`;
 
     return (
-      <div ref={el => { groupRefs.current[r.id] = el; }} style={{ marginBottom: 72, scrollMarginTop: 140 }}>
+      <div ref={el => { groupRefs.current[r.id] = el; }} className="pm-pubsite-group" style={{ marginBottom: 72, scrollMarginTop: 140 }}>
         <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
           <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} className="pm-pubsite-group-logo"
             style={{ height: 128, width: 'auto', maxWidth: 230, flexShrink: 0, display: 'block', objectFit: 'contain' }}
@@ -387,7 +389,13 @@ export function PublicSite({ data, onCreate }) {
           </div>
         )}
 
-        <Row items={list} scrollable={!valid && list.length > 4} needsCombo={needsCombo} />
+        {/* Padrão de exibição consistente entre os dois residenciais: o modo
+            (carrossel horizontal em modo "navegar" vs. grade em modo "resultados
+            de busca") depende só de haver uma pesquisa de datas ativa (`valid`),
+            nunca da quantidade de apartamentos que sobra depois de um filtro —
+            senão um residencial com poucas unidades filtradas vira grade enquanto
+            o outro continua carrossel, a pedido do Caio, 2026-09-23. */}
+        <Row items={list} scrollable={!valid} needsCombo={needsCombo} />
       </div>
     );
   };

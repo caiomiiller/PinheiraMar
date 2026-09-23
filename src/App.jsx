@@ -137,24 +137,32 @@ export default function App() {
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}
 
       /* ── site público (booking-style) — telemóvel ── */
-      .pm-pubsite-header-row{padding:10px 16px!important;gap:12px!important;height:auto!important;justify-content:center!important;}
+      .pm-pubsite-header-row{padding:10px 16px!important;gap:12px!important;height:auto!important;justify-content:center!important;position:relative!important;}
       .pm-pubsite-brand-desktop{display:none!important;}
       .pm-pubsite-brand-mobile{display:block!important;height:96px!important;width:auto!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
-      .pm-pubsite-lang{display:none!important;}
+      /* idioma volta a aparecer no telemóvel, fixo no canto superior direito do
+         cabeçalho (fora do fluxo, para não empurrar a logo centralizada) — o
+         mesmo lugar em que já fica na versão desktop, a pedido do Caio,
+         2026-09-23. */
+      .pm-pubsite-lang{display:flex!important;position:absolute!important;top:10px!important;right:16px!important;}
       .pm-pubsite-hero{display:none!important;}
       .pm-pubsite-catstrip{padding:12px 16px!important;gap:8px!important;}
       .pm-cat-btn{flex-direction:row!important;gap:7px!important;padding:10px 16px!important;font-size:14px!important;border:1px solid #E2E0DB!important;border-radius:999px!important;background:#FFF!important;}
       .pm-cat-btn[data-active="true"]{background:#0D0D0D!important;border-color:#0D0D0D!important;color:#FFF!important;}
       .pm-cat-btn[data-active="true"] span{color:#FFF!important;}
       .pm-pubsite-main{padding:32px 16px 56px!important;}
-      .pm-pubsite-group-head{gap:12px!important;flex-direction:column!important;align-items:center!important;text-align:center!important;}
+      .pm-pubsite-group-head{gap:12px!important;flex-direction:column!important;align-items:center!important;text-align:center!important;border-bottom:none!important;margin-bottom:0!important;}
       .pm-pubsite-group-logo{height:96px!important;}
       .pm-pubsite-group-brand{font-size:19px!important;text-align:center!important;}
       .pm-pubsite-group-info{align-items:center!important;text-align:center!important;}
       .pm-pubsite-group-region{justify-content:center!important;}
       .pm-pubsite-group-count{width:100%!important;order:3;text-align:center!important;}
+      .pm-pubsite-group{margin-bottom:0!important;}
+      /* setas de navegação do carrossel somem no telemóvel — lá o gesto natural
+         é arrastar o dedo sobre os cartões, a pedido do Caio, 2026-09-23. */
+      .pm-row-arrows{display:none!important;}
       .pm-pubsite-combo{padding:16px!important;}
       .pm-pubsite-footer-grid{padding:32px 16px!important;gap:28px!important;}
 
@@ -187,9 +195,10 @@ export default function App() {
 
       /* ── cartões de apartamento — mais 'app', um por linha, carrossel a espiar o próximo ── */
       .pm-card-photo{border-radius:14px!important;}
-      .pm-card-title-row{flex-wrap:wrap!important;}
-      .pm-card-title-row div:first-child{font-size:14px!important;}
-      .pm-card-title-row div:last-child{font-size:11.5px!important;}
+      /* pm-card-title-row é agora o título sozinho (a capacidade passou para a
+         linha de detalhes, ver PublicSite.jsx) — só o tamanho da fonte muda no
+         telemóvel. */
+      .pm-card-title-row{font-size:14px!important;}
       .pm-card-tag{top:12px!important;left:12px!important;bottom:auto!important;right:auto!important;border-radius:999px!important;}
       .pm-results-grid{grid-template-columns:1fr!important;gap:28px!important;}
       .pm-row-scroll{gap:12px!important;scroll-snap-type:x mandatory!important;-webkit-overflow-scrolling:touch;}
