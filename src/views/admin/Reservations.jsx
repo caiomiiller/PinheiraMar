@@ -47,6 +47,23 @@ const EXTRA_ICON_RULES = [
 ];
 const iconForExtra = (nome = '') => (EXTRA_ICON_RULES.find(([re]) => re.test(nome)) || [])[1] || Tag;
 
+// Normaliza qualquer valor em "YYYY-MM-DD" sem nunca lançar exceção — usado
+// para a data dos lançamentos do histórico de pagamentos. CORREÇÃO URGENTE
+// (2026-09-23): `criadoEm` de reservas antigas (importação histórica) nem
+// sempre é uma string "YYYY-MM-DD" limpa (pode faltar, vir noutro formato,
+// etc.) — parseYMD (helpers.js) assume sempre uma string e faz s.split('-'),
+// o que rebentava (tela em branco) ao abrir ou editar pagamentos de
+// qualquer reserva cujo criadoEm não estivesse nesse formato exato.
+const safeYmd = (v) => {
+  if (typeof v === 'string') {
+    const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  }
+  const d = v ? new Date(v) : null;
+  if (d && !isNaN(d.getTime())) return ymd(d);
+  return ymd(today());
+};
+
 // Cores de fundo das colunas do calendário. As faixas de fim-de-semana e de
 // feriado ajudam a ler o mês de relance e ficam como sempre estiveram; o dia
 // de hoje ganha verde-pastel e tem precedência sobre as duas, que é o que
@@ -894,7 +911,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
   const valorLegado = registrosPagamento.length === 0 ? Math.round((Number(i.valorPago) || 0) * 100) / 100 : 0;
   const registrosExibidos = valorLegado > 0
-    ? [{ id: '__legado__', descricao: 'Valor pago anteriormente (registo antigo)', data: i.criadoEm || ymd(today()), valor: valorLegado, legado: true }, ...registrosPagamento]
+    ? [{ id: '__legado__', descricao: 'Valor pago anteriormente (registo antigo)', data: safeYmd(i.criadoEm), valor: valorLegado, legado: true }, ...registrosPagamento]
     : registrosPagamento;
   const valorPago = Math.round(registrosExibidos.reduce((s, r) => s + (Number(r.valor) || 0), 0) * 100) / 100;
   const restante = Math.max(0, Math.round((total - valorPago) * 100) / 100);
@@ -908,9 +925,9 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     if (!descricao.trim() || v <= 0) return;
     setRegistrosPagamento(prev => {
       const base = prev.length === 0 && valorLegado > 0
-        ? [{ id: uid(), descricao: 'Valor pago anteriormente (registo antigo)', data: i.criadoEm || ymd(today()), valor: valorLegado }]
+        ? [{ id: uid(), descricao: 'Valor pago anteriormente (registo antigo)', data: safeYmd(i.criadoEm), valor: valorLegado }]
         : prev;
-      return [...base, { id: uid(), descricao: descricao.trim(), data, valor: v }];
+      return [...base, { id: uid(), descricao: descricao.trim(), data: safeYmd(data), valor: v }];
     });
     setNovaDescricao('');
     setNovoValor('');
