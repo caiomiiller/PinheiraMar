@@ -90,7 +90,26 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   // inteiro). Ao navegar pelas setas < > (shiftWeek, 7 em 7 dias), `start`
   // deixa de ser sempre o dia 1 — a janela desliza em blocos de 7 dias e pode
   // atravessar a fronteira do mês (o monthLabel abaixo já trata esse caso).
-  const DAYS = useMemo(() => new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(), [start]);
+
+  // largura disponível para o calendário — usada para, em monitores largos,
+  // preencher o espaço sobrando com mais dias em vez de deixar uma faixa em
+  // branco à direita do último dia visível (a pedido do Caio)
+  const calRef = useRef(null);
+  const [calWidth, setCalWidth] = useState(0);
+  useEffect(() => {
+    const el = calRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect?.width;
+      if (typeof w === 'number') setCalWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [view]);
+
+  const daysInMonth = useMemo(() => new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(), [start]);
+  const fitCols = calWidth > 0 ? Math.floor((calWidth - NAMEW) / COLW) : 0;
+  const DAYS = Math.max(daysInMonth, fitCols);
   const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => addDays(start, i)), [start, DAYS]);
   const aptName = (id) => data.apartamentos.find(a => a.id === id)?.nome || '—';
   const aptResidencial = (id) => residencialOf(data, data.apartamentos.find(a => a.id === id));
@@ -380,7 +399,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       {view === 'calendario' && (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+          <div ref={calRef} style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: NAMEW + DAYS * COLW }}>
               {/* header */}
               <div style={{ display: 'flex', borderBottom: `1px solid ${C.line}`, background: C.espuma, position: 'sticky', top: 0 }}>
@@ -389,10 +408,20 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                   const we = d.getDay() === 0 || d.getDay() === 6;
                   const isToday = ymd(d) === ymd(today());
                   const hol = holidaysOn(d);
+                  // dias além do mês âncora (`start`) — preenchimento do espaço sobrando
+                  // num monitor largo; marcados com opacidade reduzida e uma divisória
+                  // no dia 1, para ficar claro que já é o mês seguinte
+                  const overflowMonth = d.getMonth() !== start.getMonth() || d.getFullYear() !== start.getFullYear();
+                  const monthStart = d.getDate() === 1 && i > 0;
                   return (
                     <div key={i} title={hol ? hol.map(h => `${h.nome} — ${HOLIDAY_LABELS[h.tipo]}`).join(' · ') : ''}
-                      style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px', background: isToday ? HOJE_CABECALHO : (hol ? FERIADO_CABECALHO : (we ? FIM_DE_SEMANA_CABECALHO : 'transparent')) }}>
-                      <div style={{ fontSize: 10.5, color: C.inkSoft, textTransform: 'uppercase' }}>{WD[d.getDay()]}</div>
+                      style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px',
+                        borderLeft: monthStart ? `2px solid ${C.line}` : 'none',
+                        opacity: overflowMonth ? 0.6 : 1,
+                        background: isToday ? HOJE_CABECALHO : (hol ? FERIADO_CABECALHO : (we ? FIM_DE_SEMANA_CABECALHO : 'transparent')) }}>
+                      <div style={{ fontSize: 10.5, color: C.inkSoft, textTransform: 'uppercase' }}>
+                        {monthStart ? cap1(d.toLocaleDateString('pt-BR', { month: 'short' })).replace('.', '') : WD[d.getDay()]}
+                      </div>
                       <div style={{ fontSize: 14, fontWeight: isToday ? 700 : 500, color: isToday ? HOJE_TEXTO : C.ink }}>{d.getDate()}</div>
                       <div style={{ height: 6, marginTop: 1, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         {hol && [...new Set(hol.map(h => h.tipo))].map(tp => <span key={tp} style={{ width: 5, height: 5, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} />)}
@@ -432,12 +461,13 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                           const hol = holidaysOn(d);
                           const isToday = ymd(d) === ymd(today());
                           const inDrag = dragSel && dragSel.aptId === apt.id && i >= Math.min(dragSel.startIdx, dragSel.endIdx) && i <= Math.max(dragSel.startIdx, dragSel.endIdx);
+                          const monthStart = d.getDate() === 1 && i > 0;
                           return (
                             <div key={i}
                               onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
                               onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
                               title="Clique para criar uma reserva, ou arraste para escolher um período"
-                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE_CELULA : (hol ? FERIADO_CELULA : (we ? FIM_DE_SEMANA_CELULA : '#fff'))), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
+                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, borderLeft: monthStart ? `2px solid ${C.line}` : 'none', background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE_CELULA : (hol ? FERIADO_CELULA : (we ? FIM_DE_SEMANA_CELULA : '#fff'))), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
                               {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
                             </div>
                           );
