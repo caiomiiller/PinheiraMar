@@ -537,17 +537,9 @@ export function PublicSite({ data, onCreate }) {
             style={{ width: '100%', padding: '16px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, letterSpacing: '.02em', cursor: 'pointer' }}>
             {tr('search_btn')}
           </button>
-          {idiomasAtivos.length > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 2 }}>
-              <span style={{ fontSize: 12, color: GREY }}>Idioma:</span>
-              {idiomasAtivos.map(id => (
-                <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
-                  style={{ width: 28, height: 28, border: lang === id.codigo ? `1px solid ${BLACK}` : '1px solid transparent', background: 'transparent', cursor: 'pointer', fontSize: 15, display: 'grid', placeItems: 'center' }}>
-                  {id.bandeira}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Seletor de idioma duplicado removido daqui — o do cabeçalho
+              (canto superior direito, ver .pm-pubsite-lang em App.jsx) já
+              cobre o telemóvel, a pedido do Caio, 2026-09-23. */}
         </div>
       </div>
 
