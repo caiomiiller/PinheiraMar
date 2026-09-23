@@ -1259,7 +1259,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                     {registrosExibidos.map(reg => (
                       <div key={reg.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,.08)', borderRadius: 7, padding: '5px 9px', fontSize: 12 }}>
                         <span style={{ flex: 1, color: '#fff', opacity: reg.legado ? .75 : 1, fontStyle: reg.legado ? 'italic' : 'normal' }}>{reg.descricao}</span>
-                        <span style={{ color: 'rgba(255,255,255,.7)' }}>{fmtShort(parseYMD(reg.data))}</span>
+                        <span style={{ color: 'rgba(255,255,255,.7)' }}>{fmtShort(reg.data)}</span>
                         <span style={{ fontWeight: 700, minWidth: 64, textAlign: 'right' }}>{money(reg.valor)}</span>
                         {!reg.legado && (
                           <button type="button" onClick={() => removeRegistro(reg.id)} title="Apagar lançamento"
