@@ -872,6 +872,11 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Nomes das taxas obrigatórias do catálogo — usados só para ESCONDER essas
+  // linhas da tabela abaixo (continuam a contar no total normalmente).
+  const nomesObrigatorios = new Set((data.taxasAdicionais || []).filter(tx => tx.tipo === 'obrigatoria').map(tx => tx.nome));
+  const extrasVisiveis = extras.filter(e => !nomesObrigatorios.has(e.nome));
+
   const apt = data.apartamentos.find(a => a.id === aptId) || firstApt;
   // este ambiente é partilhado pelos dois residenciais — os horários/sinal
   // usados são sempre os do imóvel a que o apartamento escolhido pertence.
@@ -1174,8 +1179,10 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                     <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{money(acomod)}</td>
                     <td />
                   </tr>
-                  {/* Extras */}
-                  {extras.map(e => {
+                  {/* Extras — taxas obrigatórias ficam de fora da lista (contam no
+                      total à mesma), a pedido do Caio: economiza espaço e não
+                      há nada para o gestor mexer nelas reserva a reserva. */}
+                  {extrasVisiveis.map(e => {
                     const v = (Number(e.qtd) || 0) * (Number(e.preco) || 0);
                     return (
                       <tr key={e.id} style={{ borderTop: `1px solid ${C.line}` }}>
@@ -1207,7 +1214,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                   <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{money(acomod)}</span>
                 </div>
               </div>
-              {extras.map(e => {
+              {extrasVisiveis.map(e => {
                 const v = (Number(e.qtd) || 0) * (Number(e.preco) || 0);
                 return (
                   <div key={e.id} style={{ padding: 12, borderTop: `1px solid ${C.line}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1252,14 +1259,16 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                   </button>
                 )}
               </div>
-              {/* Total, com o valor do sinal (X%) logo abaixo — sem a
-                  palavra "Sinal sugerido", só o valor (a pedido do Caio). */}
+              {/* Total, com a % já paga (sobre o total) logo abaixo — em vez da
+                  % sugerida do sinal, que é sempre a mesma fração fixa e diz
+                  pouco; o que importa aqui é quanto do total já entrou (a
+                  pedido do Caio, 2026-09-24). */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.18)' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                   <span style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Total:</span>
                   <span style={{ fontSize: 24, fontWeight: 700, fontFamily: F.disp }}>{money(total)}</span>
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.68)' }}>{residencial.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.68)' }}>{total > 0 ? Math.round((valorPago / total) * 100) : 0}%: <b style={{ color: C.areia }}>{money(valorPago)}</b></div>
               </div>
               {/* Histórico de pagamentos — registo do que foi de facto recebido,
                   já não um valor único adivinhado a partir do status. Reservas
