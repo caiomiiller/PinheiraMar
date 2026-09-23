@@ -851,7 +851,12 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const sinal = Math.round(total * (residencial.sinalPct / 100));
   const free = isAvailable(data.reservas, aptId, ci, co, i.id);
   const overCap = status !== 'bloqueio' && totalGuests > apt.capacidade;
-  const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim() && tel.trim() && email.trim()));
+  // Telefone/Email deixaram de ser obrigatórios para gravar (a pedido do
+  // Caio, 2026-09-23): as 3261 reservas do histórico importado não têm
+  // telefone (e muitas não têm email), o que impedia GRAVAR QUALQUER
+  // EDIÇÃO nelas — o botão "Guardar alterações" ficava sempre desativado.
+  // O nome do hóspede continua obrigatório.
+  const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
   const restante = Math.max(0, Math.round((total - (Number(valorPago) || 0)) * 100) / 100);
 
   // Sugestão automática do valor pago a partir do status escolhido — só
@@ -994,10 +999,10 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               <Field label="Sobrenome" required><TextInput value={sobrenome} onChange={e => setSobrenome(e.target.value)} placeholder="Apelido" /></Field>
             </div>
             <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Field label="Telefone" required><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
+              <Field label="Telefone"><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
               <Field label="País"><Select value={pais} onChange={e => setPais(e.target.value)}>{[...new Set([pais, ...PAISES])].map(p => <option key={p}>{p}</option>)}</Select></Field>
             </div>
-            <Field label="Email" required><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
+            <Field label="Email"><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
             {/* Ao CRIAR, a caixa manda o e-mail no momento de gravar. Ao EDITAR
                 ela não fazia nada (o envio só acontecia na criação), o que era
                 enganador — passa a ser um botão que envia mesmo, na hora, e diz

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, X, ChevronLeft, ChevronRight, Waves, MapPin, GripVertical,
   AlertCircle, BedDouble, Wifi, Car, Minus, Plus, Info, LogIn, LogOut } from 'lucide-react';
 import { C, F } from '../lib/constants';
+import { ymd, today } from '../lib/helpers';
 
 const inputStyle = { width: '100%', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontSize: '14px', outline: 'none', fontFamily: F.sans };
 
@@ -105,7 +106,14 @@ export const STATUS = {
 // Usar sempre displayStatus(r), nunca r.status diretamente, em qualquer
 // sítio que pinte a reserva. STATUS[r.status] continua a ser o que se
 // lê/grava no formulário.
-export const displayStatus = (r) => (r.status === 'confirmado' && r.checkoutRealizado ? 'checkout' : r.status);
+export const displayStatus = (r) => {
+  if (r.status === 'bloqueio' || r.status === 'cancelada') return r.status;
+  // vermelha de check-out quando foi marcada manualmente OU quando a data de
+  // check-out já passou — em qualquer estado ativo (Pendente/Reservado/
+  // Confirmado) — a pedido do Caio, 2026-09-23.
+  if (r.checkoutRealizado || (r.checkOut && r.checkOut < ymd(today()))) return 'checkout';
+  return r.status;
+};
 
 // Fundo da barra no calendário/legenda: bloqueio ganha um risco diagonal
 // ("riscos", a pedido do Caio) para se distinguir à primeira vista mesmo
