@@ -613,13 +613,19 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
         const afetadas = data.reservas.filter(r =>
           r.apartamentoId === apt.id && r.status !== 'cancelada' && r.status !== 'bloqueio' &&
           overlaps(ciSel, coSel, r.checkIn, r.checkOut));
+        // Só é seguro alterar diretamente o preço/noite de uma reserva
+        // quando ela cabe INTEIRAMENTE no período selecionado — senão
+        // ficaríamos a aplicar o preço da tarifa rápida também às noites
+        // de fora da seleção (ver comentário acima).
+        const afetadasTotais = afetadas.filter(r => r.checkIn >= ciSel && r.checkOut <= coSel);
+        const afetadasParciais = afetadas.filter(r => !(r.checkIn >= ciSel && r.checkOut <= coSel));
         return (
-          <QuickRateModal apt={apt} startD={startD} endD={endD} nNoites={nNoites} afetadas={afetadas}
+          <QuickRateModal apt={apt} startD={startD} endD={endD} nNoites={nNoites} afetadas={afetadasTotais} parciais={afetadasParciais}
             onClose={() => setQuickRate(null)}
             onSave={preco => {
               update(prev => {
-                if (afetadas.length > 0) {
-                  const idsAfetadas = new Set(afetadas.map(r => r.id));
+                if (afetadasTotais.length > 0) {
+                  const idsAfetadas = new Set(afetadasTotais.map(r => r.id));
                   return {
                     ...prev,
                     reservas: prev.reservas.map(r => {
@@ -788,9 +794,10 @@ export const MoneyInput = ({ value, onChange, style }) => (
 // (ver Seasons.jsx), só serve o cálculo interno de preço (helpers.js), em
 // vez de reaproveitar o editor completo de Opções de preços, para manter a
 // ação de um único ecrã.
-function QuickRateModal({ apt, startD, endD, nNoites, afetadas, onClose, onSave }) {
+function QuickRateModal({ apt, startD, endD, nNoites, afetadas, parciais, onClose, onSave }) {
   const temReservas = afetadas && afetadas.length > 0;
   const umaReserva = afetadas && afetadas.length === 1 ? afetadas[0] : null;
+  const temParciais = parciais && parciais.length > 0;
   const [preco, setPreco] = useState(() => (umaReserva ? umaReserva.precoNoite : (apt?.preco || 0)));
   return (
     <Modal title="Tarifa rápida"
@@ -802,10 +809,17 @@ function QuickRateModal({ apt, startD, endD, nNoites, afetadas, onClose, onSave 
       </>}>
       <Field label="Preço por noite neste período"
         hint={temReservas
-          ? `Este período já tem ${afetadas.length > 1 ? `${afetadas.length} reservas` : 'uma reserva'} deste apartamento — vai alterar diretamente o preço por noite ${afetadas.length > 1 ? 'delas' : 'dela'} (o mesmo campo "Preço" da edição da reserva), sem mexer nas datas.`
-          : 'Sem reservas neste período — guarda este preço só para este apartamento e estas datas (não cria uma temporada em "Opções de preços"), para que uma futura reserva aqui já nasça com este valor.'}>
+          ? `Este período já tem ${afetadas.length > 1 ? `${afetadas.length} reservas` : 'uma reserva'} deste apartamento inteiramente dentro dele — vai alterar diretamente o preço por noite ${afetadas.length > 1 ? 'delas' : 'dela'} (o mesmo campo "Preço" da edição da reserva), sem mexer nas datas.`
+          : 'Sem reservas inteiramente dentro deste período — guarda este preço só para este apartamento e estas datas (não cria uma temporada em "Opções de preços"), para que uma futura reserva aqui já nasça com este valor.'}>
         <MoneyInput value={preco} onChange={e => setPreco(e.target.value)} />
       </Field>
+      {temParciais && (
+        <div style={{ marginTop: 10 }}>
+          <Note color="#b45309" bg="#fff7ed">
+            {parciais.length > 1 ? `${parciais.length} reservas` : '1 reserva'} deste apartamento {parciais.length > 1 ? 'começam antes ou terminam depois' : 'começa antes ou termina depois'} do período selecionado — o preço {parciais.length > 1 ? 'delas' : 'dela'} não será alterado, para não afetar noites fora da seleção. Edite {parciais.length > 1 ? 'essas reservas' : 'essa reserva'} individualmente se precisar.
+          </Note>
+        </div>
+      )}
     </Modal>
   );
 }

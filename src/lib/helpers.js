@@ -28,9 +28,17 @@ export const isTarifaRapida = (s) => s?.rapida === true || (typeof s?.nome === '
 // temporada atual" no Painel) quer a temporada real, então o padrão é
 // excluí-las — sem isso, uma tarifa rápida entra na frente da lista e
 // "ganha" de uma temporada de verdade para as mesmas datas.
-export function seasonForDate(seasons, dObj, { includeRapida = false } = {}) {
+export function seasonForDate(seasons, dObj, { includeRapida = false, aptId = null } = {}) {
   const t = dObj.getTime();
-  const list = includeRapida ? seasons : seasons.filter(s => !isTarifaRapida(s));
+  let list = includeRapida ? seasons : seasons.filter(s => !isTarifaRapida(s));
+  // CORREÇÃO (2026-09-23): uma tarifa rápida é um ajuste pontual PARA UM
+  // APARTAMENTO ESPECÍFICO — nunca deve "tapar" a temporada real na busca
+  // de preço de outro apartamento só por estar mais à frente na lista.
+  // Ao indicar `aptId`, ignora tarifas rápidas sem preço definido para
+  // esse apartamento (ver nightlyRate/stayBreakdown abaixo).
+  if (includeRapida && aptId) {
+    list = list.filter(s => !isTarifaRapida(s) || (s.precos && s.precos[aptId]));
+  }
   return list.find(s => s.ativa !== false && parseYMD(s.inicio).getTime() <= t && t <= parseYMD(s.fim).getTime()) || null;
 }
 export const aptRates = (season, aptId) => (season && season.precos && season.precos[aptId]) || null;
@@ -39,7 +47,7 @@ export const aptRates = (season, aptId) => (season && season.precos && season.pr
 // por apartamento (Apartments.jsx) para o caso de algum precisar de outro valor.
 export const capacidadeBaseOf = (apt) => Number(apt?.capacidadeBase) || 4;
 export function nightlyRate(apt, seasons, dObj, guests) {
-  const season = seasonForDate(seasons, dObj, { includeRapida: true });
+  const season = seasonForDate(seasons, dObj, { includeRapida: true, aptId: apt.id });
   const p = aptRates(season, apt.id);
   let rate;
   if (p) {
@@ -66,7 +74,7 @@ export function stayBreakdown(apt, seasons, ci, co, guests) {
   let total = 0; const perNight = [];
   for (let i = 0; i < n; i++) {
     const d = addDays(parseYMD(ci), i);
-    const s = seasonForDate(seasons, d, { includeRapida: true });
+    const s = seasonForDate(seasons, d, { includeRapida: true, aptId: apt.id });
     const rate = nightlyRate(apt, seasons, d, guests);
     total += rate;
     perNight.push({ date: ymd(d), rate, season: s ? s.nome : 'Tarifa base', weekend: isWeekendNight(d) });
