@@ -353,14 +353,14 @@ export function PublicSite({ data, onCreate }) {
           <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} className="pm-pubsite-group-logo"
             style={{ height: 128, width: 'auto', maxWidth: 230, flexShrink: 0, display: 'block', objectFit: 'contain' }}
             onError={e => { e.target.style.display = 'none'; }} />
-          <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="pm-pubsite-group-info" style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div className="pm-pubsite-group-brand" style={{ fontFamily: F.disp, fontWeight: 700, fontSize: 23, lineHeight: 1.1, letterSpacing: '.01em' }}>
               {(RESIDENCIAL_BRAND_TEXT[r.id] || [{ t: r.nome, c: BLACK }]).map((p, i) => (
                 <span key={i} style={{ color: p.c }}>{p.t}</span>
               ))}
             </div>
             <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.3em', textTransform: 'uppercase', color: GREY }}>Residencial</div>
-            <div style={{ fontSize: 13.5, color: GREY, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
+            <div className="pm-pubsite-group-region" style={{ fontSize: 13.5, color: GREY, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
           </div>
           <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
         </div>

@@ -35,7 +35,7 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
   // do apartamento (ver helpers.js/nightlyRate), a pedido do Caio, 2026-09-17.
   const [g, setG] = useState(Math.min(initG1 || hosp, apt.capacidade));
   const [gB, setGB] = useState(Math.min(initG2 || 1, apt2 ? apt2.capacidade : 8));
-  const ok = nome.trim() && email.trim();
+  const ok = nome.trim() && email.trim() && tel.trim();
 
   const bd = stayBreakdown(apt, data.seasons, ci, co, g);
   const bd2 = apt2 ? stayBreakdown(apt2, data.seasons, ci, co, gB) : null;
@@ -191,7 +191,7 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
           </div>
           <Field label="Nome completo" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Como no documento" /></Field>
           <Field label="Email" required><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
-          <Field label="Telefone"><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
+          <Field label="Telefone" required><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
           {!hasApt2 ? (
             <Field label="Hóspedes" hint={`Máx. ${apt.capacidade}`}>
               <NumberInput min={1} max={apt.capacidade} value={g} onChange={e => setG(Math.min(apt.capacidade, Math.max(1, +e.target.value || 1)))} />

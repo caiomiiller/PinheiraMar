@@ -149,10 +149,12 @@ export default function App() {
       .pm-cat-btn[data-active="true"]{background:#0D0D0D!important;border-color:#0D0D0D!important;color:#FFF!important;}
       .pm-cat-btn[data-active="true"] span{color:#FFF!important;}
       .pm-pubsite-main{padding:32px 16px 56px!important;}
-      .pm-pubsite-group-head{gap:12px!important;}
+      .pm-pubsite-group-head{gap:12px!important;flex-direction:column!important;align-items:center!important;text-align:center!important;}
       .pm-pubsite-group-logo{height:96px!important;}
-      .pm-pubsite-group-brand{font-size:19px!important;}
-      .pm-pubsite-group-count{width:100%!important;order:3;}
+      .pm-pubsite-group-brand{font-size:19px!important;text-align:center!important;}
+      .pm-pubsite-group-info{align-items:center!important;text-align:center!important;}
+      .pm-pubsite-group-region{justify-content:center!important;}
+      .pm-pubsite-group-count{width:100%!important;order:3;text-align:center!important;}
       .pm-pubsite-combo{padding:16px!important;}
       .pm-pubsite-footer-grid{padding:32px 16px!important;gap:28px!important;}
 

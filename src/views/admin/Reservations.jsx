@@ -234,6 +234,13 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   const listSorted = manualOrder
     ? data.reservas
     : [...data.reservas].sort((a, b) => parseYMD(b.checkIn) - parseYMD(a.checkIn));
+  // 'todas' | 'sem' (0 pago, sem confirmação) | 'com' (algum pagamento já
+  // recebido — é isso que caracteriza uma reserva de facto, a pedido do
+  // Caio). Bloqueios ficam de fora dos dois filtros de pagamento: não são
+  // reservas de hóspede, não têm o que confirmar.
+  const [paymentFilter, setPaymentFilter] = useState('todas');
+  const listFiltered = paymentFilter === 'todas' ? listSorted
+    : listSorted.filter(r => r.status !== 'bloqueio' && (paymentFilter === 'sem' ? (Number(r.valorPago) || 0) <= 0 : (Number(r.valorPago) || 0) > 0));
   const listCap = 300;
 
   return (
@@ -575,10 +582,18 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       {view === 'lista' && (
         <Card style={{ overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '8px 14px', borderBottom: `1px solid ${C.line}`, gap: 8 }}>
-            <span style={{ fontSize: 12, color: C.inkSoft }}>Ordenação:</span>
-            <button onClick={() => setManualOrder(false)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
-            <button onClick={() => setManualOrder(true)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: manualOrder ? C.ocean : C.espuma, color: manualOrder ? '#fff' : C.inkSoft }}>Manual ⠿</button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: `1px solid ${C.line}`, gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: C.inkSoft }}>Pagamento:</span>
+              <button onClick={() => setPaymentFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'todas' ? C.ocean : C.espuma, color: paymentFilter === 'todas' ? '#fff' : C.inkSoft }}>Todas</button>
+              <button onClick={() => setPaymentFilter('sem')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'sem' ? C.coralDeep : C.espuma, color: paymentFilter === 'sem' ? '#fff' : C.inkSoft }}>Sem confirmação (0 pago)</button>
+              <button onClick={() => setPaymentFilter('com')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'com' ? '#1C7A5B' : C.espuma, color: paymentFilter === 'com' ? '#fff' : C.inkSoft }}>Com pagamento</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: C.inkSoft }}>Ordenação:</span>
+              <button onClick={() => setManualOrder(false)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
+              <button onClick={() => setManualOrder(true)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: manualOrder ? C.ocean : C.espuma, color: manualOrder ? '#fff' : C.inkSoft }}>Manual ⠿</button>
+            </div>
           </div>
           <div className="pm-hide-sm" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 720 }}>
@@ -586,7 +601,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                 {[manualOrder ? '⠿' : '', 'Código', 'Residencial', 'Apartamento', 'Hóspede', 'Estadia', 'Origem', 'Total', 'Estado', ''].map((h, i) => <th key={i} style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{h}</th>)}
               </tr></thead>
               <tbody>
-                {listSorted.slice(0, listCap).map((r, idx) => (
+                {listFiltered.slice(0, listCap).map((r, idx) => (
                   <tr key={r.id} style={{ borderTop: `1px solid ${C.line}`, opacity: dndRes.dragging === r.id ? 0.4 : 1, outline: dndRes.over === r.id ? `2px dashed ${C.coral}` : 'none' }}
                     draggable={manualOrder} onDragStart={manualOrder ? () => dndRes.onDragStart(r.id) : undefined}
                     onDragOver={manualOrder ? e => { e.preventDefault(); dndRes.onDragOver(r.id); } : undefined}
@@ -623,7 +638,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               Financeiro (hóspede, datas, total, estado) em vez de obrigar
               a rolar a tabela na horizontal para ver algo útil */}
           <div className="pm-res-listcards" style={{ display: 'none' }}>
-            {listSorted.slice(0, listCap).map(r => (
+            {listFiltered.slice(0, listCap).map(r => (
               <div key={r.id} style={{ padding: '13px 16px', borderTop: `1px solid ${C.line}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <span style={{ fontFamily: F.disp, fontSize: 12.5, color: C.ocean }}>{r.codigo}</span>
@@ -648,7 +663,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             ))}
           </div>
           <div style={{ padding: '11px 16px', fontSize: 12.5, color: C.inkSoft, borderTop: `1px solid ${C.line}` }}>
-            {listSorted.length > listCap ? `A mostrar as ${listCap} reservas mais recentes de ${listSorted.length}. Use a exportação para ver todas.` : `${listSorted.length} reserva(s) no total.`}
+            {listFiltered.length > listCap ? `A mostrar as ${listCap} reservas mais recentes de ${listFiltered.length}.${paymentFilter === 'todas' ? ' Use a exportação para ver todas.' : ''}` : `${listFiltered.length} reserva(s)${paymentFilter === 'todas' ? ' no total.' : paymentFilter === 'sem' ? ' sem confirmação (0 pago).' : ' com algum pagamento.'}`}
           </div>
         </Card>
       )}
@@ -747,6 +762,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const [checkinRealizado, setCheckinRealizado] = useState(i.checkinRealizado || false);
   const [checkoutRealizado, setCheckoutRealizado] = useState(i.checkoutRealizado || false);
   const [nota, setNota] = useState(i.nota || '');
+  const [valorPago, setValorPago] = useState(i.valorPago ?? 0);
+  const [valorPagoEdited, setValorPagoEdited] = useState(i.valorPago != null); // só true depois de o gestor tocar no campo (ou já vinha gravado) — antes disso segue o status
   const [extras, setExtras] = useState(() => {
     if (!isNew && i.extras && i.extras.length > 0) {
       // Edição: preservar extras existentes (já tinham as obrigatórias quando foram criadas)
@@ -804,7 +821,19 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const sinal = Math.round(total * (residencial.sinalPct / 100));
   const free = isAvailable(data.reservas, aptId, ci, co, i.id);
   const overCap = status !== 'bloqueio' && totalGuests > apt.capacidade;
-  const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
+  const canSave = validDates && free && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim() && tel.trim() && email.trim()));
+  const restante = Math.max(0, Math.round((total - (Number(valorPago) || 0)) * 100) / 100);
+
+  // Sugestão automática do valor pago a partir do status escolhido — só
+  // enquanto o gestor não tocar manualmente no campo "Valor pago" (mesmo
+  // padrão do precoEdited acima, para o preço por noite).
+  useEffect(() => {
+    if (valorPagoEdited) return;
+    if (status === 'confirmado') setValorPago(total);
+    else if (status === 'reservado') setValorPago(sinal);
+    else setValorPago(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, sinal, total]);
 
   const addExtra = (preset) => setExtras(x => [...x, { id: uid(), nome: preset?.nome || '', qtd: 1, preco: preset?.preco ?? 0 }]);
   const updExtra = (id, patch) => setExtras(x => x.map(e => e.id === id ? { ...e, ...patch } : e));
@@ -825,7 +854,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
     precoTabela: status === 'bloqueio' ? 0 : bd.total,
     extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
-    total, sinal,
+    total, sinal, valorPago: status === 'bloqueio' ? 0 : Math.round((Number(valorPago) || 0) * 100) / 100,
     checkinRealizado: status === 'bloqueio' ? false : checkinRealizado,
     checkoutRealizado: status === 'bloqueio' ? false : checkoutRealizado,
     enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
@@ -935,10 +964,10 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               <Field label="Sobrenome" required><TextInput value={sobrenome} onChange={e => setSobrenome(e.target.value)} placeholder="Apelido" /></Field>
             </div>
             <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Field label="Telefone"><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
+              <Field label="Telefone" required><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
               <Field label="País"><Select value={pais} onChange={e => setPais(e.target.value)}>{[...new Set([pais, ...PAISES])].map(p => <option key={p}>{p}</option>)}</Select></Field>
             </div>
-            <Field label="Email"><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
+            <Field label="Email" required><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
             {/* Ao CRIAR, a caixa manda o e-mail no momento de gravar. Ao EDITAR
                 ela não fazia nada (o envio só acontecia na criação), o que era
                 enganador — passa a ser um botão que envia mesmo, na hora, e diz
@@ -1080,11 +1109,29 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                 </button>
               ))}
             </div>
-            <div style={{ background: C.oceanDeep, color: '#fff', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Sinal {residencial.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Total:</span>
-                <span style={{ fontSize: 24, fontWeight: 700, fontFamily: F.disp }}>{money(total)}</span>
+            <div style={{ background: C.oceanDeep, color: '#fff', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Sinal sugerido {residencial.sinalPct}%: <b style={{ color: C.areia }}>{money(sinal)}</b></div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Total:</span>
+                  <span style={{ fontSize: 24, fontWeight: 700, fontFamily: F.disp }}>{money(total)}</span>
+                </div>
+              </div>
+              {/* Registo do que foi de facto recebido — distinto do sinal
+                  sugerido acima. "Restante" é sempre total - valorPago,
+                  nunca gravado à parte, para nunca desalinhar do total. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.18)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,.82)' }}>Valor pago:</span>
+                  <MoneyInput value={valorPago} onChange={e => { setValorPago(e.target.value === '' ? '' : Number(e.target.value)); setValorPagoEdited(true); }} style={{ width: 120 }} />
+                </div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Restante: <b style={{ color: restante > 0 ? '#FFB25E' : C.areia }}>{money(restante)}</b></div>
+                {restante > 0 && (
+                  <button type="button" onClick={() => { setValorPagoEdited(true); setValorPago(total); }}
+                    style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.32)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
+                    Marcar como paga
+                  </button>
+                )}
               </div>
             </div>
           </div>

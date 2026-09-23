@@ -81,6 +81,7 @@ export function seedData() {
       hospedes: status === 'bloqueio' ? 0 : adultos + criancas,
       precoNoite, precoTabela: status === 'bloqueio' ? 0 : bd.total,
       extras: extras.map(e => ({ id: uid(), ...e })), total, sinal: Math.round(total * 0.5),
+      valorPago: status === 'confirmado' ? total : status === 'reservado' ? Math.round(total * 0.5) : 0,
       // checkinRealizado/checkoutRealizado: independentes do status (que
       // agora representa só o pagamento — pendente/reservado/confirmado) —
       // marcam se o hóspede já chegou/saiu de facto.
@@ -378,8 +379,17 @@ function readLocalStorage() {
    webhook do Mercado Pago, por exemplo) e não se sobrepõe a isso.
 
    O campo antigo `sinalPago` fica onde está, já não é lido por ninguém:
-   converter é reversível, apagar não. */
-export const DATA_VERSION = 2;
+   converter é reversível, apagar não.
+
+   v3 — `valorPago`: até aqui o único registo de pagamento era o `status`
+   (pendente/reservado/confirmado), que só dá um valor aproximado (0%, 50%
+   ou 100%) — não o valor real pago quando ele foge dessas frações (ex.:
+   negociação, pagamento parcial). Toda reserva passa a ter `valorPago` (o
+   que foi efetivamente recebido, editável no ecrã da reserva) e
+   `valorRestante` deixa de ser guardado — é sempre `total - valorPago`,
+   calculado na hora. Backfill: pendente → 0, reservado → sinal (50% do
+   total), confirmado → total, bloqueio/cancelada → 0. */
+export const DATA_VERSION = 3;
 
 // A marca do sinal vem escrita no nome, com ou sem espaço antes do "%".
 const MARCA_SINAL_50 = /50\s*%/;
@@ -411,6 +421,17 @@ export function migrarDados(d) {
       // anterior a hoje = estadia terminada, fica como está.
       if (!r.checkOut || r.checkOut < hoje) return r;
       return trocar(r, temSinal50(r) ? 'reservado' : 'pendente');
+    });
+  }
+
+  if (de < 3) {
+    reservas = reservas.map(r => {
+      if (r.valorPago != null) return r;
+      alteradas++;
+      const vp = r.status === 'confirmado' ? Number(r.total) || 0
+        : r.status === 'reservado' ? Number(r.sinal) || Math.round((Number(r.total) || 0) * 0.5)
+        : 0;
+      return { ...r, valorPago: vp };
     });
   }
 
