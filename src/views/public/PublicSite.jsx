@@ -425,7 +425,7 @@ export function PublicSite({ data, onCreate }) {
     <div style={{ background: WHITE, minHeight: '100vh', fontFamily: F.sans, color: BLACK }}>
 
       {/* ══ HEADER ══ */}
-      <header ref={headerRef} style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
+      <header ref={headerRef} className="pm-pubsite-header" style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
         <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 72, display: 'flex', alignItems: 'center', gap: 32 }}>
 
           {/* marca PinheiraMar — garante que o cabeçalho nunca fica vazio no telemóvel
@@ -590,7 +590,7 @@ export function PublicSite({ data, onCreate }) {
       </section>
 
       {/* ══ CATEGORY FILTER STRIP ══ */}
-      <div style={{ borderBottom: `1px solid ${BORDER}`, background: WHITE, position: 'sticky', top: 64, zIndex: 40 }}>
+      <div className="pm-pubsite-catbar" style={{ borderBottom: `1px solid ${BORDER}`, background: WHITE, position: 'sticky', top: 64, zIndex: 40 }}>
         <div className="pm-pubsite-catstrip" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {[
             { key: null,         icon: <Home size={16} />,  label: tr('cat2') },

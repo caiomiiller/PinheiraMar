@@ -137,6 +137,11 @@ export default function App() {
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}
 
       /* ── site público (booking-style) — telemóvel ── */
+      /* no telemóvel o cabeçalho (logo) e a faixa de categorias rolam com a
+         página em vez de ficarem fixos — no ecrã pequeno ocupavam espaço
+         desnecessário, a pedido do Caio. No desktop continuam fixos. */
+      .pm-pubsite-header{position:static!important;}
+      .pm-pubsite-catbar{position:static!important;}
       .pm-pubsite-header-row{padding:10px 16px!important;gap:12px!important;height:auto!important;justify-content:center!important;position:relative!important;}
       .pm-pubsite-brand-desktop{display:none!important;}
       .pm-pubsite-brand-mobile{display:block!important;height:96px!important;width:auto!important;}
