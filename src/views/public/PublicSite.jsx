@@ -493,7 +493,7 @@ export function PublicSite({ data, onCreate }) {
             {/* botão "Limpar consulta" ao lado do PROCURAR — mais visível do
                 que o X pequeno que ficava espremido dentro da barra, a
                 pedido do Caio, 2026-09. */}
-            {(ci || co || hosp) && (
+            {!!(ci || co || hosp) && (
               <button onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, cursor: 'pointer', color: GREY, fontSize: 12.5, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
                 <X size={13} /> Limpar consulta
@@ -520,7 +520,7 @@ export function PublicSite({ data, onCreate }) {
       <div className="pm-pubsite-search-inline" style={{ display: 'none', padding: '20px 20px 26px', borderBottom: `1px solid ${BORDER}`, background: WHITE }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={{ fontSize: 16, fontWeight: 800 }}>Pesquisar disponibilidade</div>
-          {(ci || co || hosp) && (
+          {!!(ci || co || hosp) && (
             <button onClick={() => { setCi(''); setCo(''); setHosp(0); setCalOpen(false); }}
               style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: GREY, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
               <X size={13} /> Limpar
