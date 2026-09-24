@@ -60,8 +60,8 @@ export function Dashboard({ data, go, openReservation }) {
   const aptName = (id) => data.apartamentos.find(a => a.id === id)?.nome || '—';
   const season = seasonForDate(data.seasons, t);
 
-  const proxCheckins  = reais.filter(r => parseYMD(r.checkIn)  >= t).sort((a, b) => parseYMD(a.checkIn)  - parseYMD(b.checkIn)).slice(0, 6);
-  const proxCheckouts = reais.filter(r => parseYMD(r.checkOut) >= t).sort((a, b) => parseYMD(a.checkOut) - parseYMD(b.checkOut)).slice(0, 6);
+  const proxCheckins  = reais.filter(r => parseYMD(r.checkIn)  >= t).sort((a, b) => parseYMD(a.checkIn)  - parseYMD(b.checkIn)).slice(0, 10);
+  const proxCheckouts = reais.filter(r => parseYMD(r.checkOut) >= t).sort((a, b) => parseYMD(a.checkOut) - parseYMD(b.checkOut)).slice(0, 10);
 
   const disponiveisHoje = aptsAtivos.filter(a => !cobre(reais, a.id, t)).length;
   const totalAtivos = aptsAtivos.length;

@@ -101,13 +101,26 @@ export function Financeiro({ data, go }) {
   const mediaNoites = comReceita.length > 0 ? (comReceita.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0) / comReceita.length).toFixed(1) : '—';
 
   // receita por apartamento
+  // Ordenação por coluna (a pedido do Caio, 2026-09-24) — 'receita' desc é o
+  // padrão (comportamento antigo, fixo).
+  const [aptSortKey, setAptSortKey] = useState('receita');
+  const [aptSortDir, setAptSortDir] = useState('desc');
+  const aptSortByColumn = (key) => {
+    if (aptSortKey === key) { setAptSortDir(d => d === 'asc' ? 'desc' : 'asc'); return; }
+    setAptSortKey(key);
+    setAptSortDir(key === 'nome' ? 'asc' : 'desc');
+  };
   const porApt = data.apartamentos.map(a => {
     const rs = comReceita.filter(r => r.apartamentoId === a.id);
     const receita = soma(rs);
     const qtd = rs.length;
     const noites = rs.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0);
     return { nome: a.nome, receita, qtd, noites };
-  }).sort((a, b) => b.receita - a.receita);
+  }).sort((a, b) => {
+    const av = a[aptSortKey], bv = b[aptSortKey];
+    const r = typeof av === 'string' ? av.localeCompare(bv, 'pt') : av - bv;
+    return aptSortDir === 'asc' ? r : -r;
+  });
 
   // receita por mês (últimos 12 meses)
   const porMes = [];
@@ -124,6 +137,31 @@ export function Financeiro({ data, go }) {
   comReceita.forEach(r => { const o = r.origem || 'Direto'; origens[o] = (origens[o] || 0) + 1; });
   const origensList = Object.entries(origens).sort((a, b) => b[1] - a[1]);
   const totalOrig = origensList.reduce((s, [, v]) => s + v, 0);
+
+  // Ordenação por coluna na tabela "Reservas no período" (a pedido do Caio,
+  // 2026-09-24) — 'checkIn' desc é o padrão (comportamento antigo, fixo).
+  const [resSortKey, setResSortKey] = useState('checkIn');
+  const [resSortDir, setResSortDir] = useState('desc');
+  const RES_SORT_ACCESSORS = {
+    codigo: r => r.codigo || '',
+    hospede: r => r.hospede || '',
+    apartamento: r => data.apartamentos.find(a => a.id === r.apartamentoId)?.nome || '',
+    checkIn: r => parseYMD(r.checkIn).getTime(),
+    checkOut: r => parseYMD(r.checkOut).getTime(),
+    noites: r => nights(r.checkIn, r.checkOut),
+    total: r => Number(r.total) || 0,
+    status: r => r.status || '',
+  };
+  const resSortByColumn = (key) => {
+    if (resSortKey === key) { setResSortDir(d => d === 'asc' ? 'desc' : 'asc'); return; }
+    setResSortKey(key);
+    setResSortDir(key === 'total' || key === 'checkIn' || key === 'checkOut' || key === 'noites' ? 'desc' : 'asc');
+  };
+  const resSorted = [...comReceita].sort((a, b) => {
+    const av = RES_SORT_ACCESSORS[resSortKey](a), bv = RES_SORT_ACCESSORS[resSortKey](b);
+    const r = typeof av === 'string' ? av.localeCompare(bv, 'pt') : av - bv;
+    return resSortDir === 'asc' ? r : -r;
+  });
 
   const KPI = ({ label, value, sub, accent }) => (
     <Card style={{ padding: 18 }}>
@@ -194,8 +232,11 @@ export function Financeiro({ data, go }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${C.line}` }}>
-                  {['Apartamento', 'Reservas', 'Noites', 'Receita', 'Participação'].map(h => (
-                    <th key={h} style={{ padding: '6px 10px 10px', textAlign: h === 'Apartamento' ? 'left' : 'right', color: C.inkSoft, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{h}</th>
+                  {[['Apartamento', 'nome'], ['Reservas', 'qtd'], ['Noites', 'noites'], ['Receita', 'receita'], ['Participação', 'receita']].map(([h, key]) => (
+                    <th key={h} onClick={() => aptSortByColumn(key)} title="Ordenar por esta coluna"
+                      style={{ padding: '6px 10px 10px', textAlign: h === 'Apartamento' ? 'left' : 'right', color: C.inkSoft, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
+                      {h}{aptSortKey === key ? (aptSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -277,13 +318,16 @@ export function Financeiro({ data, go }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: `2px solid ${C.line}` }}>
-                {['Código', 'Hóspede', 'Apartamento', 'Check-in', 'Check-out', 'Noites', 'Total', 'Status'].map(h => (
-                  <th key={h} style={{ padding: '6px 10px 10px', textAlign: 'left', color: C.inkSoft, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{h}</th>
+                {[['Código', 'codigo'], ['Hóspede', 'hospede'], ['Apartamento', 'apartamento'], ['Check-in', 'checkIn'], ['Check-out', 'checkOut'], ['Noites', 'noites'], ['Total', 'total'], ['Status', 'status']].map(([h, key]) => (
+                  <th key={h} onClick={() => resSortByColumn(key)} title="Ordenar por esta coluna"
+                    style={{ padding: '6px 10px 10px', textAlign: 'left', color: C.inkSoft, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
+                    {h}{resSortKey === key ? (resSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {[...comReceita].sort((a, b) => parseYMD(b.checkIn) - parseYMD(a.checkIn)).slice(0, 40).map(r => (
+              {resSorted.slice(0, 40).map(r => (
                 <tr key={r.id} style={{ borderBottom: `1px solid ${C.line}` }}>
                   <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, color: C.inkSoft }}>{r.codigo}</td>
                   <td style={{ padding: '8px 10px', fontWeight: 600 }}>{r.hospede || '—'}</td>

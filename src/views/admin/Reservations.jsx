@@ -294,9 +294,37 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
   const [manualOrder, setManualOrder] = useState(false);
   const dndRes = useReorder(data.reservas, arr => update(prev => ({ ...prev, reservas: arr })));
+  // Ordenação por coluna na Lista — clicar num cabeçalho ordena por ele
+  // (clicar de novo inverte), a pedido do Caio (2026-09-24), para poder
+  // analisar a partir da coluna que precisar em cada momento. 'checkIn' é o
+  // padrão (o antigo comportamento fixo), sempre descendente ao trocar de
+  // coluna por padrão, exceto texto (nome/código/etc.), que começa ascendente.
+  const [sortKey, setSortKey] = useState('checkIn');
+  const [sortDir, setSortDir] = useState('desc');
+  const SORT_ACCESSORS = {
+    codigo: r => r.codigo || '',
+    residencial: r => aptResidencial(r.apartamentoId)?.nome || '',
+    apartamento: r => aptName(r.apartamentoId) || '',
+    hospede: r => r.hospede || '',
+    checkIn: r => parseYMD(r.checkIn).getTime(),
+    origem: r => r.origem || '',
+    total: r => Number(r.total) || 0,
+    valorPago: r => Number(r.valorPago) || 0,
+    estado: r => displayStatus(r) || '',
+  };
+  const sortByColumn = (key) => {
+    setManualOrder(false);
+    if (sortKey === key) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); return; }
+    setSortKey(key);
+    setSortDir(key === 'total' || key === 'valorPago' || key === 'checkIn' ? 'desc' : 'asc');
+  };
   const listSorted = manualOrder
     ? data.reservas
-    : [...data.reservas].sort((a, b) => parseYMD(b.checkIn) - parseYMD(a.checkIn));
+    : [...data.reservas].sort((a, b) => {
+        const av = SORT_ACCESSORS[sortKey](a), bv = SORT_ACCESSORS[sortKey](b);
+        const r = typeof av === 'string' ? av.localeCompare(bv, 'pt') : av - bv;
+        return sortDir === 'asc' ? r : -r;
+      });
   // 'todas' | 'sem' (0 pago, sem confirmação) | 'com' (algum pagamento já
   // recebido — é isso que caracteriza uma reserva de facto, a pedido do
   // Caio). Bloqueios ficam de fora dos dois filtros de pagamento: não são
@@ -671,14 +699,21 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Ordenação:</span>
-              <button onClick={() => setManualOrder(false)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
+              <button onClick={() => { setManualOrder(false); setSortKey('checkIn'); setSortDir('desc'); }} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
               <button onClick={() => setManualOrder(true)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: manualOrder ? C.ocean : C.espuma, color: manualOrder ? '#fff' : C.inkSoft }}>Manual ⠿</button>
             </div>
           </div>
           <div className="pm-hide-sm" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 720 }}>
               <thead><tr style={{ background: C.espuma, textAlign: 'left', color: C.inkSoft }}>
-                {[manualOrder ? '⠿' : '', 'Código', 'Residencial', 'Apartamento', 'Hóspede', 'Estadia', 'Origem', 'Total', 'Valor pago', 'Estado', ''].map((h, i) => <th key={i} style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{h}</th>)}
+                <th style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{manualOrder ? '⠿' : ''}</th>
+                {[['Código', 'codigo'], ['Residencial', 'residencial'], ['Apartamento', 'apartamento'], ['Hóspede', 'hospede'], ['Estadia', 'checkIn'], ['Origem', 'origem'], ['Total', 'total'], ['Valor pago', 'valorPago'], ['Estado', 'estado']].map(([h, key]) => (
+                  <th key={key} onClick={() => sortByColumn(key)} title="Ordenar por esta coluna"
+                    style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5, cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
+                    {h}{!manualOrder && sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                  </th>
+                ))}
+                <th style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}></th>
               </tr></thead>
               <tbody>
                 {listFiltered.slice(0, listCap).map((r, idx) => (
@@ -989,7 +1024,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
 
   return (
     <>
-    <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${residencial.nome} · ${apt.nome} · ${apt.piso} · ${apt.vista}`} onClose={onClose} wide
+    <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${residencial.nome} · ${apt.nome} · ${apt.piso} · ${apt.vista}${!isNew && i.criadoEm ? ` · Criada em ${fmtShort(i.criadoEm)}` : ''}`} onClose={onClose} wide
       headerActions={!isNew && onDuplicate && (
         <button onClick={() => { onDuplicate(i.id); onClose(); }} title="Duplicar reserva"
           style={{ background: C.espuma, border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft, flexShrink: 0 }}>
