@@ -33,6 +33,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   // pesquisa (datas + hóspedes) editável na barra sticky do topo — a pedido
   // do Caio (2026-09-24), para não obrigar a rolar até ao widget lateral
   const [topSearchOpen, setTopSearchOpen] = useState(false);
+  const [sideSearchOpen, setSideSearchOpen] = useState(false);
   // reserva conjunta
   const [useApt2, setUseApt2] = useState(false);
   const [apt2Id, setApt2Id] = useState('');
@@ -320,11 +321,11 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
                   <Users size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{apt.capacidade} hóspedes</div><div style={{ fontSize: 12.5, color: '#717171' }}>capacidade máxima</div></div>
                 </div>
-                {apt.quartos > 0 && (
+                {(() => { const nQuartos = apt.quartos || 1; return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
-                    <DoorOpen size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{apt.quartos} {apt.quartos === 1 ? 'quarto' : 'quartos'}</div><div style={{ fontSize: 12.5, color: '#717171' }}>quartos</div></div>
+                    <DoorOpen size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{nQuartos} {nQuartos === 1 ? 'quarto' : 'quartos'}</div><div style={{ fontSize: 12.5, color: '#717171' }}>quartos</div></div>
                   </div>
-                )}
+                ); })()}
                 {apt.tamanho && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
                     <Home size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{apt.tamanho} m²</div><div style={{ fontSize: 12.5, color: '#717171' }}>área do apartamento</div></div>
@@ -369,6 +370,46 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
 
           {/* RIGHT column — booking widget (sticky no desktop, em fluxo normal no telemóvel) */}
           <div className="pm-detail-side" id="booking-widget" style={{ position: 'sticky', top: 60 }}>
+
+            {/* pesquisa atual (datas + hóspedes), editável, logo acima do
+                quadro de reserva — dá acesso rápido sem ter de rolar até
+                ao topo, sobretudo no telemóvel (onde a barra sticky do
+                topo não aparece). */}
+            <div style={{ position: 'relative', marginBottom: 10 }}>
+              <button onClick={() => setSideSearchOpen(o => !o)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '10px 14px', border: '1px solid #e0e0e0', borderRadius: 999, background: sideSearchOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#222', fontFamily: F.sans }}>
+                <CalendarDays size={14} color="#717171" />
+                {localCi && localCo
+                  ? <>{fmtShort(localCi)} → {fmtShort(localCo)} · {localHosp} hóspede{localHosp > 1 ? 's' : ''}</>
+                  : <span style={{ color: '#717171' }}>Adicionar datas e hóspedes</span>}
+              </button>
+              {(localCi || localCo) && (
+                <button onClick={e => { e.stopPropagation(); setLocalCi(''); setLocalCo(''); const v = Math.min(1, apt.capacidade); setLocalHosp(v); setG1(v); setSideSearchOpen(false); }}
+                  title="Limpar pesquisa"
+                  style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: '#222', color: '#fff', border: '2px solid #fff', cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 }}>
+                  <X size={11} />
+                </button>
+              )}
+              {sideSearchOpen && (
+                <>
+                  <div onClick={() => setSideSearchOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                  <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 100, background: '#fff', border: '1px solid #e0e0e0', borderRadius: 14, boxShadow: '0 12px 34px rgba(0,0,0,.16)', padding: 16 }} onClick={e => e.stopPropagation()}>
+                    <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo}
+                      onChange={(newCi, newCo) => { setLocalCi(newCi); setLocalCo(newCo); }} />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 14, borderTop: '1px solid #eee' }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', color: '#717171' }}>Hóspedes <span style={{ fontWeight: 400 }}>(máx. {apt.capacidade})</span></div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <button onClick={() => { const v = Math.max(1, localHosp-1); setLocalHosp(v); setG1(v); }} style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid #bbb', background: '#fff', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>−</button>
+                        <b style={{ minWidth: 18, textAlign: 'center' }}>{localHosp}</b>
+                        <button onClick={() => { const v = Math.min(apt.capacidade, localHosp+1); setLocalHosp(v); setG1(v); }} style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid #bbb', background: '#fff', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>+</button>
+                      </div>
+                    </div>
+                    <button onClick={() => setSideSearchOpen(false)} style={{ width: '100%', marginTop: 14, padding: '10px 0', background: '#222', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: F.sans }}>Aplicar</button>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 18, padding: 24, boxShadow: '0 8px 28px rgba(0,0,0,.12)' }}>
               <div style={{ marginBottom: 18 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#717171' }}>a partir de </span>

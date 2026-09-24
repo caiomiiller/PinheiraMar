@@ -438,7 +438,7 @@ export function PublicSite({ data, onCreate }) {
           </a>
 
           {/* centred search (desktop) */}
-          <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'stretch', height: 44, border: `1px solid ${BORDER}`, background: WHITE, maxWidth: 680, width: '100%', position: 'relative' }}>
               <Seg label={tr('search_checkin')}>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
@@ -484,18 +484,21 @@ export function PublicSite({ data, onCreate }) {
                   </div>
                 )}
               </Seg>
-              {(ci || co || hosp) && (
-                <button onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
-                  title="Limpar consulta"
-                  style={{ display: 'flex', alignItems: 'center', padding: '0 14px', background: WHITE, border: 'none', borderLeft: `1px solid ${BORDER}`, cursor: 'pointer', color: GREY, flexShrink: 0 }}>
-                  <X size={15} />
-                </button>
-              )}
               <button onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
                 style={{ padding: '0 24px', background: BLACK, color: WHITE, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 {tr('search_btn').toUpperCase()}
               </button>
             </div>
+
+            {/* botão "Limpar consulta" ao lado do PROCURAR — mais visível do
+                que o X pequeno que ficava espremido dentro da barra, a
+                pedido do Caio, 2026-09. */}
+            {(ci || co || hosp) && (
+              <button onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, cursor: 'pointer', color: GREY, fontSize: 12.5, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                <X size={13} /> Limpar consulta
+              </button>
+            )}
           </div>
 
           {/* right side (escondido no telemóvel — o idioma muda no ecrã de busca) */}
