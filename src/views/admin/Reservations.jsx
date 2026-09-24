@@ -118,6 +118,10 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   const [deleteConfirm, setDeleteConfirm] = useState(null); // reserva pendente de eliminação rápida a partir da lista
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef(null);
+  // campo de pesquisa global (código, hóspede, apartamento, etc.) — a pedido
+  // do Caio (2026-09-24), para localizar rapidamente uma reserva sem ter de
+  // percorrer o calendário/lista manualmente
+  const [search, setSearch] = useState('');
 
   // abre diretamente uma reserva vinda do Painel de controle (cliques em
   // "Próximos check-ins/check-outs") — ver Dashboard.jsx e Admin.jsx
@@ -318,6 +322,23 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     setSortKey(key);
     setSortDir(key === 'total' || key === 'valorPago' || key === 'checkIn' ? 'desc' : 'asc');
   };
+  // normaliza texto (minúsculas, sem acentos) para a pesquisa funcionar com
+  // ou sem acentuação
+  const normTxt = (v) => (v ?? '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const searchNorm = normTxt(search.trim());
+  const matchesSearch = (r) => {
+    if (!searchNorm) return true;
+    const hay = normTxt([r.codigo, r.hospede, r.nome, r.sobrenome, aptName(r.apartamentoId),
+      aptResidencial(r.apartamentoId)?.nome, r.origem, displayStatus(r), r.email, r.telefone,
+      r.pais, r.nota].filter(Boolean).join(' '));
+    return hay.includes(searchNorm);
+  };
+  // resultados para o dropdown de pesquisa rápida (todas as reservas, não só
+  // as 300 mais recentes da tabela) — só calculado quando há texto digitado
+  const searchMatches = searchNorm
+    ? data.reservas.filter(matchesSearch).sort((a, b) => parseYMD(b.checkIn) - parseYMD(a.checkIn))
+    : [];
+
   const listSorted = manualOrder
     ? data.reservas
     : [...data.reservas].sort((a, b) => {
@@ -330,8 +351,8 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   // Caio). Bloqueios ficam de fora dos dois filtros de pagamento: não são
   // reservas de hóspede, não têm o que confirmar.
   const [paymentFilter, setPaymentFilter] = useState('todas');
-  const listFiltered = paymentFilter === 'todas' ? listSorted
-    : listSorted.filter(r => r.status !== 'bloqueio' && (paymentFilter === 'sem' ? (Number(r.valorPago) || 0) <= 0 : (Number(r.valorPago) || 0) > 0));
+  const listFiltered = (paymentFilter === 'todas' ? listSorted
+    : listSorted.filter(r => r.status !== 'bloqueio' && (paymentFilter === 'sem' ? (Number(r.valorPago) || 0) <= 0 : (Number(r.valorPago) || 0) > 0))).filter(matchesSearch);
   const listCap = 300;
 
   return (
@@ -370,6 +391,43 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
           {['calendario', 'lista'].map(v => (
             <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, background: view === v ? '#fff' : 'transparent', color: view === v ? C.ocean : C.inkSoft, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>{v === 'calendario' ? 'Calendário' : 'Lista'}</button>
           ))}
+        </div>
+
+        {/* pesquisa global de reservas (código, hóspede, apartamento, e-mail,
+            telefone, origem, estado…) — a pedido do Caio (2026-09-24).
+            Funciona nas duas vistas: filtra a tabela na Lista, e mostra um
+            dropdown de atalho para abrir a reserva diretamente a partir do
+            Calendário. */}
+        <div style={{ position: 'relative' }}>
+          <Search size={14} color={C.inkSoft} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          <TextInput value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Pesquisar código, hóspede, apartamento…"
+            style={{ width: 260, height: 34, paddingLeft: 30, fontSize: 13 }} />
+          {search.trim() && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 60, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 14px 34px rgba(10,40,46,.18)', width: 340, maxHeight: 340, overflowY: 'auto' }}>
+              {searchMatches.length === 0 ? (
+                <div style={{ padding: '12px 14px', fontSize: 13, color: C.inkSoft }}>Nenhuma reserva encontrada.</div>
+              ) : <>
+                {searchMatches.slice(0, 8).map(r => (
+                  <button key={r.id} onClick={() => { setEditing(r); setSearch(''); }}
+                    style={{ width: '100%', textAlign: 'left', display: 'block', padding: '9px 12px', background: 'none', border: 'none', borderBottom: `1px solid ${C.line}`, cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = C.espuma} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ fontFamily: F.disp, fontSize: 12.5, color: C.ocean }}>{r.codigo}</span>
+                      <span style={{ fontSize: 11.5, color: C.inkSoft, whiteSpace: 'nowrap' }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</span>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{r.status === 'bloqueio' ? '⛔ Bloqueio' : (r.hospede || '—')}</div>
+                    <div style={{ fontSize: 11.5, color: C.inkSoft }}>{aptName(r.apartamentoId)}</div>
+                  </button>
+                ))}
+                {searchMatches.length > 8 && (
+                  <div style={{ padding: '8px 12px', fontSize: 11.5, color: C.inkSoft }}>
+                    +{searchMatches.length - 8} resultado(s) — refine a pesquisa {view !== 'lista' && 'ou veja na Lista'}.
+                  </div>
+                )}
+              </>}
+            </div>
+          )}
         </div>
         {view === 'calendario' && <>
           {/* ── mês/ano clicável com dropdown picker ── */}
