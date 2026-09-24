@@ -30,6 +30,9 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const [guestOpen, setGuestOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  // pesquisa (datas + hóspedes) editável na barra sticky do topo — a pedido
+  // do Caio (2026-09-24), para não obrigar a rolar até ao widget lateral
+  const [topSearchOpen, setTopSearchOpen] = useState(false);
   // reserva conjunta
   const [useApt2, setUseApt2] = useState(false);
   const [apt2Id, setApt2Id] = useState('');
@@ -125,6 +128,45 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           <ChevronLeft size={20} /> Voltar
         </button>
         <div style={{ fontWeight: 700, fontSize: 16, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apt.nome}</div>
+
+        {/* pesquisa atual (datas + hóspedes), editável, sempre visível porque
+            esta barra já é sticky — evita ter de rolar até ao widget lateral
+            ou voltar ao topo do site para alterar a pesquisa */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button onClick={() => setTopSearchOpen(o => !o)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', border: '1px solid #e0e0e0', borderRadius: 999, background: topSearchOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#222', whiteSpace: 'nowrap', fontFamily: F.sans }}>
+            <CalendarDays size={14} color="#717171" />
+            {localCi && localCo
+              ? <>{fmtShort(localCi)} → {fmtShort(localCo)} · {localHosp} hóspede{localHosp > 1 ? 's' : ''}</>
+              : <span style={{ color: '#717171' }}>Adicionar datas e hóspedes</span>}
+          </button>
+          {(localCi || localCo) && (
+            <button onClick={e => { e.stopPropagation(); setLocalCi(''); setLocalCo(''); const v = Math.min(1, apt.capacidade); setLocalHosp(v); setG1(v); setTopSearchOpen(false); }}
+              title="Limpar pesquisa"
+              style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: '#222', color: '#fff', border: '2px solid #fff', cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 }}>
+              <X size={11} />
+            </button>
+          )}
+          {topSearchOpen && (
+            <>
+              <div onClick={() => setTopSearchOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 100, width: 340, maxWidth: '90vw', background: '#fff', border: '1px solid #e0e0e0', borderRadius: 14, boxShadow: '0 12px 34px rgba(0,0,0,.16)', padding: 16 }} onClick={e => e.stopPropagation()}>
+                <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo}
+                  onChange={(newCi, newCo) => { setLocalCi(newCi); setLocalCo(newCo); }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 14, borderTop: '1px solid #eee' }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', color: '#717171' }}>Hóspedes <span style={{ fontWeight: 400 }}>(máx. {apt.capacidade})</span></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button onClick={() => { const v = Math.max(1, localHosp-1); setLocalHosp(v); setG1(v); }} style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid #bbb', background: '#fff', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>−</button>
+                    <b style={{ minWidth: 18, textAlign: 'center' }}>{localHosp}</b>
+                    <button onClick={() => { const v = Math.min(apt.capacidade, localHosp+1); setLocalHosp(v); setG1(v); }} style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid #bbb', background: '#fff', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>+</button>
+                  </div>
+                </div>
+                <button onClick={() => setTopSearchOpen(false)} style={{ width: '100%', marginTop: 14, padding: '10px 0', background: '#222', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: F.sans }}>Aplicar</button>
+              </div>
+            </>
+          )}
+        </div>
+
         <button onClick={() => { if (navigator.share) { navigator.share({ title: apt.nome, url: window.location.href }).catch(() => {}); } else { navigator.clipboard?.writeText(window.location.href); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); } }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600, color: '#555' }}>
           <Share2 size={16} /> {shareCopied ? 'Link copiado!' : 'Partilhar'}

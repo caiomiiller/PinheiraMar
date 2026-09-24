@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, ChevronDown,
   Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Users,
-  AlertCircle } from 'lucide-react';
+  AlertCircle, X } from 'lucide-react';
 import { C, F, WHATSAPP_URL } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
   stayBreakdown, nights, fmtShort, pad, WD } from '../../lib/helpers';
@@ -484,6 +484,13 @@ export function PublicSite({ data, onCreate }) {
                   </div>
                 )}
               </Seg>
+              {(ci || co || hosp) && (
+                <button onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
+                  title="Limpar consulta"
+                  style={{ display: 'flex', alignItems: 'center', padding: '0 14px', background: WHITE, border: 'none', borderLeft: `1px solid ${BORDER}`, cursor: 'pointer', color: GREY, flexShrink: 0 }}>
+                  <X size={15} />
+                </button>
+              )}
               <button onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
                 style={{ padding: '0 24px', background: BLACK, color: WHITE, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 {tr('search_btn').toUpperCase()}
@@ -508,7 +515,15 @@ export function PublicSite({ data, onCreate }) {
       {/* ══ BUSCA — sempre visível no telemóvel, sem esconder atrás de um botão. Público-alvo 50+:
              mais direto ver os campos logo de cara do que ter de descobrir onde tocar. ══ */}
       <div className="pm-pubsite-search-inline" style={{ display: 'none', padding: '20px 20px 26px', borderBottom: `1px solid ${BORDER}`, background: WHITE }}>
-        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>Pesquisar disponibilidade</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ fontSize: 16, fontWeight: 800 }}>Pesquisar disponibilidade</div>
+          {(ci || co || hosp) && (
+            <button onClick={() => { setCi(''); setCo(''); setHosp(0); setCalOpen(false); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: GREY, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
+              <X size={13} /> Limpar
+            </button>
+          )}
+        </div>
         <div style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <DateCard label={tr('search_checkin')} value={ci} compact onClick={() => setCalOpen(o => !o)} />
@@ -622,8 +637,12 @@ export function PublicSite({ data, onCreate }) {
         {valid && (
           <div style={{ marginBottom: 44, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em' }}>
+              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 {fmtShort(ci)} — {fmtShort(co)} · {nights(ci, co)} noite{nights(ci,co) > 1 ? 's' : ''}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}
+                <button onClick={() => { setCi(''); setCo(''); setHosp(0); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: GREY, background: 'none', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '5px 12px', cursor: 'pointer' }}>
+                  <X size={12} /> Limpar consulta
+                </button>
               </div>
               <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>{subtituloDisponibilidade}</div>
             </div>

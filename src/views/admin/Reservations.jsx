@@ -351,8 +351,15 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   // Caio). Bloqueios ficam de fora dos dois filtros de pagamento: não são
   // reservas de hóspede, não têm o que confirmar.
   const [paymentFilter, setPaymentFilter] = useState('todas');
+  // filtro por status (Confirmado/Reservado/Pendente/Bloqueio/Cancelada) na
+  // Lista — a pedido do Caio (2026-09-24), mesmas categorias do quadro
+  // "Reservas por status" do Financeiro, somado ao filtro de pagamento já
+  // existente (não o substitui)
+  const [statusFilter, setStatusFilter] = useState('todas');
   const listFiltered = (paymentFilter === 'todas' ? listSorted
-    : listSorted.filter(r => r.status !== 'bloqueio' && (paymentFilter === 'sem' ? (Number(r.valorPago) || 0) <= 0 : (Number(r.valorPago) || 0) > 0))).filter(matchesSearch);
+    : listSorted.filter(r => r.status !== 'bloqueio' && (paymentFilter === 'sem' ? (Number(r.valorPago) || 0) <= 0 : (Number(r.valorPago) || 0) > 0)))
+    .filter(r => statusFilter === 'todas' || r.status === statusFilter)
+    .filter(matchesSearch);
   const listCap = 300;
 
   return (
@@ -754,6 +761,16 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               <button onClick={() => setPaymentFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'todas' ? C.ocean : C.espuma, color: paymentFilter === 'todas' ? '#fff' : C.inkSoft }}>Todas</button>
               <button onClick={() => setPaymentFilter('sem')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'sem' ? C.coralDeep : C.espuma, color: paymentFilter === 'sem' ? '#fff' : C.inkSoft }}>Sem confirmação (0 pago)</button>
               <button onClick={() => setPaymentFilter('com')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'com' ? '#1C7A5B' : C.espuma, color: paymentFilter === 'com' ? '#fff' : C.inkSoft }}>Com pagamento</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: C.inkSoft }}>Status:</span>
+              <button onClick={() => setStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === 'todas' ? C.ocean : C.espuma, color: statusFilter === 'todas' ? '#fff' : C.inkSoft }}>Todas</button>
+              {['confirmado', 'reservado', 'pendente', 'bloqueio', 'cancelada'].map(st => (
+                <button key={st} onClick={() => setStatusFilter(st)}
+                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === st ? STATUS[st].fg : C.espuma, color: statusFilter === st ? '#fff' : C.inkSoft }}>
+                  {STATUS[st].label}
+                </button>
+              ))}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Ordenação:</span>

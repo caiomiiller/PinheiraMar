@@ -3,7 +3,7 @@ import { Download, CreditCard, Wallet, ChevronDown } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, fmtLong, fmtShort, holdExpirado } from '../../lib/helpers';
 import { buildCSV, downloadBlob } from '../../lib/csvUtils';
-import { Card, PageHead, Badge, Select, Field, Btn, DateInput } from '../../components/ui';
+import { Card, PageHead, Badge, Select, Field, Btn, DateInput, STATUS } from '../../components/ui';
 import * as XLSX from 'xlsx';
 
 export function Financeiro({ data, go }) {
@@ -157,7 +157,15 @@ export function Financeiro({ data, go }) {
     setResSortKey(key);
     setResSortDir(key === 'total' || key === 'checkIn' || key === 'checkOut' || key === 'noites' ? 'desc' : 'asc');
   };
-  const resSorted = [...comReceita].sort((a, b) => {
+  // Filtro por status na tabela "Reservas no período" (a pedido do Caio,
+  // 2026-09-24) — usa as mesmas categorias do quadro "Reservas por status"
+  // ao lado. 'Todas' mantém o comportamento de sempre (comReceita, sem
+  // bloqueios); um status específico — incluindo Bloqueio, que não faz
+  // parte de comReceita — vem de `filtradas` (o mesmo conjunto que o quadro
+  // "Reservas por status" usa para contar), para os números baterem certo.
+  const [resStatusFilter, setResStatusFilter] = useState('todas');
+  const resBase = resStatusFilter === 'todas' ? comReceita : filtradas.filter(r => r.status === resStatusFilter);
+  const resSorted = [...resBase].sort((a, b) => {
     const av = RES_SORT_ACCESSORS[resSortKey](a), bv = RES_SORT_ACCESSORS[resSortKey](b);
     const r = typeof av === 'string' ? av.localeCompare(bv, 'pt') : av - bv;
     return resSortDir === 'asc' ? r : -r;
@@ -310,9 +318,19 @@ export function Financeiro({ data, go }) {
 
       {/* tabela de reservas recentes */}
       <Card style={{ padding: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0 }}>Reservas no período <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· {comReceita.length} registos</span></h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0 }}>Reservas no período <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· {resBase.length} registos</span></h3>
           <Btn size="sm" variant="ghost" onClick={() => go('reservas')}>Gerir reservas</Btn>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <span style={{ fontSize: 12, color: C.inkSoft }}>Status:</span>
+          <button onClick={() => setResStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === 'todas' ? C.ocean : C.espuma, color: resStatusFilter === 'todas' ? '#fff' : C.inkSoft }}>Todas</button>
+          {['confirmado', 'reservado', 'pendente', 'bloqueio'].map(st => (
+            <button key={st} onClick={() => setResStatusFilter(st)}
+              style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === st ? STATUS[st].fg : C.espuma, color: resStatusFilter === st ? '#fff' : C.inkSoft }}>
+              {STATUS[st].label}
+            </button>
+          ))}
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -341,8 +359,11 @@ export function Financeiro({ data, go }) {
               ))}
             </tbody>
           </table>
-          {comReceita.length > 40 && (
-            <div style={{ padding: '12px 10px', fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>A mostrar 40 de {comReceita.length} registos. Use filtros de período para refinar.</div>
+          {resBase.length > 40 && (
+            <div style={{ padding: '12px 10px', fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>A mostrar 40 de {resBase.length} registos. Use filtros de período{resStatusFilter === 'todas' ? '' : ' ou de status'} para refinar.</div>
+          )}
+          {resBase.length === 0 && (
+            <div style={{ padding: '20px 10px', fontSize: 13.5, color: C.inkSoft, textAlign: 'center' }}>Nenhuma reserva com este status no período.</div>
           )}
         </div>
       </Card>
