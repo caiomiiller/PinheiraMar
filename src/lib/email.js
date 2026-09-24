@@ -13,6 +13,14 @@
 // Enquanto essas variáveis não estiverem definidas, o envio é ignorado
 // silenciosamente (só um aviso na consola) — o site continua a funcionar
 // normalmente, só sem o e-mail.
+//
+// IMPORTANTE: `buildParams` abaixo e a função `enviarEmailConfirmacao` em
+// api/mp-webhook.js têm de continuar a produzir exatamente as MESMAS
+// variáveis (mesmos nomes) — os dois enviam para o mesmo template do
+// EmailJS, um pelo navegador, outro pelo servidor (quando o pagamento é
+// confirmado pelo Mercado Pago). Ao mexer aqui, mexer lá também.
+
+import { money, fmtLong, nights } from './helpers';
 
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
@@ -29,7 +37,23 @@ function ensureInit() {
   initialized = true;
 }
 
-function buildParams(reserva, apt, settings) {
+// Junta "2 adultos, 1 criança" (ou só uma das partes, se a outra for 0) —
+// usado no template em vez de dois números soltos.
+function hospedesTxt(reserva) {
+  const adultos = Number(reserva.adultos) || 0;
+  const criancas = Number(reserva.criancas) || 0;
+  return [
+    adultos ? `${adultos} adulto${adultos > 1 ? 's' : ''}` : null,
+    criancas ? `${criancas} criança${criancas > 1 ? 's' : ''}` : null,
+  ].filter(Boolean).join(', ') || '—';
+}
+
+export function buildParams(reserva, apt, settings) {
+  // Saldo restante: usa o valor já efetivamente pago (valorPago, mantido
+  // pelo Admin — ver montarReserva em Reservations.jsx) quando existir;
+  // numa reserva ainda por confirmar pelo site, só há o sinal.
+  const pago = Number(reserva.valorPago ?? reserva.sinal ?? 0);
+  const restante = Math.round((Number(reserva.total || 0) - pago) * 100) / 100;
   return {
     // O template do EmailJS usa {{email}} como destinatário (campo "To
     // Email" do template) — mantém-se também `to_email` por precaução,
@@ -39,12 +63,16 @@ function buildParams(reserva, apt, settings) {
     to_name: reserva.hospede || reserva.nome || '',
     codigo_reserva: reserva.codigo,
     nome_propriedade: settings?.nome || '',
-    apartamento: apt?.nome || '',
-    check_in: reserva.checkIn,
-    check_out: reserva.checkOut,
-    total: reserva.total,
-    sinal: reserva.sinal,
+    cidade: settings?.cidade || '',
+    apartamento: [apt?.nome, apt?.vista].filter(Boolean).join(' · '),
+    check_in_fmt: fmtLong(reserva.checkIn),
+    check_out_fmt: fmtLong(reserva.checkOut),
+    noites: nights(reserva.checkIn, reserva.checkOut),
+    hospedes_txt: hospedesTxt(reserva),
+    total_fmt: money(reserva.total),
+    sinal_fmt: money(reserva.sinal),
     sinal_pct: settings?.sinalPct,
+    restante_fmt: money(restante),
     endereco: settings?.endereco || '',
     whatsapp: settings?.telefone || '',
   };

@@ -27,7 +27,19 @@
 // "reservas" para uma tabela própria no Supabase) se o volume crescer.
 
 import { createClient } from '@supabase/supabase-js';
-import { overlaps, uid } from '../src/lib/helpers.js';
+import { overlaps, uid, money, fmtLong, nights } from '../src/lib/helpers.js';
+
+// Junta "2 adultos, 1 criança" (ou só uma das partes, se a outra for 0) —
+// mesma lógica de src/lib/email.js (hospedesTxt), duplicada de propósito
+// (ver nota no topo de enviarEmailConfirmacao).
+function hospedesTxt(reserva) {
+  const adultos = Number(reserva.adultos) || 0;
+  const criancas = Number(reserva.criancas) || 0;
+  return [
+    adultos ? `${adultos} adulto${adultos > 1 ? 's' : ''}` : null,
+    criancas ? `${criancas} criança${criancas > 1 ? 's' : ''}` : null,
+  ].filter(Boolean).join(', ') || '—';
+}
 
 // Envia o e-mail de confirmação da reserva pelo EmailJS. Aqui, no servidor,
 // não se pode usar o SDK do navegador (src/lib/email.js) — usa-se a API REST,
@@ -47,8 +59,16 @@ async function enviarEmailConfirmacao(reserva, apt, residencial) {
   }
   if (!reserva?.email) return false;
   try {
-    // Mesmas variáveis que o template já usa no envio pelo navegador
-    // (buildParams em src/lib/email.js) — o template é o mesmo.
+    // Mesmas variáveis (mesmos nomes) que buildParams() usa no envio pelo
+    // navegador (src/lib/email.js) — o template do EmailJS é o mesmo dos
+    // dois lados. CORRIGIDO em 2026-09-24: faltava `email` (o template usa
+    // {{email}} como destinatário, não {{to_email}} — sem isto a EmailJS
+    // respondia sempre 422 "The recipients address is empty", e nenhuma
+    // reserva paga pelo Mercado Pago chegava a enviar o e-mail de
+    // confirmação). Também enriquecido com os mesmos campos formatados
+    // (datas por extenso, noites, hóspedes, valores em R$, saldo restante).
+    const pago = Number(reserva.valorPago ?? reserva.sinal ?? 0);
+    const restante = Math.round((Number(reserva.total || 0) - pago) * 100) / 100;
     const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -58,16 +78,21 @@ async function enviarEmailConfirmacao(reserva, apt, residencial) {
         user_id: publicKey,
         accessToken: privateKey,
         template_params: {
+          email: reserva.email,
           to_email: reserva.email,
           to_name: reserva.hospede || reserva.nome || '',
           codigo_reserva: reserva.codigo,
           nome_propriedade: residencial?.nome || '',
-          apartamento: apt?.nome || '',
-          check_in: reserva.checkIn,
-          check_out: reserva.checkOut,
-          total: reserva.total,
-          sinal: reserva.sinal,
+          cidade: residencial?.cidade || '',
+          apartamento: [apt?.nome, apt?.vista].filter(Boolean).join(' · '),
+          check_in_fmt: fmtLong(reserva.checkIn),
+          check_out_fmt: fmtLong(reserva.checkOut),
+          noites: nights(reserva.checkIn, reserva.checkOut),
+          hospedes_txt: hospedesTxt(reserva),
+          total_fmt: money(reserva.total),
+          sinal_fmt: money(reserva.sinal),
           sinal_pct: residencial?.sinalPct,
+          restante_fmt: money(restante),
           endereco: residencial?.endereco || '',
           whatsapp: residencial?.telefone || '',
         },
