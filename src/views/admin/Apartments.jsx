@@ -74,6 +74,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
   const [titulo, setTitulo] = useState(i.tipo || i.nome || '');
   const [hospedes, setHospedes] = useState(i.capacidade || 4);
   const [criancas, setCriancas] = useState(i.criancas || 0);
+  const [quartos, setQuartos] = useState(i.quartos || 1);
   const [tamanho, setTamanho] = useState(i.tamanho || '');
   const [piso, setPiso] = useState(i.piso || 'Térreo');
   const [vista, setVista] = useState(i.vista || 'Frente Mar');
@@ -161,6 +162,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
               piso, vista, ativo,
               capacidade: Number(hospedes),
               criancas: Number(criancas),
+              quartos: Number(quartos) || 1,
               tamanho: tamanho ? String(tamanho) : '',
               camas,
               amenidades: [...amenidades],
@@ -225,7 +227,15 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           </div>
         </div>
 
-        {/* ── 2. Camas ── */}
+        {/* ── 2. Quartos ── */}
+        <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
+          <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Quartos</div></div>
+          <div>
+            <SpinField label="Número de quartos" value={quartos} onChange={setQuartos} min={1} />
+          </div>
+        </div>
+
+        {/* ── 3. Camas ── */}
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Camas</div></div>
           <div style={{ display: 'grid', gap: 10 }}>
@@ -255,7 +265,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           </div>
         </div>
 
-        {/* ── 3. Amenidades ── */}
+        {/* ── 4. Amenidades ── */}
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Amenidades</div></div>
           <div>
@@ -275,7 +285,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           </div>
         </div>
 
-        {/* ── 4. Fotos ── */}
+        {/* ── 5. Fotos ── */}
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Fotos</div></div>
           <div>
@@ -321,7 +331,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           </div>
         </div>
 
-        {/* ── 5. Descrição ── */}
+        {/* ── 6. Descrição ── */}
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Descrição</div>
@@ -335,7 +345,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           </div>
         </div>
 
-        {/* ── 6. Endereço ── */}
+        {/* ── 7. Endereço ── */}
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ paddingTop: 2 }}><div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Endereço</div></div>
           <div style={{ display: 'grid', gap: 12 }}>
@@ -362,7 +372,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           </div>
         </div>
 
-        {/* ── 7. Preço ── */}
+        {/* ── 8. Preço ── */}
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0 8px' }}>
           <div style={{ paddingTop: 2 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Preço</div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Car, Users,
   AlertCircle, CalendarDays, Check, Info, Waves, Star, MapPin, Home,
-  MessageCircle, X, Share2 } from 'lucide-react';
+  MessageCircle, X, Share2, DoorOpen } from 'lucide-react';
 import { C, F, WHATSAPP_URL, GOOGLE_RATING } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, addDays, fmtShort, fmtLong, WD,
   isAvailable, stayBreakdown, nightlyRate, seasonForDate } from '../../lib/helpers';
@@ -320,6 +320,11 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
                   <Users size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{apt.capacidade} hóspedes</div><div style={{ fontSize: 12.5, color: '#717171' }}>capacidade máxima</div></div>
                 </div>
+                {apt.quartos > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
+                    <DoorOpen size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{apt.quartos} {apt.quartos === 1 ? 'quarto' : 'quartos'}</div><div style={{ fontSize: 12.5, color: '#717171' }}>quartos</div></div>
+                  </div>
+                )}
                 {apt.tamanho && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
                     <Home size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{apt.tamanho} m²</div><div style={{ fontSize: 12.5, color: '#717171' }}>área do apartamento</div></div>
