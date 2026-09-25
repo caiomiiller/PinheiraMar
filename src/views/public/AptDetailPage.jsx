@@ -387,9 +387,16 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
 
             <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 18, padding: 24, boxShadow: '0 8px 28px rgba(0,0,0,.12)' }}>
               <div style={{ marginBottom: 18 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#717171' }}>a partir de </span>
-                <span style={{ fontSize: 22, fontWeight: 800 }}>{money(apt.preco)}</span>
-                <span style={{ fontSize: 14, color: '#717171' }}> / noite</span>
+                {/* "a partir de" só faz sentido sem datas selecionadas — com bd calculado
+                    (tarifário sazonal aplicado), o valor real já aparece no resumo abaixo,
+                    então evitamos mostrar aqui um valor-base que pode não bater. */}
+                {!bd && (
+                  <>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#717171' }}>a partir de </span>
+                    <span style={{ fontSize: 22, fontWeight: 800 }}>{money(apt.preco)}</span>
+                    <span style={{ fontSize: 14, color: '#717171' }}> / noite</span>
+                  </>
+                )}
                 <a href={GOOGLE_RATING.url} target="_blank" rel="noreferrer"
                   style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontSize: 13, color: 'inherit', textDecoration: 'none' }}
                   title="Ver avaliações no Google">

@@ -456,7 +456,11 @@ export function PublicSite({ data, onCreate }) {
                 centrado no telemóvel — trocados por CSS na media query mobile em App.jsx */}
             {/* assinatura horizontal do Grupo PinheiraMar (2b, cabeçalho do site) */}
             <span className="pm-pubsite-brand-desktop" style={{ display: 'block' }}><GroupLogo variant="horizontal" size={24} /></span>
-            <span className="pm-pubsite-brand-mobile" style={{ display: 'none' }}><GroupLogo variant="horizontal" size={19} /></span>
+            {/* no telemóvel, só o galo (marca do grupo) — mais compacto que a assinatura
+                horizontal completa, que fica apertada ao lado do menu de categorias */}
+            <span className="pm-pubsite-brand-mobile" style={{ display: 'none' }}>
+              <img src="/brand/galo-navy.png" alt="Grupo PinheiraMar" style={{ height: 34, width: 'auto', display: 'block' }} />
+            </span>
           </a>
 
           {/* centred search (desktop) */}
