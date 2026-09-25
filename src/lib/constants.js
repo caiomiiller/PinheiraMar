@@ -1,15 +1,20 @@
 // C é um objecto mutável partilhado — os componentes fazem `import { C } from './constants'`
 // e lêem propriedades em cada render, por isso para trocar de tema por imóvel basta
 // mutar as chaves de C (ver applyTheme) em vez de reatribuir a exportação.
+// Paleta do Grupo PinheiraMar (ver src/components/Brand.jsx): marinho para
+// títulos e ações, noite para fundos escuros, pedra para texto de apoio.
+// As chaves antigas (ocean, coral…) mantêm-se para não partir componentes;
+// "coral" deixou de ser laranja — as ações do grupo são em marinho.
 export const C = {
-  ocean: '#0E4A58', oceanDeep: '#0A3742', brisa: '#2E7E8C',
-  espuma: '#EEF4F3', areia: '#E7D7B6', areiaSoft: '#F4ECD9',
-  coral: '#E8744F', coralDeep: '#D65F3C',
-  ink: '#15302E', inkSoft: '#506764', line: '#D9E3E1', white: '#FFFFFF',
+    ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
+    espuma: '#F2F1F5', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
+    coral: '#1B1C46', coralDeep: '#14152F',
+    ink: '#1B1C46', inkSoft: '#6F6B64', line: '#E2E0DB', white: '#FFFFFF',
 };
 export const F = {
-  disp: "Georgia, 'Times New Roman', serif",
-  sans: "'Inter','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
+  // uma só família em todo o grupo: Montserrat (carregada em index.html)
+  disp: "'Montserrat','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
+  sans: "'Montserrat','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
 };
 
 // WhatsApp é o canal principal de contacto do site (substitui e-mail/telefone
@@ -31,17 +36,19 @@ export const GOOGLE_RATING = {
    original (tons de mar/areia). "novo imóvel" usa tons de bairro/verde,
    para não competir visualmente com a marca da praia. */
 export const THEMES = {
+  // os dois residenciais partilham a paleta do grupo (a cor própria de cada
+  // um — vermelho / azul — entra só nas suas peças e no seu segmento da faixa)
   pinheiramar: {
-    ocean: '#0E4A58', oceanDeep: '#0A3742', brisa: '#2E7E8C',
-    espuma: '#EEF4F3', areia: '#E7D7B6', areiaSoft: '#F4ECD9',
-    coral: '#E8744F', coralDeep: '#D65F3C',
-    ink: '#15302E', inkSoft: '#506764', line: '#D9E3E1', white: '#FFFFFF',
+    ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
+    espuma: '#F2F1F5', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
+    coral: '#1B1C46', coralDeep: '#14152F',
+    ink: '#1B1C46', inkSoft: '#6F6B64', line: '#E2E0DB', white: '#FFFFFF',
   },
   novoimovel: {
-    ocean: '#3B5B3B', oceanDeep: '#28402A', brisa: '#6E8F5C',
-    espuma: '#F1F3EC', areia: '#E3DAC2', areiaSoft: '#F6F1E4',
-    coral: '#C97A3D', coralDeep: '#A9612C',
-    ink: '#22271E', inkSoft: '#5C6354', line: '#DDE1D5', white: '#FFFFFF',
+    ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
+    espuma: '#F2F1F5', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
+    coral: '#1B1C46', coralDeep: '#14152F',
+    ink: '#1B1C46', inkSoft: '#6F6B64', line: '#E2E0DB', white: '#FFFFFF',
   },
 };
 

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Car, Users,
   AlertCircle, CalendarDays, Check, Info, Waves, Star, MapPin, Home,
-  MessageCircle, X, Share2, DoorOpen } from 'lucide-react';
+  MessageCircle, X, Share2, DoorOpen, Utensils, SquareParking, Flame, Snowflake,
+  Sun, Clock, VolumeX, PawPrint, CigaretteOff, ShoppingBag } from 'lucide-react';
+import { Faixa, BRAND } from '../../components/Brand';
 import { C, F, WHATSAPP_URL, GOOGLE_RATING } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, addDays, fmtShort, fmtLong, WD,
   isAvailable, stayBreakdown, nightlyRate, seasonForDate } from '../../lib/helpers';
@@ -9,14 +11,15 @@ import { Btn, Badge, PhotoTile, Field } from '../../components/ui';
 import { AvailabilityCalendar } from '../../components/AvailabilityCalendar';
 
 export const HIGHLIGHTS = [
-  { match: /wi.fi|internet/i,       icon: '📶', label: 'Wi-Fi grátis' },
-  { match: /estacionamento|garagem/i, icon: '🚗', label: 'Estacionamento' },
-  { match: /vista.*mar|mar.*vista|frente.*mar/i, icon: '🌊', label: 'Vista para o mar' },
-  { match: /churrasco/i,            icon: '🔥', label: 'Churrasqueira' },
-  { match: /ar.condicionado/i,      icon: '❄️',  label: 'Ar condicionado' },
-  { match: /cozinha/i,              icon: '🍳', label: 'Cozinha completa' },
-  { match: /piscina/i,              icon: '🏊',  label: 'Piscina' },
-  { match: /varanda/i,              icon: '🌅', label: 'Varanda' },
+  // ícones de linha fina (Lucide, traço 1,5, marinho) — regra da marca, em vez de emojis
+  { match: /wi.fi|internet/i,       Icon: Wifi, label: 'Wi-Fi grátis' },
+  { match: /estacionamento|garagem/i, Icon: SquareParking, label: 'Estacionamento' },
+  { match: /vista.*mar|mar.*vista|frente.*mar/i, Icon: Waves, label: 'Vista para o mar' },
+  { match: /churrasco/i,            Icon: Flame, label: 'Churrasqueira' },
+  { match: /ar.condicionado/i,      Icon: Snowflake, label: 'Ar condicionado' },
+  { match: /cozinha/i,              Icon: Utensils, label: 'Cozinha equipada' },
+  { match: /piscina/i,              Icon: Waves, label: 'Piscina' },
+  { match: /varanda/i,              Icon: Sun, label: 'Varanda' },
 ];
 
 // botões circulares flutuantes sobre a foto (voltar/partilhar/guardar) — só no telemóvel
@@ -30,6 +33,16 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
   const [guestOpen, setGuestOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  // telemóvel: o quadro de reserva abre como folha de ecrã inteiro a partir
+  // da barra fixa do rodapé, em vez de ficar no fim de uma página longa
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const openSheet = (withCal) => { if (withCal) setCalOpen(true); setSheetOpen(true); };
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [sheetOpen]);
   // reserva conjunta
   const [useApt2, setUseApt2] = useState(false);
   const [apt2Id, setApt2Id] = useState('');
@@ -103,16 +116,21 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
     (apt.vista === 'Frente Mar' && h.match.test('frente mar'))
   );
 
+  const canBookNow = !!(localNights && isAvail && meetsMin && (!useApt2 || (apt2Id && isAvail2)) && comboAtendeReq);
+  const nQuartos = apt.quartos || 1;
+  const nCamas = camas.reduce((n, c) => n + (Number(c.qtd) || 0), 0) || 1;
+
   const handleBook = () => {
     if (!localCi || !localCo || localNights < 1 || !meetsMin || !comboAtendeReq) return;
+    setSheetOpen(false);
     setCi(localCi); setCo(localCo); setHosp(useApt2 ? g1 + g2 : localHosp);
     onBook(apt, apt2 || null, useApt2 ? g1 : localHosp, useApt2 ? g2 : null);
   };
 
   const PolicyItem = ({ icon, title, text }) => (
     <div style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: `1px solid #f0f0f0` }}>
-      <span style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{icon}</span>
-      <div><div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{title}</div><div style={{ fontSize: 13.5, color: '#555', lineHeight: 1.55 }}>{text}</div></div>
+      <span style={{ flexShrink: 0, marginTop: 1, display: 'grid', placeItems: 'center' }}>{React.createElement(icon, { size: 21, strokeWidth: 1.5, color: BRAND.marinho })}</span>
+      <div><div style={{ fontWeight: 500, fontSize: 15, marginBottom: 2 }}>{title}</div><div style={{ fontSize: 14.5, color: '#4A4843', lineHeight: 1.55 }}>{text}</div></div>
     </div>
   );
 
@@ -140,7 +158,11 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
 
         {/* title + badges */}
         <div className="pm-detail-title-block" style={{ marginBottom: 18 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-.01em' }}>{apt.tipo || apt.nome}</h1>
+          <h1 style={{ fontSize: 30, fontWeight: 300, margin: '0 0 8px', letterSpacing: 0, lineHeight: 1.2 }}>{apt.tipo || apt.nome}</h1>
+          {/* resumo rápido, como no Airbnb: o que o cliente quer saber primeiro */}
+          <div className="pm-detail-facts" style={{ fontSize: 15.5, color: '#333', margin: '0 0 8px' }}>
+            Até {apt.capacidade} pessoas · {nQuartos} {nQuartos === 1 ? 'quarto' : 'quartos'} · {nCamas} {nCamas === 1 ? 'cama' : 'camas'}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 13.5 }}>
             <a href={GOOGLE_RATING.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
               style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'inherit', textDecoration: 'none' }}
@@ -152,7 +174,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             <span style={{ color: '#717171' }}>{apt.piso}</span>
             <span style={{ color: '#717171' }}>·</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} color="#717171" /> {apt.cidade || data.settings.cidade}</span>
-            {apt.vista === 'Frente Mar' && <span style={{ background: '#E1F0EC', color: '#1C7A5B', borderRadius: 999, padding: '3px 10px', fontWeight: 700, fontSize: 12 }}>🌊 Frente Mar</span>}
+            {apt.vista === 'Frente Mar' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: `1px solid ${BRAND.marinho}`, color: BRAND.marinho, borderRadius: 999, padding: '3px 10px', fontWeight: 500, fontSize: 12.5 }}><Waves size={14} strokeWidth={1.5} /> Frente Mar</span>}
           </div>
         </div>
 
@@ -218,11 +240,12 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             {/* highlights */}
             {highlights.length > 0 && (
               <section style={{ marginBottom: 32 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 16px' }}>Pontos fortes do apartamento</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 400, margin: '0 0 8px' }}>Pontos fortes do apartamento</h2>
+                <Faixa height={2} width={44} style={{ marginBottom: 16 }} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
                   {highlights.map((h, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: '#f8f8f8', borderRadius: 12 }}>
-                      <span style={{ fontSize: 22 }}>{h.icon}</span>
+                      <h.Icon size={22} strokeWidth={1.5} color={BRAND.marinho} />
                       <span style={{ fontSize: 14, fontWeight: 600 }}>{h.label}</span>
                     </div>
                   ))}
@@ -233,25 +256,27 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             {/* description */}
             {apt.descricao && (
               <section style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #eee' }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 12px' }}>Sobre o apartamento</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 400, margin: '0 0 8px' }}>Sobre o apartamento</h2>
+                <Faixa height={2} width={44} style={{ marginBottom: 12 }} />
                 <div style={{ fontSize: 15, lineHeight: 1.7, color: '#333', whiteSpace: 'pre-wrap' }}>{apt.descricao}</div>
               </section>
             )}
 
             {/* sleeping arrangements */}
             <section style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #eee' }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 16px' }}>Acomodações</h2>
+              <h2 style={{ fontSize: 22, fontWeight: 400, margin: '0 0 8px' }}>Acomodações</h2>
+              <Faixa height={2} width={44} style={{ marginBottom: 16 }} />
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 {camas.map((c, i) => (
                   <div key={i} style={{ padding: '16px 20px', background: '#f8f8f8', borderRadius: 14, minWidth: 140 }}>
-                    <div style={{ fontSize: 26, marginBottom: 8 }}>🛏️</div>
+                    <BedDouble size={26} strokeWidth={1.5} color={BRAND.marinho} style={{ marginBottom: 8 }} />
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{c.qtd}× {c.tipo}</div>
                     <div style={{ fontSize: 12.5, color: '#717171', marginTop: 2 }}>cama {c.tipo.toLowerCase()}</div>
                   </div>
                 ))}
                 {camas.length === 0 && (
                   <div style={{ padding: '16px 20px', background: '#f8f8f8', borderRadius: 14 }}>
-                    <div style={{ fontSize: 26, marginBottom: 8 }}>🛏️</div>
+                    <BedDouble size={26} strokeWidth={1.5} color={BRAND.marinho} style={{ marginBottom: 8 }} />
                     <div style={{ fontWeight: 700, fontSize: 14 }}>1× Casal</div>
                   </div>
                 )}
@@ -261,7 +286,8 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
             {/* amenities */}
             {amenidades.length > 0 && (
               <section style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #eee' }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 16px' }}>Comodidades</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 400, margin: '0 0 8px' }}>Comodidades</h2>
+                <Faixa height={2} width={44} style={{ marginBottom: 16 }} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px 24px' }}>
                   {amenidades.map((a, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#333' }}>
@@ -274,14 +300,15 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
 
             {/* capacity */}
             <section style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #eee' }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 14px' }}>Capacidade</h2>
+              <h2 style={{ fontSize: 22, fontWeight: 400, margin: '0 0 8px' }}>Capacidade</h2>
+              <Faixa height={2} width={44} style={{ marginBottom: 14 }} />
               <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
                   <Users size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{apt.capacidade} hóspedes</div><div style={{ fontSize: 12.5, color: '#717171' }}>capacidade máxima</div></div>
                 </div>
                 {(() => { const nQuartos = apt.quartos || 1; return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12 }}>
-                    <DoorOpen size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{nQuartos} {nQuartos === 1 ? 'quarto' : 'quartos'}</div><div style={{ fontSize: 12.5, color: '#717171' }}>quartos</div></div>
+                    <DoorOpen size={22} color={C.ocean} /><div><div style={{ fontWeight: 700 }}>{nQuartos} {nQuartos === 1 ? 'quarto' : 'quartos'}</div><div style={{ fontSize: 12.5, color: '#717171' }}>para dormir</div></div>
                   </div>
                 ); })()}
                 {apt.tamanho && (
@@ -294,19 +321,21 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
 
             {/* house rules */}
             <section style={{ marginBottom: 32, paddingBottom: 32, borderBottom: '1px solid #eee' }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px' }}>Regras do apartamento</h2>
-              <PolicyItem icon="🕐" title="Check-in" text={`A partir das ${data.settings.checkInHora || '13:00'}`} />
-              <PolicyItem icon="🚪" title="Check-out" text={`Até às ${data.settings.checkOutHora || '10:00'}`} />
-              <PolicyItem icon="🔇" title="Lei do silêncio" text="Das 22h às 7h, excepto Réveillon e Carnaval." />
-              <PolicyItem icon="🐾" title="Animais de estimação" text="Permitidos mediante taxa única de R$ 200,00 por pet (até 10 kg, máx. 2)." />
-              <PolicyItem icon="🚗" title="Estacionamento" text="Vaga de garagem mediante taxa única obrigatória. Vaga adicional: R$ 50,00 (sujeito a disponibilidade)." />
-              <PolicyItem icon="🚭" title="Fumar" text="Proibido em todas as áreas internas e comuns." />
+              <h2 style={{ fontSize: 22, fontWeight: 400, margin: '0 0 8px' }}>Regras do apartamento</h2>
+              <Faixa height={2} width={44} style={{ marginBottom: 12 }} />
+              <PolicyItem icon={Clock} title="Check-in" text={`A partir das ${data.settings.checkInHora || '13:00'}`} />
+              <PolicyItem icon={DoorOpen} title="Check-out" text={`Até às ${data.settings.checkOutHora || '10:00'}`} />
+              <PolicyItem icon={VolumeX} title="Lei do silêncio" text="Das 22h às 7h, excepto Réveillon e Carnaval." />
+              <PolicyItem icon={PawPrint} title="Animais de estimação" text="Permitidos mediante taxa única de R$ 200,00 por pet (até 10 kg, máx. 2)." />
+              <PolicyItem icon={SquareParking} title="Estacionamento" text="Vaga de garagem mediante taxa única obrigatória. Vaga adicional: R$ 50,00 (sujeito a disponibilidade)." />
+              <PolicyItem icon={CigaretteOff} title="Fumar" text="Proibido em todas as áreas internas e comuns." />
             </section>
 
             {/* location map */}
             {apt.mostrarMapa !== false && (
               <section style={{ marginBottom: 32 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 14px' }}>Localização</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 400, margin: '0 0 8px' }}>Localização</h2>
+                <Faixa height={2} width={44} style={{ marginBottom: 14 }} />
                 <div style={{ borderRadius: 14, overflow: 'hidden', height: 260 }}>
                   <iframe title="mapa"
                     src={`https://maps.google.com/maps?q=${encodeURIComponent((apt.endereco || data.settings.endereco || '') + ', ' + (apt.cidade || data.settings.cidade || 'Praia da Pinheira, SC'))}&output=embed&zoom=15`}
@@ -314,11 +343,11 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
                     loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
                 </div>
                 <p style={{ fontSize: 13.5, color: '#717171', marginTop: 10 }}>
-                  📍 {apt.endereco || data.settings.endereco} · {apt.cidade || data.settings.cidade}
+                  <MapPin size={14} strokeWidth={1.5} style={{ verticalAlign: '-2px' }} /> {apt.endereco || data.settings.endereco} · {apt.cidade || data.settings.cidade}
                 </p>
                 {apt.residencialId === 'pinheiramar' && (
                   <p style={{ fontSize: 13.5, color: '#717171', marginTop: 6 }}>
-                    🛒 A poucos passos do comércio local, Supermercados, Bares e Restaurantes.
+                    <ShoppingBag size={14} strokeWidth={1.5} style={{ verticalAlign: '-2px' }} /> A poucos passos do comércio local: supermercados, bares e restaurantes.
                   </p>
                 )}
               </section>
@@ -327,15 +356,24 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
           </div>
 
           {/* RIGHT column — booking widget (sticky no desktop, em fluxo normal no telemóvel) */}
-          <div className="pm-detail-side" id="booking-widget" style={{ position: 'sticky', top: 60 }}>
+          <div className="pm-detail-side" id="booking-widget" data-sheet={sheetOpen ? 'open' : 'closed'} style={{ position: 'sticky', top: 60 }}>
+
+            {/* cabeçalho da folha — só aparece no telemóvel (ver App.jsx) */}
+            <div className="pm-detail-sheethead" style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+              <div style={{ fontSize: 19, fontWeight: 800 }}>Datas e reserva</div>
+              <button onClick={() => setSheetOpen(false)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 16px', border: '1px solid #ddd', borderRadius: 999, background: '#fff', fontSize: 15, fontWeight: 700, color: '#222', cursor: 'pointer', fontFamily: F.sans }}>
+                <X size={17} /> Fechar
+              </button>
+            </div>
 
             {/* pesquisa REAL do cliente (a que veio da página principal),
                 independente da capacidade deste apartamento — se ele pesquisou
                 acima do que o apartamento comporta, pode limpar aqui mesmo,
                 sem ter de voltar à página principal. A pedido do Caio. */}
             {!!(ci || co || hosp) && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10, padding: '8px 8px 8px 14px', border: '1px solid #e0e0e0', borderRadius: 999, background: '#fff', fontSize: 13, fontWeight: 600, color: '#222' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10, padding: '8px 8px 8px 14px', border: '1px solid #e0e0e0', borderRadius: 16, background: '#fff', fontSize: 13.5, fontWeight: 600, color: '#222' }}>
+                <span style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '2px 8px', minWidth: 0 }}>
                   <CalendarDays size={14} color="#717171" style={{ flexShrink: 0 }} />
                   {ci && co ? <>{fmtShort(ci)} → {fmtShort(co)}</> : <span style={{ color: '#717171' }}>Sem datas</span>}
                   {hosp > 0 && <> · {hosp} hóspede{hosp > 1 ? 's' : ''}</>}
@@ -534,25 +572,49 @@ export function AptDetailPage({ apt, data, ci, co, hosp, valid, setCi, setCo, se
         </div>
       </div>
 
-      {/* barra fixa de preço + reservar — só no telemóvel (ver CSS); leva ao widget de reserva acima */}
-      <div className="pm-detail-stickybar" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 70, background: '#fff', borderTop: '1px solid #e8e8e8', padding: '12px 20px', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 -6px 20px rgba(0,0,0,.08)' }}>
-        <div>
-          {localNights > 0 && isAvail && bd ? (
+      {/* barra fixa do rodapé — só no telemóvel (ver CSS). É o botão principal
+          da página: sem datas pede para escolher; com datas mostra o total e
+          reserva direto; nos outros casos abre a folha com o quadro de reserva. */}
+      <div className="pm-detail-stickybar" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 70, background: '#fff', borderTop: '1px solid #e8e8e8', padding: '12px 16px', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', alignItems: 'center', justifyContent: 'space-between', gap: 12, boxShadow: '0 -6px 20px rgba(0,0,0,.08)' }}>
+        {(() => {
+          const btn = (label, onClick) => (
+            <button onClick={onClick}
+              style={{ minHeight: 52, padding: '0 22px', background: C.coral, color: '#fff', border: 'none', borderRadius: 14, fontWeight: 800, fontSize: 16.5, cursor: 'pointer', fontFamily: F.sans, flexShrink: 0 }}>
+              {label}
+            </button>
+          );
+          if (canBookNow && bd) return (
             <>
-              <div style={{ fontSize: 17, fontWeight: 800 }}>{money(totalComExtras)}</div>
-              <div style={{ fontSize: 11.5, color: '#717171' }}>{fmtShort(localCi)} – {fmtShort(localCo)} · {localNights} noite{localNights > 1 ? 's' : ''}</div>
+              <button onClick={() => openSheet(false)} style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: F.sans, color: '#222', minWidth: 0 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>{fmtShort(localCi)} – {fmtShort(localCo)} · {localNights} noite{localNights > 1 ? 's' : ''}</div>
+                <div style={{ fontSize: 19, fontWeight: 800 }}>{money(totalComExtras)} <span style={{ fontSize: 13.5, fontWeight: 500, color: '#555' }}>total</span></div>
+                <div style={{ fontSize: 13, color: '#555', textDecoration: 'underline' }}>Ver detalhes do preço</div>
+              </button>
+              {btn('Reservar', handleBook)}
             </>
-          ) : (
+          );
+          if (localNights > 0 && !isAvail) return (
             <>
-              <div style={{ fontSize: 17, fontWeight: 800 }}><span style={{ fontSize: 12.5, fontWeight: 500, color: '#717171' }}>a partir de</span> {money(apt.preco)} <span style={{ fontSize: 12.5, fontWeight: 500, color: '#717171' }}>/noite</span></div>
-              <div style={{ fontSize: 11.5, color: '#717171' }}>Selecione as datas</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#991B1B' }}>Ocupado nestas datas</div>
+              {btn('Mudar datas', () => openSheet(true))}
             </>
-          )}
-        </div>
-        <button onClick={() => document.getElementById('booking-widget')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-          style={{ padding: '13px 26px', background: C.coral, color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 14.5, cursor: 'pointer', fontFamily: F.sans, flexShrink: 0 }}>
-          Reservar
-        </button>
+          );
+          if (localNights > 0) return (
+            <>
+              <div style={{ fontSize: 14.5, color: '#333', lineHeight: 1.35 }}>Falta um detalhe para reservar</div>
+              {btn('Continuar', () => openSheet(false))}
+            </>
+          );
+          return (
+            <>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 15.5, fontWeight: 700, color: '#222' }}>Veja o preço total</div>
+                <div style={{ fontSize: 13.5, color: '#555' }}>desde {money(apt.preco)}/noite</div>
+              </div>
+              {btn('Escolher datas', () => openSheet(true))}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

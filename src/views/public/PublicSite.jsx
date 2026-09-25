@@ -11,12 +11,18 @@ import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
 import { DestinoSection } from './DestinoSection';
 import { AvailabilityCalendar } from '../../components/AvailabilityCalendar';
+import { GroupLogo, Faixa, FAIXA_INDEX, BRAND } from '../../components/Brand';
 import { BookingModal } from '../../components/BookingModal';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 
 // Logo vertical de cada residencial, usada no cabeçalho de cada grupo de
 // apartamentos (substitui o ícone + nome em texto que havia antes).
-const RESIDENCIAL_LOGOS = { pinheiramar: '/logo-vertical-pinheiramar.png', novoimovel: '/logo-vertical-caminho.png' };
+// assinatura horizontal de cada residencial (símbolo + nome + "Residencial"),
+// versão positiva do designer, sem o endosso do grupo: no site o grupo já
+// assina o cabeçalho e o rodapé, e o endosso em tamanho de lista não se lia.
+// Larguras na mesma escala, para o nome dos dois ter a mesma altura.
+const RESIDENCIAL_LOGOS = { pinheiramar: '/brand/pinheiramar-horizontal.png', novoimovel: '/brand/caminho-horizontal.png' };
+const RESIDENCIAL_LOGO_W = { pinheiramar: 200, novoimovel: 252 };
 
 // Nome do residencial escrito por extenso ao lado da logo, no mesmo espírito
 // tipográfico dela (serifada, maiúsculas, mesmas cores) — a logo sozinha, em
@@ -26,13 +32,13 @@ const RESIDENCIAL_LOGOS = { pinheiramar: '/logo-vertical-pinheiramar.png', novoi
 // lettering e cada uma tem o seu acento em "Mar" — vermelho no PinheiraMar,
 // azul-petróleo no Caminho do Mar.
 const RESIDENCIAL_BRAND_TEXT = {
-  pinheiramar: [{ t: 'Pinheira', c: '#0B1B42' }, { t: 'Mar', c: '#D80000' }],
-  novoimovel: [{ t: 'Caminho do ', c: '#0B1B42' }, { t: 'Mar', c: '#287898' }],
+  pinheiramar: [{ t: 'Pinheira', c: '#1B1C46' }, { t: 'Mar', c: '#D1301B' }],
+  novoimovel: [{ t: 'Caminho do ', c: '#1B1C46' }, { t: 'Mar', c: '#2D7F9D' }],
 };
 
 // Só o símbolo da marca de cada residencial — a logo completa não cabe num
 // botão da barra de filtros, que trabalha com ícones de ~20px.
-const RESIDENCIAL_ICONS = { pinheiramar: '/logo-icon-pinheiramar.png', novoimovel: '/logo-icon-caminho.png' };
+const RESIDENCIAL_ICONS = { pinheiramar: '/brand/pinheiramar-simbolo.png', novoimovel: '/brand/caminho-simbolo.png' };
 
 // Nome curto (sem o prefixo "Residencial"), montado das mesmas partes que o
 // cabeçalho de cada grupo usa — assim a barra e o cabeçalho nunca divergem.
@@ -213,11 +219,12 @@ export function PublicSite({ data, onCreate }) {
   }, []);
 
   /* ── tokens ── */
-  const BLACK  = '#0D0D0D';
-  const GREY   = '#6B6B6B';
-  const LIGHT  = '#F5F4F0';
+  // paleta do Grupo PinheiraMar: marinho (texto e ações), pedra (apoio)
+  const BLACK  = BRAND.marinho;
+  const GREY   = BRAND.pedra;
+  const LIGHT  = '#F6F4F0';
   const BORDER = '#E2E0DB';
-  const ACCENT = '#C8A96E'; // dourado — marca partilhada dos dois residenciais
+  const ACCENT = BRAND.marinho;
   const WHITE  = '#FFFFFF';
 
   /* ── search pill segments ── */
@@ -227,33 +234,37 @@ export function PublicSite({ data, onCreate }) {
       {children}
     </div>
   );
-  const segInput = { border: 'none', outline: 'none', background: 'transparent', fontFamily: F.sans, fontSize: 14.5, color: BLACK, width: '100%' };
+  const segInput = { border: 'none', outline: 'none', background: 'transparent', fontFamily: F.sans, fontSize: 14, color: BLACK, width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
 
   /* ── cartão de data grande (busca mobile em ecrã cheio) — abre o calendário de disponibilidade visual ── */
-  const DateCard = ({ label, value, onClick, compact }) => {
+  const DateCard = ({ label, value, onClick, compact, placeholder }) => {
     const parts = bigDateParts(value);
     return (
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{label}</div>
-        <button onClick={onClick} style={{ width: '100%', textAlign: 'left', position: 'relative', border: `1px solid ${BORDER}`, borderRadius: 14, padding: compact ? '12px' : '14px 16px', background: WHITE, cursor: 'pointer', fontFamily: F.sans }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* rótulo legível (sem maiúsculas miúdas) — público 50+ */}
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#333', marginBottom: 8 }}>{label}</div>
+        <button onClick={onClick} style={{ width: '100%', minHeight: 60, textAlign: 'left', position: 'relative', border: `1.5px solid ${value ? BLACK : '#C9C6BF'}`, borderRadius: 14, padding: compact ? '12px' : '14px 16px', background: WHITE, cursor: 'pointer', fontFamily: F.sans }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
             {parts ? (
               <div style={{ display: 'flex', alignItems: 'baseline', gap: compact ? 8 : 12 }}>
                 <span style={{ fontSize: compact ? 26 : 34, fontWeight: 800, color: BLACK, lineHeight: 1 }}>{parts.day}</span>
                 <div>
-                  <div style={{ fontSize: compact ? 13 : 14.5, fontWeight: 700, color: BLACK }}>{parts.month}</div>
-                  <div style={{ fontSize: compact ? 11.5 : 12.5, color: GREY }}>{parts.wd}</div>
+                  <div style={{ fontSize: compact ? 14 : 15, fontWeight: 700, color: BLACK }}>{parts.month}</div>
+                  <div style={{ fontSize: compact ? 12.5 : 13, color: GREY }}>{parts.wd}</div>
                 </div>
               </div>
             ) : (
-              <span style={{ fontSize: compact ? 13 : 15, color: '#AAA' }}>Selecionar {label === tr('search_checkin') ? 'entrada' : 'saída'}</span>
+              <span style={{ fontSize: 15, color: '#555' }}>{placeholder || tr('m_pick_date')}</span>
             )}
-            <CalendarDays size={compact ? 15 : 18} color={GREY} />
+            <CalendarDays size={compact ? 18 : 20} color={GREY} style={{ flexShrink: 0 }} />
           </div>
         </button>
       </div>
     );
   };
+
+  // taxas obrigatórias (limpeza, estacionamento…) — somadas como na página do apartamento
+  const taxasObrigTotal = (data.taxasAdicionais || []).filter(tx => tx.tipo === 'obrigatoria').reduce((n, e) => n + (Number(e.preco) || 0), 0);
 
   /* ── reusable card ── */
   const PCard = ({ apt, available = true, fits = true, bd = null, needsCombo = false }) => {
@@ -298,12 +309,26 @@ export function PublicSite({ data, onCreate }) {
                 </div>
               : <div style={{ fontSize: 12, color: ACCENT, fontWeight: 600, marginTop: 5, letterSpacing: '.02em' }}>Combinar com outro apartamento</div>
           )}
-          {valid && bd && <div style={{ fontSize: 12.5, color: GREY, marginTop: 4 }}>Total {money(bd.total)} · {bd.n} noites</div>}
-          <div style={{ marginTop: 10, display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            {!(valid && bd) && <span style={{ fontSize: 12.5, color: GREY }}>a partir de</span>}
-            <span style={{ fontSize: 18, fontWeight: 700, color: BLACK }}>{money(rate)}</span>
-            <span style={{ fontSize: 12.5, color: GREY }}>/noite</span>
-          </div>
+          {valid && bd ? (
+            // com datas: o número principal é o TOTAL da estadia, já com as
+            // taxas obrigatórias — o mesmo valor que aparece na página do
+            // apartamento, para não haver surpresa (público 50+)
+            <div style={{ marginTop: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 19, fontWeight: 800, color: BLACK }}>{money(bd.total + taxasObrigTotal)}</span>
+                <span style={{ fontSize: 13.5, color: GREY }}>total</span>
+              </div>
+              <div style={{ fontSize: 13, color: GREY, marginTop: 2 }}>{bd.n} noites · {money(rate)} por noite + taxas</div>
+            </div>
+          ) : (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 12.5, color: GREY }}>a partir de</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 18, fontWeight: 600, color: BLACK }}>{money(rate)}</span>
+                <span style={{ fontSize: 12.5, color: GREY }}>/noite</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -351,21 +376,17 @@ export function PublicSite({ data, onCreate }) {
 
     return (
       <div ref={el => { groupRefs.current[r.id] = el; }} className="pm-pubsite-group" style={{ marginBottom: 72, scrollMarginTop: 140 }}>
-        <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 20, paddingBottom: 20, borderBottom: `1px solid ${BORDER}`, marginBottom: 28, flexWrap: 'wrap' }}>
+        <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 24, paddingBottom: 18, marginBottom: 6, flexWrap: 'wrap' }}>
           <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} className="pm-pubsite-group-logo"
-            style={{ height: 128, width: 'auto', maxWidth: 230, flexShrink: 0, display: 'block', objectFit: 'contain' }}
+            style={{ width: RESIDENCIAL_LOGO_W[r.id] || 220, height: 'auto', maxWidth: '100%', flexShrink: 0, display: 'block' }}
             onError={e => { e.target.style.display = 'none'; }} />
           <div className="pm-pubsite-group-info" style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div className="pm-pubsite-group-brand" style={{ fontFamily: F.disp, fontWeight: 700, fontSize: 23, lineHeight: 1.1, letterSpacing: '.01em' }}>
-              {(RESIDENCIAL_BRAND_TEXT[r.id] || [{ t: r.nome, c: BLACK }]).map((p, i) => (
-                <span key={i} style={{ color: p.c }}>{p.t}</span>
-              ))}
-            </div>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.3em', textTransform: 'uppercase', color: GREY }}>Residencial</div>
-            <div className="pm-pubsite-group-region" style={{ fontSize: 13.5, color: GREY, display: 'flex', alignItems: 'center', gap: 5 }}><MapPin size={13} /> {r.regiaoLabel}</div>
+            <div className="pm-pubsite-group-region" style={{ fontSize: 14.5, color: GREY, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {r.regiaoLabel}</div>
           </div>
-          <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
+          <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
         </div>
+        {/* indicador de residencial: o segmento deste residencial aceso, os outros a 15% */}
+        <Faixa height={3} lit={FAIXA_INDEX[r.id] ?? null} style={{ marginBottom: 28 }} />
 
         {valid && needsCombo && combo && (
           <div className="pm-pubsite-combo" style={{ border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
@@ -433,8 +454,9 @@ export function PublicSite({ data, onCreate }) {
           <a href="/" className="pm-pubsite-brand" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
             {/* horizontal no desktop (cabe melhor numa barra estreita); vertical, maior e
                 centrado no telemóvel — trocados por CSS na media query mobile em App.jsx */}
-            <img src="/logo-horizontal.png" alt="PinheiraMar" className="pm-pubsite-brand-desktop" style={{ height: 60, width: 'auto', display: 'block' }} />
-            <img src="/logo-vertical-pinheiramar.png" alt="PinheiraMar" className="pm-pubsite-brand-mobile" style={{ height: 40, width: 'auto', display: 'none' }} />
+            {/* assinatura horizontal do Grupo PinheiraMar (2b, cabeçalho do site) */}
+            <span className="pm-pubsite-brand-desktop" style={{ display: 'block' }}><GroupLogo variant="horizontal" size={24} /></span>
+            <span className="pm-pubsite-brand-mobile" style={{ display: 'none' }}><GroupLogo variant="horizontal" size={19} /></span>
           </a>
 
           {/* centred search (desktop) */}
@@ -517,20 +539,20 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ BUSCA — sempre visível no telemóvel, sem esconder atrás de um botão. Público-alvo 50+:
              mais direto ver os campos logo de cara do que ter de descobrir onde tocar. ══ */}
-      <div className="pm-pubsite-search-inline" style={{ display: 'none', padding: '20px 20px 26px', borderBottom: `1px solid ${BORDER}`, background: WHITE }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>Pesquisar disponibilidade</div>
+      <div className="pm-pubsite-search-inline" style={{ display: 'none', padding: '18px 16px 22px', borderBottom: `1px solid ${BORDER}`, background: WHITE }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 16 }}>
+          <div style={{ fontSize: 20, fontWeight: 500 }}>{tr('m_search_title')}</div>
           {!!(ci || co || hosp) && (
             <button onClick={() => { setCi(''); setCo(''); setHosp(0); setCalOpen(false); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: GREY, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
-              <X size={13} /> Limpar
+              style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, fontSize: 14, fontWeight: 700, color: '#333', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 999, cursor: 'pointer', padding: '0 14px' }}>
+              <X size={15} /> {tr('m_clear')}
             </button>
           )}
         </div>
-        <div style={{ display: 'grid', gap: 14 }}>
+        <div style={{ display: 'grid', gap: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <DateCard label={tr('search_checkin')} value={ci} compact onClick={() => setCalOpen(o => !o)} />
-            <DateCard label={tr('search_checkout')} value={co} compact onClick={() => setCalOpen(o => !o)} />
+            <DateCard label={tr('m_arrival')} value={ci} compact onClick={() => setCalOpen(o => !o)} />
+            <DateCard label={tr('m_departure')} value={co} compact onClick={() => setCalOpen(o => !o)} />
           </div>
           {calOpen && (
             <AvailabilityCalendar ci={ci} co={co}
@@ -541,23 +563,20 @@ export function PublicSite({ data, onCreate }) {
               }} />
           )}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: GREY, marginBottom: 8 }}>{tr('search_who')}</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: `1px solid ${BORDER}`, borderRadius: 10 }}>
-              <span style={{ fontSize: 15, fontWeight: 600 }}>{hosp ? `${hosp} hóspede${hosp > 1 ? 's' : ''}` : 'Hóspedes'}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <button onClick={() => setHosp(h => Math.max(0, h - 1))} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>−</button>
-                <span style={{ fontWeight: 700, minWidth: 18, textAlign: 'center' }}>{hosp || 0}</span>
-                <button onClick={() => setHosp(h => h + 1)} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>+</button>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#333', marginBottom: 8 }}>{tr('m_people')}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 64, padding: '8px 12px 8px 16px', border: `1.5px solid ${hosp ? BLACK : '#C9C6BF'}`, borderRadius: 14 }}>
+              <span style={{ fontSize: 16, fontWeight: hosp ? 700 : 400, color: hosp ? BLACK : '#555' }}>{hosp ? tr('m_people_n', hosp) : tr('m_people_none')}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <button aria-label="Menos uma pessoa" disabled={!hosp} onClick={() => setHosp(h => Math.max(0, h - 1))} style={{ width: 46, height: 46, borderRadius: '50%', border: `1.5px solid ${hosp ? '#999' : BORDER}`, background: WHITE, color: hosp ? BLACK : '#BBB', cursor: hosp ? 'pointer' : 'default', fontSize: 22, display: 'grid', placeItems: 'center' }}>−</button>
+                <span style={{ fontWeight: 800, fontSize: 18, minWidth: 20, textAlign: 'center', visibility: hosp ? 'visible' : 'hidden' }}>{hosp || 0}</span>
+                <button aria-label="Mais uma pessoa" onClick={() => setHosp(h => h + 1)} style={{ width: 46, height: 46, borderRadius: '50%', border: '1.5px solid #999', background: WHITE, color: BLACK, cursor: 'pointer', fontSize: 22, display: 'grid', placeItems: 'center' }}>+</button>
               </div>
             </div>
           </div>
-          <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            style={{ width: '100%', padding: '16px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, letterSpacing: '.02em', cursor: 'pointer' }}>
-            {tr('search_btn')}
+          <button onClick={() => { setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+            style={{ width: '100%', minHeight: 56, background: BLACK, color: WHITE, border: 'none', borderRadius: 14, fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>
+            {tr('m_see_available')}
           </button>
-          {/* Seletor de idioma duplicado removido daqui — o do cabeçalho
-              (canto superior direito, ver .pm-pubsite-lang em App.jsx) já
-              cobre o telemóvel, a pedido do Caio, 2026-09-23. */}
         </div>
       </div>
 
@@ -575,12 +594,12 @@ export function PublicSite({ data, onCreate }) {
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>
             Praia da Pinheira · Palhoça · Santa Catarina
           </div>
-          <h1 style={{ fontSize: 'clamp(32px,4.2vw,56px)', fontWeight: 800, lineHeight: 1.05, margin: '0 0 18px', letterSpacing: '-.03em', color: '#fff', maxWidth: 700 }}>
-            Apartamentos à beira-mar<br />
-            <span style={{ color: ACCENT, fontWeight: 300, fontStyle: 'italic' }}>ou a poucos passos dele.</span>
+          <h1 style={{ fontSize: 'clamp(34px,4.6vw,62px)', fontWeight: 200, lineHeight: 1.08, margin: '0 0 16px', letterSpacing: '-.005em', color: '#fff', maxWidth: 760 }}>
+            A sua casa de verão,<br />perto do mar.
           </h1>
-          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,.85)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 480 }}>
-            {data.residenciais.length} residenciais, um só motor de reservas — escolha as datas e o número de hóspedes e veja tudo o que está disponível.
+          <Faixa height={4} width={220} tone="negativo" style={{ marginBottom: 22 }} />
+          <p style={{ fontSize: 16.5, color: 'rgba(255,255,255,.9)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 520 }}>
+            Apartamentos mobiliados e completos em {data.residenciais.length} residenciais do Grupo PinheiraMar. Escolha as datas e veja o que está livre.
           </p>
           <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             style={{ padding: '14px 32px', background: '#fff', color: BLACK, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
@@ -640,7 +659,7 @@ export function PublicSite({ data, onCreate }) {
         {valid && (
           <div style={{ marginBottom: 44, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.02em', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: 0, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 {fmtShort(ci)} — {fmtShort(co)} · {nights(ci, co)} noite{nights(ci,co) > 1 ? 's' : ''}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}
                 <button onClick={() => { setCi(''); setCo(''); setHosp(0); }}
                   style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: GREY, background: 'none', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '5px 12px', cursor: 'pointer' }}>
@@ -666,40 +685,45 @@ export function PublicSite({ data, onCreate }) {
       {/* ══ DESTINATION (partilhado — mesma zona/praia para os dois imóveis) ══ */}
       <DestinoSection />
 
-      {/* ══ FOOTER ══ */}
+      {/* ══ FOOTER — assinatura do grupo, residenciais e faixa como remate ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>
         <div className="pm-pubsite-footer-grid" style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 40 }}>
+          <div>
+            <GroupLogo variant="principal" size={26} />
+            <div style={{ fontSize: 15, color: GREY, marginTop: 18, lineHeight: 1.6 }}>A sua casa de verão.</div>
+          </div>
           {data.residenciais.map(r => (
             <div key={r.id}>
-              <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', color: BLACK, marginBottom: 10 }}>{r.nome}</div>
-              <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: BLACK, marginBottom: 10 }}>{r.nome}</div>
+              <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
                 <div>{r.endereco}</div>
                 <div>{r.cidade}</div>
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: '#25D366', fontWeight: 700, textDecoration: 'none' }}>
-                  <MessageCircle size={14} /> WhatsApp
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: '#1E8E4E', fontWeight: 600, textDecoration: 'none' }}>
+                  <MessageCircle size={15} strokeWidth={1.5} /> WhatsApp
                 </a>
               </div>
             </div>
           ))}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Horários</div>
-            <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
-              <div>Check-in — a partir das {r0.checkInHora || '13:00'}</div>
-              <div>Check-out — até às {r0.checkOutHora || '10:00'}</div>
+            <div style={{ fontSize: 11.5, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Horários</div>
+            <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
+              <div>Check-in a partir das {r0.checkInHora || '13:00'}</div>
+              <div>Check-out até às {r0.checkOutHora || '10:00'}</div>
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Como chegar</div>
-            <div style={{ fontSize: 13, color: GREY, lineHeight: 1.9 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Como chegar</div>
+            <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
               <div>35 km de Florianópolis</div>
               <div>48 km do Aeroporto</div>
               <div>BR-101 → Palhoça → Pinheira</div>
             </div>
           </div>
         </div>
-        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 12, color: GREY, letterSpacing: '.04em' }}>
-          © {new Date().getFullYear()} PINHEIRA HOSPEDAGENS — TODOS OS DIREITOS RESERVADOS
+        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 12, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase' }}>
+          © {new Date().getFullYear()} Grupo PinheiraMar
         </div>
+        <Faixa height={6} />
       </footer>
       {calApt && (
         <Modal title={`Datas livres · ${calApt.nome}`}

@@ -13,8 +13,10 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
   const taxasOpc = (data.taxasAdicionais || []).filter(tx => tx.tipo === 'opcional');
   const hasExtras = taxasOpc.length > 0;
 
-  // ── passos do fluxo: extras (se houver) → dados do hóspede → revisão e confirmação ──
-  const steps = hasExtras ? ['extras', 'dados', 'revisao'] : ['dados', 'revisao'];
+  // ── passos do fluxo: resumo da estadia → extras (se houver) → dados do hóspede → revisão e confirmação ──
+  // O "resumo" vem primeiro (como no Airbnb): o cliente confere apartamento,
+  // datas, pessoas e preço antes de preencher qualquer dado.
+  const steps = hasExtras ? ['resumo', 'extras', 'dados', 'revisao'] : ['resumo', 'dados', 'revisao'];
   const [step, setStep] = useState(steps[0]);
   const stepIdx = steps.indexOf(step);
   const goBack = () => { if (stepIdx > 0) setStep(steps[stepIdx - 1]); };
@@ -141,6 +143,83 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
     wide: true,
   };
 
+  // ── Passo: Resumo da estadia ───────────────────────────────────────────────
+  if (step === 'resumo') {
+    const stepBtn = (label, onClick, disabled) => (
+      <button aria-label={label} onClick={onClick} disabled={disabled}
+        style={{ width: 44, height: 44, borderRadius: '50%', border: `1.5px solid ${disabled ? '#ddd' : '#999'}`, background: '#fff', color: disabled ? '#bbb' : '#222', cursor: disabled ? 'default' : 'pointer', fontSize: 20, display: 'grid', placeItems: 'center' }}>
+        {label === 'Menos' ? <Minus size={18} /> : <Plus size={18} />}
+      </button>
+    );
+    const row = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: `1px solid ${C.line}` };
+    return (
+      <Modal {...modalNav} title="Confira sua estadia" subtitle={hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}
+        footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52, fontSize: 16 }} onClick={goNext}>Continuar</Btn>}>
+        <div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
+            <div style={{ width: 72, height: 72, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={72} radius={12} /></div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>{hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}</div>
+              <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{apt.piso} · {apt.vista}</div>
+            </div>
+          </div>
+
+          <div style={row}>
+            <div>
+              <div style={{ fontSize: 14, color: C.inkSoft }}>Datas</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{fmtShort(ci)} – {fmtShort(co)}</div>
+              <div style={{ fontSize: 14, color: C.inkSoft }}>{bd.n} noite{bd.n > 1 ? 's' : ''}</div>
+            </div>
+            {/* as datas mudam-se na página do apartamento (com o calendário de disponibilidade) */}
+            <button onClick={onClose} style={{ minHeight: 44, padding: '0 16px', border: '1px solid #ccc', borderRadius: 999, background: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', color: '#222' }}>Alterar</button>
+          </div>
+
+          {!hasApt2 ? (
+            <div style={row}>
+              <div>
+                <div style={{ fontSize: 14, color: C.inkSoft }}>Pessoas</div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{g} pessoa{g > 1 ? 's' : ''}</div>
+                <div style={{ fontSize: 13, color: C.inkSoft }}>máximo {apt.capacidade}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {stepBtn('Menos', () => setG(v => Math.max(1, v - 1)), g <= 1)}
+                <b style={{ minWidth: 18, textAlign: 'center', fontSize: 17 }}>{g}</b>
+                {stepBtn('Mais', () => setG(v => Math.min(apt.capacidade, v + 1)), g >= apt.capacidade)}
+              </div>
+            </div>
+          ) : (
+            <div style={row}>
+              <div style={{ fontSize: 14, color: C.inkSoft }}>Pessoas</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{g} + {gB} pessoas</div>
+            </div>
+          )}
+
+          <div style={{ padding: '16px 0', borderBottom: `1px solid ${C.line}` }}>
+            <div style={{ fontSize: 14, color: C.inkSoft }}>Preço total{hasApt2 ? ' combinado' : ''}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}>{money(totalComExtras)}</div>
+            <div style={{ marginTop: 10, fontSize: 14.5, color: '#444', display: 'grid', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span>Estadia ({bd.n} noite{bd.n > 1 ? 's' : ''}{hasApt2 ? `, ${apt.nome}` : ''})</span><span>{money(bd.total)}</span></div>
+              {hasApt2 && bd2 && <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span>Estadia ({apt2.nome})</span><span>{money(bd2.total)}</span></div>}
+              {extrasObrig.map(e => (
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span>{e.nome}{hasApt2 ? ' (×2)' : ''}</span><span>{money(e.preco * e.qtd * (hasApt2 ? 2 : 1))}</span></div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, background: C.espuma, display: 'grid', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 15.5, fontWeight: 800, color: C.coralDeep }}>
+              <span>Sinal para reservar ({data.settings.sinalPct}%)</span><span>{money(sinal)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 14.5, color: '#444' }}>
+              <span>Restante</span><span>{money(totalComExtras - sinal)}</span>
+            </div>
+            <div style={{ fontSize: 13.5, color: C.inkSoft, marginTop: 2 }}>Nada é cobrado até você confirmar no último passo.</div>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   // ── Passo: Extras opcionais ──────────────────────────────────────────────
   if (step === 'extras') return (
     <Modal {...modalNav} title="Serviços extras" subtitle="Adicione serviços à sua estadia (opcional)"
@@ -192,11 +271,7 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
           <Field label="Nome completo" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Como no documento" /></Field>
           <Field label="Email" required><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
           <Field label="Telefone" required><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
-          {!hasApt2 ? (
-            <Field label="Hóspedes" hint={`Máx. ${apt.capacidade}`}>
-              <NumberInput min={1} max={apt.capacidade} value={g} onChange={e => setG(Math.min(apt.capacidade, Math.max(1, +e.target.value || 1)))} />
-            </Field>
-          ) : (
+          {!hasApt2 ? null : (
             <div>
               <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#666', marginBottom: 8 }}>Hóspedes por apartamento</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

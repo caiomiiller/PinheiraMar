@@ -2,6 +2,12 @@ import { useState } from 'react';
 
 export const TRANSLATIONS = {
   pt: {
+    /* busca no telemóvel — textos simples para o público 50+ */
+    m_search_title: 'Encontre seu apartamento',
+    m_arrival: 'Chegada', m_departure: 'Saída', m_pick_date: 'Escolher data',
+    m_people: 'Quantas pessoas?', m_people_none: 'Toque no +',
+    m_people_n: (n) => `${n} ${n === 1 ? 'pessoa' : 'pessoas'}`,
+    m_see_available: 'Ver apartamentos disponíveis', m_clear: 'Limpar',
     /* header */
     nav_location: 'Praia da Pinheira, SC',
     /* hero */
@@ -46,6 +52,11 @@ export const TRANSLATIONS = {
     footer_copy: (y) => `© ${y} Residencial PinheiraMar · Praia da Pinheira, Palhoça — SC`,
   },
   es: {
+    m_search_title: 'Encuentre su apartamento',
+    m_arrival: 'Llegada', m_departure: 'Salida', m_pick_date: 'Elegir fecha',
+    m_people: '¿Cuántas personas?', m_people_none: 'Toque el +',
+    m_people_n: (n) => `${n} ${n === 1 ? 'persona' : 'personas'}`,
+    m_see_available: 'Ver apartamentos disponibles', m_clear: 'Borrar',
     nav_location: 'Playa de Pinheira, SC',
     hero_tag: 'Frente al mar',
     hero_loc: 'Playa de Pinheira, Palhoça — Santa Catarina',
@@ -82,6 +93,11 @@ export const TRANSLATIONS = {
     footer_copy: (y) => `© ${y} Residencial PinheiraMar · Playa de Pinheira, Palhoça — SC`,
   },
   en: {
+    m_search_title: 'Find your apartment',
+    m_arrival: 'Arrival', m_departure: 'Departure', m_pick_date: 'Choose date',
+    m_people: 'How many people?', m_people_none: 'Tap +',
+    m_people_n: (n) => `${n} ${n === 1 ? 'person' : 'people'}`,
+    m_see_available: 'See available apartments', m_clear: 'Clear',
     nav_location: 'Pinheira Beach, SC',
     hero_tag: 'Oceanfront',
     hero_loc: 'Pinheira Beach, Palhoça — Santa Catarina, Brazil',
