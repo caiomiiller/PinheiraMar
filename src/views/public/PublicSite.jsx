@@ -654,10 +654,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             })}
           </nav>
 
-          {/* idioma — de volta ao canto superior direito do cabeçalho (onde
-              já estava antes de 2026-09-26): a pedido do Caio, não deve ficar
-              lá embaixo, junto ao bloco "Conheça a Pinheira" (DestinoSection).
-              À direita dos filtros no telemóvel e da busca no desktop. */}
+          {/* idioma — canto superior direito do cabeçalho, só no desktop
+              (no telemóvel esta barra fica escondida por CSS: lá o seletor de
+              idioma vive dentro do bloco "Conheça a Pinheira" — ver
+              DestinoSection e .pm-destino-lang em App.jsx, 2026-09-27). */}
           {idiomasAtivos.length > 1 && (
             <div className="pm-pubsite-lang" style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
               {idiomasAtivos.map(id => (
@@ -840,7 +840,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       </main>
 
       {/* ══ DESTINATION (partilhado — mesma zona/praia para os dois imóveis) ══ */}
-      <DestinoSection residenciais={data.residenciais} />
+      <DestinoSection residenciais={data.residenciais} lang={lang} setLang={setLang} idiomasAtivos={idiomasAtivos} />
 
       {/* ══ FOOTER — assinatura do grupo, residenciais e faixa como remate ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>

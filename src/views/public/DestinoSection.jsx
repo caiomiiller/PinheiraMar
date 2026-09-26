@@ -19,7 +19,7 @@ const ATRATIVOS = [
 
 const icone = { size: 22, strokeWidth: 1.5, color: BRAND.marinho };
 
-export function DestinoSection({ residenciais = [] }) {
+export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos = [] }) {
   const { tr } = useIdioma();
   const [tab, setTab] = useState('destino');
 
@@ -45,6 +45,22 @@ export function DestinoSection({ residenciais = [] }) {
     <section style={{ background: '#fff', borderTop: '1px solid #eee' }}>
       {/* faixa de abertura em marinho */}
       <div style={{ background: `linear-gradient(160deg, ${BRAND.noite} 0%, ${BRAND.marinho} 70%)`, color: '#fff', textAlign: 'center', padding: '64px 24px 56px' }}>
+        {/* seletor de idioma — só aparece aqui no telemóvel (escondido por
+            padrão, .pm-destino-lang liga no media query em App.jsx); no
+            desktop o idioma continua só no cabeçalho. A pedido do Caio,
+            2026-09-27: no celular a barra ficava por cima da faixa de
+            filtros do cabeçalho e atrapalhava; aqui embaixo, junto a este
+            texto, tem espaço de sobra. */}
+        {idiomasAtivos.length > 1 && (
+          <div className="pm-destino-lang" style={{ display: 'none', justifyContent: 'center', gap: 2, marginBottom: 12 }}>
+            {idiomasAtivos.map(id => (
+              <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo} aria-label={id.nativo} aria-pressed={lang === id.codigo}
+                style={{ width: 40, height: 40, borderRadius: '50%', border: lang === id.codigo ? '1px solid #fff' : '1px solid transparent', background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
+                {id.bandeira}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: '.22em', textTransform: 'uppercase', opacity: .8, marginBottom: 14 }}>{tr('ps_hero_local')}</div>
         <h2 style={{ fontFamily: F.disp, fontSize: 'clamp(30px,4.6vw,48px)', fontWeight: 200, margin: '0 auto 16px', lineHeight: 1.12, maxWidth: 720 }}>{tr('ds_titulo')}</h2>
         <Faixa height={4} width={180} tone="negativo" style={{ margin: '0 auto 20px' }} />
