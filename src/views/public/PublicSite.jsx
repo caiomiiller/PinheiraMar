@@ -410,10 +410,15 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     );
   };
 
-  /* ── bloco de um imóvel (à la Booking: banner do imóvel + as suas unidades) ── */
-  const PropertyGroup = ({ g }) => {
+  /* ── bloco de um imóvel (à la Booking: banner do imóvel + as suas unidades) ──
+     `invert`: usado na secção "outros apartamentos" que aparece abaixo dos
+     resultados do filtro quando há um filtro de categoria ativo — mostra o
+     COMPLEMENTO do filtro (o que ficou de fora), em vez de reordenar ou
+     esconder o resto, a pedido do Caio (2026-09-26): sem filtro, quem olha
+     só a lista filtrada pode achar que não há mais opções. */
+  const PropertyGroup = ({ g, invert = false, last = false }) => {
     const { residencial: r, withInfo, needsCombo, combo } = g;
-    const filtered = withInfo.filter(w => catFilter(w.apt));
+    const filtered = withInfo.filter(w => (invert ? !catFilter(w.apt) : catFilter(w.apt)));
     const list = valid ? filtered : filtered.map(w => ({ ...w, available: true }));
     if (!list.length) return null;
     // A contagem é a do que está à vista (com um filtro ativo dizia "17
@@ -427,7 +432,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       : contagemUnidades(filtered.map(w => w.apt));
 
     return (
-      <div ref={el => { groupRefs.current[r.id] = el; }} className="pm-pubsite-group" style={{ marginBottom: 72, scrollMarginTop: 140 }}>
+      <div ref={invert ? undefined : el => { groupRefs.current[r.id] = el; }} className={`pm-pubsite-group${last ? ' pm-pubsite-group--last' : ''}`} style={{ marginBottom: last ? 32 : 72, scrollMarginTop: 140 }}>
         <div className="pm-pubsite-group-head" style={{ display: 'flex', alignItems: 'center', gap: 24, paddingBottom: 18, marginBottom: 6, flexWrap: 'wrap' }}>
           <img src={RESIDENCIAL_LOGOS[r.id] || r.heroImage} alt={r.nome} className="pm-pubsite-group-logo"
             style={{ width: RESIDENCIAL_LOGO_W[r.id] || 220, height: 'auto', maxWidth: '100%', flexShrink: 0, display: 'block' }}
@@ -440,7 +445,9 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         {/* indicador de residencial: o segmento deste residencial aceso, os outros a 15% */}
         <Faixa height={3} lit={FAIXA_INDEX[r.id] ?? null} style={{ marginBottom: 28 }} />
 
-        {valid && needsCombo && combo && (
+        {/* não repete a sugestão de combinação na secção "outros apartamentos"
+            (invert) — já apareceu na secção do filtro, para o mesmo imóvel */}
+        {!invert && valid && needsCombo && combo && (
           <div className="pm-pubsite-combo" style={{ border: `1px solid ${BORDER}`, borderRadius: 16, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
             <Users size={18} color={GREY} style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ fontSize: 14, color: BLACK, lineHeight: 1.65 }}>
@@ -625,16 +632,18 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           {/* telemóvel: os filtros sobem para o cabeçalho, só com ícones (o nome
               vai no aria-label/title) e com rolagem para o lado quando não
               cabem — a pedido do Caio, 2026-09. No desktop ficam na faixa de
-              baixo, com o nome. Exceção: o filtro por residencial leva o nome
-              visível também no telemóvel — o ícone sozinho ("ondas") é ambíguo
-              com o de Frente Mar, e o title/aria-label não aparece em toque
-              (público 40+, 2026-09-26). */}
+              baixo, com o nome.
+              TESTE (2026-09-26, a pedido do Caio): tirado o nome visível do
+              filtro por residencial no telemóvel também — fica só ícone,
+              como os outros. Antes disto tinha nome porque "ondas" sozinho
+              é ambíguo com o filtro de Frente Mar; ao reverter, restaurar
+              `const comTexto = catIsResidencial(cat.key);`. */}
           <nav className="pm-pubsite-hcats" aria-label={tr('ps_filtros')}
             style={{ display: 'none', flex: 1, minWidth: 0, alignItems: 'center', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', padding: '2px 0' }}>
             {categorias.map((cat, i) => {
               if (cat.sep) return <div key={`sep${i}`} aria-hidden style={{ alignSelf: 'center', width: 1, height: 24, background: BORDER, flexShrink: 0 }} />;
               const on = activeCategory === cat.key;
-              const comTexto = catIsResidencial(cat.key);
+              const comTexto = false; // teste: sempre só ícone (era catIsResidencial(cat.key))
               return (
                 <button key={String(cat.key)} type="button" onClick={() => escolherCategoriaTopo(on ? null : cat.key)}
                   aria-label={cat.nomeCompleto} title={cat.nomeCompleto} aria-pressed={on}
@@ -645,17 +654,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             })}
           </nav>
 
-          {/* idioma — à direita da busca no desktop e dos filtros no telemóvel */}
-          {idiomasAtivos.length > 1 && (
-            <div className="pm-pubsite-lang" style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-              {idiomasAtivos.map(id => (
-                <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo} aria-label={id.nativo} aria-pressed={lang === id.codigo}
-                  style={{ width: 40, height: 40, borderRadius: '50%', border: lang === id.codigo ? `1px solid ${BLACK}` : `1px solid transparent`, background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
-                  {id.bandeira}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* idioma: saiu do cabeçalho (disputava espaço com os filtros) —
+              volta a ser a barra de bandeiras (não um menu), mas agora
+              centralizada junto ao bloco "Conheça a Pinheira", a pedido do
+              Caio (2026-09-26). Ver DestinoSection.jsx. */}
         </div>
       </header>
 
@@ -756,7 +758,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       </div>
 
       {/* ══ RESULTADOS — um bloco por imóvel, como um motor de reservas de hotel ══ */}
-      <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 80px', scrollMarginTop: 80 }}>
+      <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 40px', scrollMarginTop: 80 }}>
         {/* sem datas: uma frase só, em vez de um preço "a partir de" em cada
             cartão — e um toque nela abre logo o calendário */}
         {!valid && (
@@ -792,11 +794,43 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             </label>
           </div>
         )}
-        {groups.map(g => <PropertyGroup key={g.residencial.id} g={g} />)}
+        {(() => {
+          const temOutros = activeCategory && groups.some(g => g.withInfo.some(w => !catFilter(w.apt)));
+          // último grupo com algo para mostrar no bloco de cima — só ele
+          // encolhe a margem de baixo quando NÃO há secção "outros" depois
+          // (a pedido do Caio, 2026-09-26: menos espaço em branco antes do
+          // destino, sem também apertar a separação entre residenciais).
+          const visiveis = groups.filter(g => g.withInfo.some(w => catFilter(w.apt)));
+          const idUltimoVisivel = temOutros ? null : visiveis[visiveis.length - 1]?.residencial.id;
+          return groups.map(g => <PropertyGroup key={g.residencial.id} g={g} last={g.residencial.id === idUltimoVisivel} />);
+        })()}
+
+        {/* ══ "OUTROS APARTAMENTOS" — com um filtro de categoria ativo, mostra
+            abaixo o complemento (o que ficou fora do filtro), sem reordenar
+            nem esconder nada: são DUAS apresentações separadas na tela, a do
+            filtro e a das demais opções, a pedido do Caio (2026-09-26) —
+            antes, escolher um filtro fazia o resto do site "desaparecer" e
+            passava a impressão de que não havia mais nada disponível. ══ */}
+        {(() => {
+          const outrosVisiveis = groups.filter(g => g.withInfo.some(w => !catFilter(w.apt)));
+          if (!activeCategory || !outrosVisiveis.length) return null;
+          const idUltimoOutro = outrosVisiveis[outrosVisiveis.length - 1].residencial.id;
+          return (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 10 }}>
+                <div aria-hidden style={{ flex: 1, height: 1, background: BORDER }} />
+                <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY, whiteSpace: 'nowrap' }}>{tr('ps_outros_apartamentos')}</div>
+                <div aria-hidden style={{ flex: 1, height: 1, background: BORDER }} />
+              </div>
+              <div style={{ fontSize: 14, color: GREY, textAlign: 'center', marginBottom: 36 }}>{tr('ps_outros_apartamentos_desc')}</div>
+              {groups.map(g => <PropertyGroup key={`outros-${g.residencial.id}`} g={g} invert last={g.residencial.id === idUltimoOutro} />)}
+            </div>
+          );
+        })()}
       </main>
 
       {/* ══ DESTINATION (partilhado — mesma zona/praia para os dois imóveis) ══ */}
-      <DestinoSection residenciais={data.residenciais} />
+      <DestinoSection residenciais={data.residenciais} lang={lang} setLang={setLang} idiomasAtivos={idiomasAtivos} />
 
       {/* ══ FOOTER — assinatura do grupo, residenciais e faixa como remate ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>

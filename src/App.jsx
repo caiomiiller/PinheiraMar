@@ -162,13 +162,8 @@ export default function App() {
       .pm-pubsite-catbar{display:none!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
-      /* idioma volta a aparecer no telemóvel, fixo no canto superior direito do
-         cabeçalho (fora do fluxo, para não empurrar a logo centralizada) — o
-         mesmo lugar em que já fica na versão desktop, a pedido do Caio,
-         2026-09-23. */
-      .pm-pubsite-lang{display:flex!important;position:static!important;}
       .pm-pubsite-hero{display:none!important;}
-      .pm-pubsite-main{padding:32px 16px 56px!important;}
+      .pm-pubsite-main{padding:32px 16px 24px!important;}
       .pm-pubsite-group-head{gap:12px!important;flex-direction:column!important;align-items:center!important;text-align:center!important;border-bottom:none!important;margin-bottom:0!important;}
       
       .pm-pubsite-group-brand{font-size:19px!important;text-align:center!important;}
@@ -176,6 +171,11 @@ export default function App() {
       .pm-pubsite-group-region{justify-content:center!important;}
       .pm-pubsite-group-count{width:100%!important;order:3;text-align:center!important;}
       .pm-pubsite-group{margin-bottom:44px!important;}
+      /* o último grupo antes do destino (DestinoSection) precisa de bem menos
+         respiro — sem isto, a margem do grupo somada ao padding do <main>
+         deixava um vão de espaço em branco enorme antes da secção escura,
+         a pedido do Caio (2026-09-26). */
+      .pm-pubsite-group.pm-pubsite-group--last{margin-bottom:16px!important;}
       /* setas de navegação do carrossel somem no telemóvel — lá o gesto natural
          é arrastar o dedo sobre os cartões, a pedido do Caio, 2026-09-23. */
       .pm-row-arrows{display:none!important;}
