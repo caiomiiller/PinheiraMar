@@ -20,6 +20,16 @@ export const F = {
 // WhatsApp é o canal principal de contacto do site (substitui e-mail/telefone
 // nas páginas públicas) — link fixo do titular do WhatsApp Business.
 export const WHATSAPP_URL = 'https://api.whatsapp.com/send/?phone=%2B5548984761800&text&type=phone_number&app_absent=0';
+
+// Assinatura horizontal de cada residencial (versão positiva, sem o endosso
+// do grupo) e a largura com que aparece — na mesma escala, para o nome dos
+// dois ter a mesma altura. Usada no site (cabeçalho de cada residencial) e
+// no e-mail de confirmação (server/email.js), que mostra a do residencial do
+// apartamento reservado.
+export const LOGO_RESIDENCIAL = {
+  pinheiramar: { src: '/brand/pinheiramar-horizontal.png', largura: 200 },
+  novoimovel: { src: '/brand/caminho-horizontal.png', largura: 252 },
+};
 // Mostrado quando o site não consegue carregar os dados (aí não há o telefone do residencial à mão).
 export const TELEFONE_CONTATO = '(48) 98476-1800';
 

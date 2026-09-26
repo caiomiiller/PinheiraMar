@@ -14,7 +14,7 @@
 //   principal) — antes entrava nas duas e contava o sinal em dobro;
 // • estornos/chargebacks ficam sinalizados na reserva.
 import { alterarEstado } from '../server/estado.js';
-import { responder } from '../server/http.js';
+import { responder, baseDoSite } from '../server/http.js';
 import { mpConfigurado, consultarPagamento } from '../server/mercadopago.js';
 import { enviarConfirmacao, registarEnvio } from '../server/email.js';
 import { overlaps, uid } from '../src/lib/helpers.js';
@@ -159,7 +159,7 @@ export default async function handler(req, res) {
         .sort((a, b) => (a.id === reservaId ? -1 : b.id === reservaId ? 1 : 0))
         .map(x => ({ reserva: x, apt: (e.apartamentos || []).find(a => a.id === x.apartamentoId) }));
       const residencial = (e.residenciais || []).find(x => x.id === grupo[0]?.apt?.residencialId) || (e.residenciais || [])[0];
-      const env = await enviarConfirmacao(grupo, residencial);
+      const env = await enviarConfirmacao(grupo, residencial, { site: baseDoSite(req) });
       if (env.ok) await registarEnvio(grupo.map(g => g.reserva.id));
     }
     return responder(res, 200, { ok: true, status: payment.status, reservas: desfecho.alvos.length, gravado: !!r.gravado });

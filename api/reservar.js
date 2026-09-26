@@ -137,7 +137,7 @@ export default async function handler(req, res) {
 
   // Fluxo manual (sem Mercado Pago, ou ele falhou): a reserva vale desde já
   // e a equipa combina o sinal por WhatsApp/Pix. O e-mail sai daqui.
-  const env = await enviarConfirmacao(grupo, m.residencial);
+  const env = await enviarConfirmacao(grupo, m.residencial, { site: baseDoSite(req) });
   if (env.ok) await registarEnvio([...ids]);
   return responder(res, 200, { ...resposta, pagamentoOnline: false, emailEnviado: !!env.ok });
 }

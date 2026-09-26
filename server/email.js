@@ -8,6 +8,7 @@
 // "Use Private Key" (o envio pelo navegador, com a chave pública, deixa de
 // ser possível).
 import { money, fmtLong, nights } from '../src/lib/helpers.js';
+import { LOGO_RESIDENCIAL } from '../src/lib/constants.js';
 import { alterarEstado } from './estado.js';
 
 const API = () => (process.env.EMAILJS_API_URL || 'https://api.emailjs.com').replace(/\/+$/, '');
@@ -20,6 +21,28 @@ const cfg = () => ({ publicKey: env('EMAILJS_PUBLIC_KEY'), serviceId: env('EMAIL
 export function emailConfigurado() {
   const c = cfg();
   return !!(c.publicKey && c.serviceId && c.templateId && c.privateKey);
+}
+
+// Endereço público do site, para as imagens do e-mail (a logo do
+// residencial). As imagens de um e-mail têm de ter o endereço completo — o
+// programa de e-mail do hóspede não sabe de onde veio a mensagem. Ordem:
+// SITE_URL (se definida na Vercel) → o domínio onde a função está a correr
+// → o endereço de produção de sempre.
+const SITE_PADRAO = 'https://pinheira-mar.vercel.app';
+export function baseImagens(site) {
+  const limpa = (u) => String(u || '').trim().replace(/\/+$/, '');
+  const fixo = limpa(process.env.SITE_URL);
+  if (/^https?:\/\//.test(fixo)) return fixo;
+  const daqui = limpa(site);
+  return /^https?:\/\//.test(daqui) ? daqui : SITE_PADRAO;
+}
+
+// Logo do residencial do apartamento reservado (a pedido do Caio: o hóspede
+// tem de saber logo de que residencial é a reserva). Sem logo conhecida, a
+// do grupo.
+function logoResidencial(residencial, site) {
+  const l = LOGO_RESIDENCIAL[residencial?.id] || { src: '/brand/galo-navy.png', largura: 64 };
+  return { url: baseImagens(site) + l.src, largura: String(l.largura) };
 }
 
 function hospedesTxt(reserva) {
@@ -35,8 +58,9 @@ function hospedesTxt(reserva) {
 // template-emailjs-confirmacao.html). Uma reserva conjunta (2 apartamentos)
 // gera UM só e-mail, com os dois apartamentos e o total combinado — antes
 // saíam dois, e o da 2ª metade mostrava um "saldo restante" errado.
-// `grupo` = [{ reserva, apt }] (a 1ª é a que leva o sinal).
-export function parametrosEmail(grupo, residencial) {
+// `grupo` = [{ reserva, apt }] (a 1ª é a que leva o sinal). `site` = o
+// domínio do pedido (baseDoSite), só para o endereço das imagens.
+export function parametrosEmail(grupo, residencial, { site } = {}) {
   const [{ reserva: r1 }] = grupo;
   const total = Math.round(grupo.reduce((s, g) => s + (Number(g.reserva.total) || 0), 0) * 100) / 100;
   const pago = Math.round(grupo.reduce((s, g) => s + (Number(g.reserva.valorPago) || 0), 0) * 100) / 100;
@@ -55,12 +79,15 @@ export function parametrosEmail(grupo, residencial) {
     residencial?.checkInHora ? `Check-in a partir das ${residencial.checkInHora}` : null,
     residencial?.checkOutHora ? `check-out até ${residencial.checkOutHora}` : null,
   ].filter(Boolean).join(' · ');
+  const logo = logoResidencial(residencial, site);
   return {
     email: r1.email,
     to_email: r1.email,
     to_name: r1.hospede || r1.nome || '',
     codigo_reserva: r1.codigo,
     nome_propriedade: residencial?.nome || '',
+    logo_residencial: logo.url,
+    logo_largura: logo.largura,
     cidade: residencial?.cidade || '',
     apartamento: grupo.map(g => [g.apt?.nome, g.apt?.vista].filter(Boolean).join(' · ')).join(' + '),
     check_in_fmt: fmtLong(r1.checkIn),
@@ -87,7 +114,7 @@ export function parametrosEmail(grupo, residencial) {
   };
 }
 
-export async function enviarConfirmacao(grupo, residencial) {
+export async function enviarConfirmacao(grupo, residencial, opcoes = {}) {
   if (!emailConfigurado()) {
     console.warn('[email] EmailJS não configurado no servidor — e-mail não enviado (ver .env.example).');
     return { ok: false, motivo: 'nao_configurado' };
@@ -102,7 +129,7 @@ export async function enviarConfirmacao(grupo, residencial) {
         template_id: cfg().templateId,
         user_id: cfg().publicKey,
         accessToken: cfg().privateKey,
-        template_params: parametrosEmail(grupo, residencial),
+        template_params: parametrosEmail(grupo, residencial, opcoes),
       }),
     });
     if (!resp.ok) {

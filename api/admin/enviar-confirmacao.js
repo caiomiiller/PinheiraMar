@@ -4,7 +4,7 @@
 import { lerEstado } from '../../server/estado.js';
 import { verificarAdmin } from '../../server/auth.js';
 import { enviarConfirmacao, registarEnvio } from '../../server/email.js';
-import { corpoJSON, responder } from '../../server/http.js';
+import { corpoJSON, responder, baseDoSite } from '../../server/http.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return responder(res, 405, { ok: false, erro: 'metodo_nao_permitido' });
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       .sort((a, b2) => (a.id === ref ? -1 : b2.id === ref ? 1 : 0))
       .map(x => ({ reserva: x, apt: (data.apartamentos || []).find(a => a.id === x.apartamentoId) }));
     const residencial = (data.residenciais || []).find(x => x.id === grupo[0]?.apt?.residencialId) || (data.residenciais || [])[0];
-    const env = await enviarConfirmacao(grupo.length ? grupo : [{ reserva: r, apt: (data.apartamentos || []).find(a => a.id === r.apartamentoId) || null }], residencial);
+    const env = await enviarConfirmacao(grupo.length ? grupo : [{ reserva: r, apt: (data.apartamentos || []).find(a => a.id === r.apartamentoId) || null }], residencial, { site: baseDoSite(req) });
     const quando = new Date().toISOString();
     if (env.ok) await registarEnvio(grupo.length ? grupo.map(g => g.reserva.id) : [r.id], quando);
     return responder(res, env.ok ? 200 : 502, { ok: !!env.ok, motivo: env.motivo || null, enviadoEm: env.ok ? quando : null });

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
   Home, Users, AlertCircle, X } from 'lucide-react';
-import { F, WHATSAPP_URL, fotoTopo } from '../../lib/constants';
+import { F, WHATSAPP_URL, fotoTopo, LOGO_RESIDENCIAL } from '../../lib/constants';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
 import { orcamentoApartamento } from '../../lib/precos';
 import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
@@ -22,8 +22,9 @@ import { ConfirmationModal } from '../../components/ConfirmationModal';
 // versão positiva do designer, sem o endosso do grupo: no site o grupo já
 // assina o cabeçalho e o rodapé, e o endosso em tamanho de lista não se lia.
 // Larguras na mesma escala, para o nome dos dois ter a mesma altura.
-const RESIDENCIAL_LOGOS = { pinheiramar: '/brand/pinheiramar-horizontal.png', novoimovel: '/brand/caminho-horizontal.png' };
-const RESIDENCIAL_LOGO_W = { pinheiramar: 200, novoimovel: 252 };
+// (definidas em lib/constants.js — o e-mail de confirmação usa as mesmas)
+const RESIDENCIAL_LOGOS = Object.fromEntries(Object.entries(LOGO_RESIDENCIAL).map(([id, l]) => [id, l.src]));
+const RESIDENCIAL_LOGO_W = Object.fromEntries(Object.entries(LOGO_RESIDENCIAL).map(([id, l]) => [id, l.largura]));
 
 // Nome do residencial escrito por extenso ao lado da logo, no mesmo espírito
 // tipográfico dela (serifada, maiúsculas, mesmas cores) — a logo sozinha, em
@@ -704,12 +705,13 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       {/* ══ HERO — escondido no telemóvel (ver App.jsx), onde ocupava a tela
              toda antes do hóspede ver a busca/resultados; fica só no desktop ══ */}
       <section className="pm-pubsite-hero" style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
+        {/* foto do topo sem object-fit: cover — a pedido do Caio (10/09 e de novo 26/09): a foto aparece inteira na moldura, sem o "zoom" que a cortava */}
         <img
           src={fotoTopo(r0.heroImage)}
           alt=""
           fetchpriority="high"
           decoding="async"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
           onError={e => { e.target.style.display = 'none'; }}
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 40%, rgba(0,0,0,.72) 100%)' }} />

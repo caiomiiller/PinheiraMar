@@ -162,9 +162,10 @@ export function PhotoTile({ apt, h = 184, radius = 14, rotulo }) {
     // para miniaturas pequenas — com background-image ficavam com um ar
     // "esborratado"/pixelado nos cartões pequenos, apesar de as mesmas
     // fotos abrirem nítidas em tamanho grande (galeria/lightbox).
+    // sem object-fit: cover — a pedido do Caio (10/09 e de novo 26/09): a foto aparece inteira na moldura, sem o "zoom" que a cortava.
     return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', position: 'relative' }}>
       <img src={apt.foto} alt={apt.nome || ''} loading="lazy" decoding="async"
-        style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+        style={{ width: '100%', height: '100%', display: 'block' }} />
       {etiqueta && <span style={tilePill}>{etiqueta}</span>}
     </div>;
   }

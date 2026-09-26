@@ -22,6 +22,12 @@
   (server/email.js → parametrosEmail). O mesmo template serve às duas
   situações: sinal já pago ("Reserva confirmada!") ou reserva recebida à
   espera do sinal ("Reserva recebida") — os textos que mudam vêm prontos.
+
+  Residencial: {{logo_residencial}} e {{logo_largura}} são a logo do
+  residencial do apartamento reservado (imagem do próprio site) e o nome vai
+  também por escrito, para quem tem as imagens bloqueadas.
+  "Retirada das chaves" é texto fixo (o mesmo para os dois residenciais):
+  se a recepção mudar de endereço ou de WhatsApp, é só trocar aqui.
 -->
 <div style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;background:#F4F2EE;padding:24px 12px;margin:0;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;margin:0 auto;background:#FFFFFF;border-radius:14px;overflow:hidden;">
@@ -34,15 +40,21 @@
           <td style="width:40px;height:3px;background:#4FA6C6;font-size:0;line-height:0;">&nbsp;</td>
         </tr></table>
         <div style="color:#FFFFFF;font-size:22px;font-weight:300;margin-top:18px;">{{titulo}}</div>
-        <div style="color:rgba(255,255,255,.78);font-size:13px;margin-top:4px;">{{nome_propriedade}}</div>
       </td>
     </tr>
     <tr>
       <td style="padding:28px 32px;">
+        <!-- residencial do apartamento reservado -->
+        <img src="{{logo_residencial}}" width="{{logo_largura}}" alt="{{nome_propriedade}}" style="display:block;margin:0 auto 24px;width:{{logo_largura}}px;max-width:80%;height:auto;border:0;color:#1B1C46;font-size:16px;font-weight:600;text-align:center;" />
+
         <p style="margin:0 0 4px;color:#6F6B64;font-size:13px;text-align:center;">Seu código de reserva</p>
         <p style="margin:0 0 24px;color:#1B1C46;font-size:26px;font-weight:600;letter-spacing:.06em;text-align:center;">{{codigo_reserva}}</p>
 
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F4F0;border-radius:10px;">
+          <tr>
+            <td style="padding:12px 20px 10px;color:#6F6B64;font-size:13px;">Residencial</td>
+            <td style="padding:12px 20px 10px;color:#1B1C46;font-size:13px;font-weight:700;text-align:right;">{{nome_propriedade}}</td>
+          </tr>
           <tr>
             <td style="padding:10px 20px;color:#6F6B64;font-size:13px;">Apartamento</td>
             <td style="padding:10px 20px;color:#1B1C46;font-size:13px;font-weight:600;text-align:right;">{{apartamento}}</td>
@@ -67,12 +79,30 @@
             <td style="padding:12px 20px 6px;color:#1B1C46;font-size:16px;font-weight:700;text-align:right;border-top:1px solid #E3DED6;">{{total_fmt}}</td>
           </tr>
           <tr>
-            <td style="padding:2px 20px;color:#6F6B64;font-size:13px;">{{rotulo_sinal}}</td>
+            <td style="padding:2px 20px;color:#6F6B64;font-size:13px;white-space:nowrap;">{{rotulo_sinal}}</td>
             <td style="padding:2px 20px;color:#D1301B;font-size:14px;font-weight:700;text-align:right;">{{valor_sinal_fmt}}</td>
           </tr>
           <tr>
-            <td style="padding:2px 20px 14px;color:#6F6B64;font-size:13px;">Saldo (no check-in)</td>
+            <td style="padding:2px 20px 14px;color:#6F6B64;font-size:13px;white-space:nowrap;">Saldo (no check-in)</td>
             <td style="padding:2px 20px 14px;color:#1B1C46;font-size:13px;font-weight:600;text-align:right;">{{restante_fmt}}</td>
+          </tr>
+        </table>
+
+        <!-- retirada das chaves: texto fixo, o mesmo para os dois residenciais -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border:1px solid #E3DED6;border-radius:10px;">
+          <tr>
+            <td style="padding:16px 20px;">
+              <div style="color:#1B1C46;font-size:14px;font-weight:700;">Retirada das chaves</div>
+              <div style="margin-top:6px;color:#4A4843;font-size:13px;line-height:1.6;">
+                As chaves são entregues na recepção, neste endereço:<br/>
+                <b style="color:#1B1C46;">Rua Dom Patrício, 82 - Enseada da Pinheira</b><br/>
+                Palhoça - Santa Catarina, Brasil
+              </div>
+              <div style="margin-top:12px;">
+                <a href="https://api.whatsapp.com/send/?phone=%2B5548984761800&amp;text&amp;type=phone_number&amp;app_absent=0" style="display:inline-block;margin:0 6px 6px 0;padding:9px 16px;background:#1E8E4E;color:#FFFFFF;font-size:13px;font-weight:700;text-decoration:none;border-radius:8px;">Falar no WhatsApp</a>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=PinheiraMar+Residencial+R.+Dom+Patr%C3%ADcio+82+Palho%C3%A7a+SC" style="display:inline-block;margin:0 6px 6px 0;padding:8px 15px;border:1px solid #1B1C46;color:#1B1C46;font-size:13px;font-weight:700;text-decoration:none;border-radius:8px;">Ver no mapa</a>
+              </div>
+            </td>
           </tr>
         </table>
 
@@ -81,7 +111,7 @@
           Qualquer dúvida, fale conosco pelo WhatsApp <b style="color:#1B1C46;">{{whatsapp}}</b>.
         </p>
         <p style="margin:18px 0 0;color:#8A857C;font-size:11.5px;line-height:1.5;">
-          {{nome_propriedade}} &middot; {{endereco}} &middot; {{cidade}}
+          Endereço do {{nome_propriedade}}: {{endereco}} &middot; {{cidade}}
         </p>
       </td>
     </tr>
