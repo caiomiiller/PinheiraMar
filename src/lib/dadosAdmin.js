@@ -81,8 +81,24 @@ export function reducaoSuspeita(antes, depois, agora = Date.now()) {
   return d < a - 20 && d < a * 0.9;
 }
 
-async function gravarLinha(novo, lido) {
+async function gravarLinha(novo, lido, { permitirReducao = false } = {}) {
   const agora = new Date().toISOString();
+  // "Restaurar backup" com um arquivo mais antigo (menos reservas, de
+  // propósito): passa pela função do banco que avisa o gatilho de
+  // supabase/02-trava-reducao-reservas.sql a não recusar ESTA gravação —
+  // qualquer outra gravação continua sujeita à verificação normal.
+  if (permitirReducao) {
+    const { data, error } = await supabase.rpc('gravar_app_state_ignorando_reducao', { p_data: novo, p_versao: lido.versao });
+    if (error) {
+      // Função ainda não existe (02-trava-reducao-reservas.sql não
+      // aplicado): grava do jeito de sempre, sem a proteção do banco.
+      if (error.code === '42883' || error.code === 'PGRST202') return gravarLinha(novo, lido, { permitirReducao: false });
+      throw new ErroDados('gravacao_falhou', error.message);
+    }
+    const linha = Array.isArray(data) ? data[0] : data;
+    if (!linha) return { ok: false, conflito: true };
+    return { ok: true, versao: linha.nova_versao, updatedAt: linha.atualizado_em || agora };
+  }
   if (lido.versao != null) {
     const { data, error } = await supabase.from(APP_STATE_TABLE)
       .update({ data: novo, versao: lido.versao + 1, updated_at: agora })
@@ -122,7 +138,7 @@ export async function gravarAdmin(fn, base, { pre, permitirReducao = false, tent
     if (!permitirReducao && reducaoSuspeita(atual.data, novo)) {
       throw new ErroDados('reducao_suspeita', { antes: atual.data.reservas.length, depois: novo.reservas.length });
     }
-    const w = await gravarLinha(novo, atual);
+    const w = await gravarLinha(novo, atual, { permitirReducao });
     if (w.ok) return { data: novo, versao: w.versao, updatedAt: w.updatedAt };
     atual = null; resultado = undefined; // conflito: recarrega e reaplica
     await new Promise(r => setTimeout(r, 150 * t));
@@ -151,6 +167,30 @@ export function ouvirAlteracoes(cb) {
       (p) => cb({ versao: p.new?.versao ?? null, updatedAt: p.new?.updated_at || null }))
     .subscribe();
   return () => { supabase.removeChannel(canal); };
+}
+
+/* ───────────── encerrar sessões (kill switch) ─────────────
+   Força a saída de TODOS os administradores, em qualquer dispositivo —
+   inclusive de quem aciona (é preciso entrar de novo depois). Existe para
+   os momentos em que se quer ter a certeza de que nenhuma aba antiga do
+   painel fica gravando por cima (ex.: antes de aplicar uma migração de
+   banco). Não substitui a trava do banco (supabase/02-trava-reducao-
+   reservas.sql), que protege sempre, mesmo sem ninguém lembrar de clicar
+   aqui — isto é um botão de conforto operacional para os casos em que se
+   quer mesmo garantir uma "página em branco". */
+export async function encerrarTodasSessoes() {
+  if (MODO_DEMO) return { ok: false, motivo: 'demo' };
+  const s = await sessaoAtual();
+  try {
+    const resp = await fetch('/api/admin/encerrar-sessoes', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${s?.access_token || ''}` },
+    });
+    const j = await resp.json().catch(() => ({}));
+    return { ok: resp.ok && j.ok !== false, motivo: j.motivo || j.erro || (resp.ok ? null : 'http_' + resp.status), contas: j.contas ?? null };
+  } catch {
+    return { ok: false, motivo: 'rede' };
+  }
 }
 
 /* ───────────── e-mail de confirmação (pelo servidor) ───────────── */
