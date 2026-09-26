@@ -873,14 +873,6 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               ))}
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>{tr('ps_como_chegar')}</div>
-            <div style={{ fontSize: 15, color: GREY, lineHeight: 1.9 }}>
-              <div>{tr('ps_km_floripa')}</div>
-              <div>{tr('ps_km_aeroporto')}</div>
-              <div>BR-101 → Palhoça → Pinheira</div>
-            </div>
-          </div>
         </div>
         <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 13, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase' }}>
           © {new Date().getFullYear()} Grupo PinheiraMar

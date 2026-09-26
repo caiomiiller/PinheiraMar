@@ -104,7 +104,6 @@ const pt = {
   ps_ordem_recomendados: 'Recomendados', ps_ordem_menor: 'Preço: menor primeiro', ps_ordem_maior: 'Preço: maior primeiro',
   ps_essencia: 'A sua casa de verão.', ps_horarios: 'Horários',
   ps_checkin_a_partir: (h) => `Check-in a partir das ${h}`, ps_checkout_ate: (h) => `Check-out até ${h}`,
-  ps_como_chegar: 'Como chegar', ps_km_floripa: '55 km de Florianópolis', ps_km_aeroporto: '66 km do aeroporto',
   ps_datas_livres: (n) => `Datas livres · ${n}`,
   ps_datas_livres_sub: 'Escolha um período livre para ver este apartamento nos resultados.',
 
@@ -290,7 +289,6 @@ const es = {
   ps_ordem_recomendados: 'Recomendados', ps_ordem_menor: 'Precio: menor primero', ps_ordem_maior: 'Precio: mayor primero',
   ps_essencia: 'Su casa de verano.', ps_horarios: 'Horarios',
   ps_checkin_a_partir: (h) => `Check-in desde las ${h}`, ps_checkout_ate: (h) => `Check-out hasta las ${h}`,
-  ps_como_chegar: 'Cómo llegar', ps_km_floripa: 'A 55 km de Florianópolis', ps_km_aeroporto: 'A 66 km del aeropuerto',
   ps_datas_livres: (n) => `Fechas libres · ${n}`,
   ps_datas_livres_sub: 'Elija un período libre para ver este departamento en los resultados.',
 
@@ -481,7 +479,6 @@ const en = {
   ps_ordem_recomendados: 'Recommended', ps_ordem_menor: 'Price: low to high', ps_ordem_maior: 'Price: high to low',
   ps_essencia: 'Your summer home.', ps_horarios: 'Hours',
   ps_checkin_a_partir: (h) => `Check-in from ${h}`, ps_checkout_ate: (h) => `Check-out by ${h}`,
-  ps_como_chegar: 'Getting here', ps_km_floripa: '55 km from Florianópolis', ps_km_aeroporto: '66 km from the airport',
   ps_datas_livres: (n) => `Free dates · ${n}`,
   ps_datas_livres_sub: 'Pick a free period to see this apartment in the results.',
 
