@@ -442,37 +442,47 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                 </a>
               </div>
 
-              {/* seletor de datas — abre o calendário de disponibilidade */}
-              <div style={{ border: '1px solid #9a9a9a', borderRadius: 12, overflow: 'hidden', marginBottom: 10 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-                  <button onClick={() => setCalOpen(o => !o)} aria-expanded={calOpen} style={{ minHeight: 60, padding: '10px 14px', border: 'none', borderRight: '1px solid #9a9a9a', background: calOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: F.sans }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', marginBottom: 3, color: '#222' }}>{tr('ap_checkin')}</div>
-                    <div style={{ fontSize: 16, color: localCi ? '#222' : '#5f5f5f' }}>{localCi ? fmtCurta(localCi) : tr('ap_adicionar_data')}</div>
-                  </button>
-                  <button onClick={() => setCalOpen(o => !o)} aria-expanded={calOpen} style={{ minHeight: 60, padding: '10px 14px', border: 'none', background: calOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: F.sans }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', marginBottom: 3, color: '#222' }}>{tr('ap_checkout')}</div>
-                    <div style={{ fontSize: 16, color: localCo ? '#222' : '#5f5f5f' }}>{localCo ? fmtCurta(localCo) : tr('ap_adicionar_data')}</div>
-                  </button>
-                </div>
-                <div style={{ padding: '10px 14px', borderTop: '1px solid #9a9a9a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>{tr('ap_hospedes')}</div>
-                    <div style={{ fontSize: 14, color: '#5f5f5f' }}>{tr('bk_maximo', apt.capacidade)}</div>
+              {/* seletor de datas — abre o calendário de disponibilidade.
+                  Envolvido num wrapper "position: relative" para o calendário
+                  poder abrir como um popover mais largo (460px, como o da
+                  página inicial) por cima do resto do cartão, em vez de ficar
+                  espremido nos ~300px da coluna lateral — a pedido do Caio,
+                  2026-09-27 (calendário "mal dimensionado" nesta página). */}
+              <div style={{ position: 'relative', marginBottom: 10 }}>
+                <div style={{ border: '1px solid #9a9a9a', borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                    <button onClick={() => setCalOpen(o => !o)} aria-expanded={calOpen} style={{ minHeight: 60, padding: '10px 14px', border: 'none', borderRight: '1px solid #9a9a9a', background: calOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: F.sans }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', marginBottom: 3, color: '#222' }}>{tr('ap_checkin')}</div>
+                      <div style={{ fontSize: 16, color: localCi ? '#222' : '#5f5f5f' }}>{localCi ? fmtCurta(localCi) : tr('ap_adicionar_data')}</div>
+                    </button>
+                    <button onClick={() => setCalOpen(o => !o)} aria-expanded={calOpen} style={{ minHeight: 60, padding: '10px 14px', border: 'none', background: calOpen ? '#F7F7F7' : '#fff', cursor: 'pointer', textAlign: 'left', fontFamily: F.sans }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', marginBottom: 3, color: '#222' }}>{tr('ap_checkout')}</div>
+                      <div style={{ fontSize: 16, color: localCo ? '#222' : '#5f5f5f' }}>{localCo ? fmtCurta(localCo) : tr('ap_adicionar_data')}</div>
+                    </button>
                   </div>
-                  <Contador valor={localHosp} max={apt.capacidade} onChange={v => { setLocalHosp(v); setG1(v); }}
-                    rotuloMenos={tr('bk_menos_pessoa')} rotuloMais={tr('bk_mais_pessoa')} />
+                  <div style={{ padding: '10px 14px', borderTop: '1px solid #9a9a9a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>{tr('ap_hospedes')}</div>
+                      <div style={{ fontSize: 14, color: '#5f5f5f' }}>{tr('bk_maximo', apt.capacidade)}</div>
+                    </div>
+                    <Contador valor={localHosp} max={apt.capacidade} onChange={v => { setLocalHosp(v); setG1(v); }}
+                      rotuloMenos={tr('bk_menos_pessoa')} rotuloMais={tr('bk_mais_pessoa')} />
+                  </div>
                 </div>
-              </div>
 
-              {calOpen && (
-                <div style={{ marginBottom: 10 }}>
-                  <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo} ate={ultimaNoite}
-                    onChange={(newCi, newCo) => {
-                      setLocalCi(newCi); setLocalCo(newCo);
-                      if (newCi && newCo) setCalOpen(false);
-                    }} />
-                </div>
-              )}
+                {calOpen && (
+                  <>
+                    <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '92vw' }} onClick={e => e.stopPropagation()}>
+                      <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo} ate={ultimaNoite}
+                        onChange={(newCi, newCo) => {
+                          setLocalCi(newCi); setLocalCo(newCo);
+                          if (newCi && newCo) setCalOpen(false);
+                        }} />
+                    </div>
+                  </>
+                )}
+              </div>
 
               {/* aviso: a pesquisa exige mais pessoas do que este apartamento leva sozinho */}
               {precisaSegundoApto && (
