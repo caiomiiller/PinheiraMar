@@ -45,8 +45,25 @@ export { HORAS_ATE_LIMPAR_PROVISORIA };
    que foi efetivamente recebido, editável no ecrã da reserva) e
    `valorRestante` deixa de ser guardado — é sempre `total - valorPago`,
    calculado na hora. Backfill: pendente → 0, reservado → sinal (50% do
-   total), confirmado → total, bloqueio/cancelada → 0. */
-export const DATA_VERSION = 3;
+   total), confirmado → total, bloqueio/cancelada → 0.
+
+   v5 — taxas obrigatórias que faltavam em reservas ainda por acontecer (a
+   pedido do Caio, 2026-09-26, depois de investigar por que "sumiram de
+   todas as reservas"). Na verdade nunca tinham sido lançadas nelas: são
+   quase todas reservas "Importado" do sistema antigo, que nunca discriminou
+   essa taxa — não é uma regressão de hoje. Ainda assim, para as reservas
+   com checkout ainda por vir (as únicas onde ainda faz sentido cobrar), sem
+   NENHUM item em `extras`, lança agora as taxas obrigatórias atuais e soma
+   o valor ao total. NÃO mexe em reservas já terminadas (encerradas do jeito
+   que estavam) nem nas que já têm algum extra lançado (já foram tratadas à
+   mão). Roda uma única vez (por causa do `versaoDados`), na próxima leitura
+   do estado depois do deploy.
+
+   (Pulou-se de v3 direto para v5: os dados de produção já tinham
+   `versaoDados: 4` gravado — não por nenhum passo daqui, o histórico do
+   git nunca teve um v4 — provavelmente de uma edição manual anterior. Usar
+   "5" evita que este passo seja ignorado por engano.) */
+export const DATA_VERSION = 5;
 
 // A marca do sinal vem escrita no nome, com ou sem espaço antes do "%".
 const MARCA_SINAL_50 = /50\s*%/;
@@ -90,6 +107,25 @@ export function migrarDados(d) {
         : 0;
       return { ...r, valorPago: vp };
     });
+  }
+
+  if (de < 5) {
+    const hoje = hojeISO();
+    const obrig = (d.taxasAdicionais || []).filter(t => t && t.tipo === 'obrigatoria');
+    if (obrig.length) {
+      reservas = reservas.map(r => {
+        if (r.status === 'cancelada' || r.status === 'bloqueio') return r;
+        if (!r.checkOut || r.checkOut < hoje) return r;
+        if (r.extras && r.extras.length) return r; // já tem algo lançado — não mexe
+        const novos = obrig.map(t => ({
+          id: 'mig4-' + r.id + '-' + t.id, taxaId: t.id, nome: t.nome, tipo: 'obrigatoria',
+          por: t.por || 'reserva', qtd: 1, preco: Number(t.preco) || 0,
+        }));
+        const acrescimo = novos.reduce((s, e) => s + e.qtd * e.preco, 0);
+        alteradas++;
+        return { ...r, extras: novos, total: Math.round(((Number(r.total) || 0) + acrescimo) * 100) / 100 };
+      });
+    }
   }
 
   return { data: { ...d, reservas, versaoDados: DATA_VERSION }, migrou: true, alteradas };
