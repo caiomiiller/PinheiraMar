@@ -62,8 +62,16 @@ export { HORAS_ATE_LIMPAR_PROVISORIA };
    (Pulou-se de v3 direto para v5: os dados de produção já tinham
    `versaoDados: 4` gravado — não por nenhum passo daqui, o histórico do
    git nunca teve um v4 — provavelmente de uma edição manual anterior. Usar
-   "5" evita que este passo seja ignorado por engano.) */
-export const DATA_VERSION = 5;
+   "5" evita que este passo seja ignorado por engano.)
+
+   v6 — desfaz a v5 (a pedido do Caio, 2026-09-27). A v5 já tinha corrido em
+   produção nas 74 reservas futuras sem nenhum extra lançado, somando R$225
+   a cada uma. Remove exatamente os itens que a v5 lançou — reconhecidos
+   pelo prefixo `mig4-` no id, que só ela usa — e tira o mesmo valor do
+   total; não mexe em mais nada (nem nas 5 reservas que já tinham a taxa
+   lançada de outra forma, nem em qualquer extra lançado à mão desde então,
+   porque nenhum desses tem esse prefixo). */
+export const DATA_VERSION = 6;
 
 // A marca do sinal vem escrita no nome, com ou sem espaço antes do "%".
 const MARCA_SINAL_50 = /50\s*%/;
@@ -126,6 +134,18 @@ export function migrarDados(d) {
         return { ...r, extras: novos, total: Math.round(((Number(r.total) || 0) + acrescimo) * 100) / 100 };
       });
     }
+  }
+
+  if (de < 6) {
+    reservas = reservas.map(r => {
+      const extras = r.extras || [];
+      const daV5 = extras.filter(e => typeof e.id === 'string' && e.id.startsWith('mig4-'));
+      if (!daV5.length) return r;
+      const remocao = daV5.reduce((s, e) => s + (Number(e.qtd) || 1) * (Number(e.preco) || 0), 0);
+      const restantes = extras.filter(e => !(typeof e.id === 'string' && e.id.startsWith('mig4-')));
+      alteradas++;
+      return { ...r, extras: restantes, total: Math.round(((Number(r.total) || 0) - remocao) * 100) / 100 };
+    });
   }
 
   return { data: { ...d, reservas, versaoDados: DATA_VERSION }, migrou: true, alteradas };
