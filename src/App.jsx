@@ -162,6 +162,12 @@ export default function App() {
       .pm-pubsite-catbar{display:none!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
+      /* idioma volta a aparecer no telemóvel, fixo no canto superior direito do
+         cabeçalho (fora do fluxo, para não empurrar a logo centralizada) — o
+         mesmo lugar em que já fica na versão desktop, a pedido do Caio,
+         2026-09-23 (e de novo em 2026-09-27: não deve descer para junto do
+         bloco "Conheça a Pinheira"). */
+      .pm-pubsite-lang{display:flex!important;position:static!important;}
       .pm-pubsite-hero{display:none!important;}
       .pm-pubsite-main{padding:32px 16px 24px!important;}
       .pm-pubsite-group-head{gap:12px!important;flex-direction:column!important;align-items:center!important;text-align:center!important;border-bottom:none!important;margin-bottom:0!important;}

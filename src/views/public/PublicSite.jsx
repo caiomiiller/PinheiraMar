@@ -654,10 +654,20 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             })}
           </nav>
 
-          {/* idioma: saiu do cabeçalho (disputava espaço com os filtros) —
-              volta a ser a barra de bandeiras (não um menu), mas agora
-              centralizada junto ao bloco "Conheça a Pinheira", a pedido do
-              Caio (2026-09-26). Ver DestinoSection.jsx. */}
+          {/* idioma — de volta ao canto superior direito do cabeçalho (onde
+              já estava antes de 2026-09-26): a pedido do Caio, não deve ficar
+              lá embaixo, junto ao bloco "Conheça a Pinheira" (DestinoSection).
+              À direita dos filtros no telemóvel e da busca no desktop. */}
+          {idiomasAtivos.length > 1 && (
+            <div className="pm-pubsite-lang" style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+              {idiomasAtivos.map(id => (
+                <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo} aria-label={id.nativo} aria-pressed={lang === id.codigo}
+                  style={{ width: 40, height: 40, borderRadius: '50%', border: lang === id.codigo ? `1px solid ${BLACK}` : `1px solid transparent`, background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
+                  {id.bandeira}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
@@ -830,7 +840,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       </main>
 
       {/* ══ DESTINATION (partilhado — mesma zona/praia para os dois imóveis) ══ */}
-      <DestinoSection residenciais={data.residenciais} lang={lang} setLang={setLang} idiomasAtivos={idiomasAtivos} />
+      <DestinoSection residenciais={data.residenciais} />
 
       {/* ══ FOOTER — assinatura do grupo, residenciais e faixa como remate ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>
