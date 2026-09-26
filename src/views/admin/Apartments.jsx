@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Upload, X, Check, BedDouble, Copy, Star, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, Star, GripVertical } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { uid, money } from '../../lib/helpers';
-import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput,
-  Select, Textarea, PhotoTile, DragGrip, MoneyInput, duplicateInList, ConfirmDialog } from '../../components/ui';
-import { useReorder } from '../../hooks/useReorder';
+import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, Textarea,
+  PhotoTile, DragGrip, MoneyInput, duplicateInList, ConfirmDialog } from '../../components/ui';
+import { useReorder, reordenarPorIds } from '../../hooks/useReorder';
 import { iconBtn } from './Reservations';
 
 export function Apartments({ data, update }) {
@@ -19,7 +19,7 @@ export function Apartments({ data, update }) {
   };
   const remove = (id) => { update(prev => ({ ...prev, apartamentos: prev.apartamentos.filter(x => x.id !== id) })); setEditing(null); };
   const duplicate = (id) => update(prev => ({ ...prev, apartamentos: duplicateInList(prev.apartamentos, id, a => ({ ...a, id: 'a' + uid(), nome: a.nome + ' (cópia)' })) }));
-  const dnd = useReorder(data.apartamentos, (arr) => update(prev => ({ ...prev, apartamentos: arr })));
+  const dnd = useReorder(data.apartamentos, (arr) => update(prev => ({ ...prev, apartamentos: reordenarPorIds(prev.apartamentos, arr) })));
   const residencial = data.settings;
 
   return (
@@ -120,15 +120,6 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
   const nome = titulo.trim().split(' ').slice(0, 2).join(' ') || 'Apto';
   const ok = titulo.trim();
 
-  /* ── Section wrapper ── */
-  const Sec = ({ label, children }) => (
-    <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0 28px', padding: '24px 0', borderBottom: `1px solid ${C.line}` }}>
-      <div style={{ paddingTop: 2 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{label}</div>
-      </div>
-      <div>{children}</div>
-    </div>
-  );
 
   const SpinField = ({ label, value, onChange, min = 0, hint }) => (
     <div>

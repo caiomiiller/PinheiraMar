@@ -5,3 +5,10 @@ dist
 .env.*.local
 
 vite.config.js.timestamp-*.mjs
+
+# ferramentas do computador (Visual Studio / JetBrains / Claude) — não vão para o Git
+.vs/
+**/.vs/
+.idea/
+.claude/
+.preview-demo/

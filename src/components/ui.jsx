@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Check, X, ChevronLeft, ChevronRight, Waves, MapPin, GripVertical,
-  AlertCircle, BedDouble, Wifi, Car, Minus, Plus, Info, LogIn, LogOut } from 'lucide-react';
+import React from 'react';
+import { X, ChevronLeft, GripVertical, Minus, Plus, LogIn, LogOut } from 'lucide-react';
 import { C, F } from '../lib/constants';
 import { ymd, today } from '../lib/helpers';
 
-const inputStyle = { width: '100%', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontSize: '14px', outline: 'none', fontFamily: F.sans };
+// 16 px: abaixo disso o iPhone dá zoom sozinho ao tocar no campo (e é mais
+// legível para o público 50+).
+const inputStyle = { width: '100%', padding: '11px 12px', borderRadius: '10px', border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontSize: '16px', outline: 'none', fontFamily: F.sans, boxSizing: 'border-box' };
 
 export const TextInput = (p) => <input {...p} className="pmf" style={{ ...inputStyle, ...(p.style || {}) }} />;
 export const DateInput = (p) => <input type="date" {...p} className="pmf" style={{ ...inputStyle, ...(p.style || {}) }} />;
@@ -31,14 +32,14 @@ export function Btn({ variant = 'primary', size = 'md', children, style, icon: I
   );
 }
 
-export function Modal({ title, subtitle, onClose, onBack, headerActions, children, footer, wide, progress }) {
+export function Modal({ title, subtitle, onClose, onBack, headerActions, children, footer, wide, progress, rotuloVoltar = 'Voltar', rotuloFechar = 'Fechar' }) {
   return (
     <div onClick={onClose} className="pm-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(10,40,46,.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 14px', zIndex: 100, overflowY: 'auto', backdropFilter: 'blur(2px)' }}>
       <div onClick={e => e.stopPropagation()} className="pm-pop pm-modal-card" style={{ background: '#fff', borderRadius: '18px', width: '100%', maxWidth: wide ? 760 : 520, boxShadow: '0 24px 70px rgba(10,40,46,.35)', overflow: 'hidden', marginTop: 12 }}>
         <div className="pm-modal-header" style={{ padding: '18px 22px', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
             {onBack && (
-              <button onClick={onBack} title="Voltar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink, padding: '2px 0 0', flexShrink: 0, display: 'flex' }}>
+              <button onClick={onBack} title={rotuloVoltar} aria-label={rotuloVoltar} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink, padding: '2px 0 0', flexShrink: 0, display: 'flex' }}>
                 <ChevronLeft size={22} />
               </button>
             )}
@@ -49,7 +50,7 @@ export function Modal({ title, subtitle, onClose, onBack, headerActions, childre
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {headerActions}
-            <button onClick={onClose} style={{ background: C.espuma, border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft, flexShrink: 0 }}><X size={18} /></button>
+            <button onClick={onClose} title={rotuloFechar} aria-label={rotuloFechar} style={{ background: C.espuma, border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft, flexShrink: 0 }}><X size={18} /></button>
           </div>
         </div>
         <div className="pm-modal-body" style={{ padding: '20px 22px' }}>{children}</div>
@@ -68,11 +69,11 @@ export function Modal({ title, subtitle, onClose, onBack, headerActions, childre
 
 export const Field = ({ label, children, hint, required }) => (
   <label style={{ display: 'block' }}>
-    <span style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: C.inkSoft, marginBottom: 6, letterSpacing: '.01em' }}>
+    <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: C.inkSoft, marginBottom: 6, letterSpacing: '.01em' }}>
       {label}{required && <span style={{ color: C.coral }}> *</span>}
     </span>
     {children}
-    {hint && <span style={{ display: 'block', fontSize: 12, color: C.inkSoft, marginTop: 5 }}>{hint}</span>}
+    {hint && <span style={{ display: 'block', fontSize: 13, color: C.inkSoft, marginTop: 5 }}>{hint}</span>}
   </label>
 );
 
@@ -150,7 +151,11 @@ export const CheckoutBadge = ({ compact }) => (
   </span>
 );
 
-export function PhotoTile({ apt, h = 184, radius = 14 }) {
+// `rotulo`: texto da etiqueta de vista no canto (o site passa-o já
+// traduzido); sem rótulo usa a vista tal como está gravada, e com '' não
+// mostra etiqueta nenhuma.
+export function PhotoTile({ apt, h = 184, radius = 14, rotulo }) {
+  const etiqueta = rotulo ?? apt.vista;
   if (apt.foto) {
     // Usa <img> em vez de background-image: os browsers aplicam um
     // reamostragem de maior qualidade a <img> ao reduzir fotos grandes
@@ -159,8 +164,8 @@ export function PhotoTile({ apt, h = 184, radius = 14 }) {
     // fotos abrirem nítidas em tamanho grande (galeria/lightbox).
     return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', position: 'relative' }}>
       <img src={apt.foto} alt={apt.nome || ''} loading="lazy" decoding="async"
-        style={{ width: '100%', height: '100%', display: 'block' }} />
-      <span style={tilePill}>{apt.vista}</span>
+        style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+      {etiqueta && <span style={tilePill}>{etiqueta}</span>}
     </div>;
   }
   let seed = 0; for (const ch of (apt.id || apt.nome || 'x')) seed = (seed * 31 + ch.charCodeAt(0)) % 360;
@@ -174,7 +179,7 @@ export function PhotoTile({ apt, h = 184, radius = 14 }) {
         <path d="M0,42 C60,12 120,72 200,46 C280,20 340,76 400,46 L400,130 L0,130 Z" fill="rgba(255,255,255,.22)" />
         <path d="M0,72 C70,46 140,96 210,72 C290,48 350,92 400,70 L400,130 L0,130 Z" fill="#ECDCB9" />
       </svg>
-      <span style={tilePill}>{apt.vista}</span>
+      {etiqueta && <span style={tilePill}>{etiqueta}</span>}
     </div>
   );
 }

@@ -20,6 +20,13 @@ export const F = {
 // WhatsApp é o canal principal de contacto do site (substitui e-mail/telefone
 // nas páginas públicas) — link fixo do titular do WhatsApp Business.
 export const WHATSAPP_URL = 'https://api.whatsapp.com/send/?phone=%2B5548984761800&text&type=phone_number&app_absent=0';
+// Mostrado quando o site não consegue carregar os dados (aí não há o telefone do residencial à mão).
+export const TELEFONE_CONTATO = '(48) 98476-1800';
+
+// Foto do topo do site quando o residencial ainda usa a imagem genérica do
+// Unsplash (a de origem) — uma foto real, tirada do próprio residencial.
+export const FOTO_TOPO_PADRAO = '/fotos/a305/2.jpg';
+export const fotoTopo = (url) => (!url || /images\.unsplash\.com\/photo-1507525428034/.test(url) ? FOTO_TOPO_PADRAO : url);
 
 // Avaliação real do perfil Google Meu Negócio "PinheiraMar Residencial"
 // (não é calculada pela aplicação — atualizar manualmente de vez em quando,

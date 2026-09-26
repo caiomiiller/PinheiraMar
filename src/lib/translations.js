@@ -1,8 +1,8 @@
-import { useState } from 'react';
+
 
 export const TRANSLATIONS = {
   pt: {
-    /* busca no telemóvel — textos simples para o público 50+ */
+    /* busca no celular — textos simples para o público 50+ */
     m_search_title: 'Encontre seu apartamento',
     m_arrival: 'Chegada', m_departure: 'Saída', m_pick_date: 'Escolher data',
     m_people: 'Quantas pessoas?', m_people_none: 'Toque no +',
@@ -26,7 +26,7 @@ export const TRANSLATIONS = {
     search_add_guests: 'Adicionar viajantes',
     /* results */
     results_title: (n) => `Apartamentos em Praia da Pinheira`,
-    results_sub: (n) => `${n} alojamentos · Pinheira, Palhoça — Santa Catarina`,
+    results_sub: (n) => `${n} acomodações · Pinheira, Palhoça — Santa Catarina`,
     results_avail: (n) => `${n} ${n === 1 ? 'disponível' : 'disponíveis'}`,
     results_avail_for: (ci, co) => ` para ${ci}–${co}`,
     combo_title: (n) => `Para ${n} hóspedes é necessário combinar apartamentos.`,

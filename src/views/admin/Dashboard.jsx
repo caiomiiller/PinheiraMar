@@ -1,7 +1,7 @@
 import React from 'react';
-import { CalendarDays, Users, Wallet, BedDouble, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
+import { CalendarDays, Users, Wallet, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
 import { C, F } from '../../lib/constants';
-import { money, nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong, holdExpirado } from '../../lib/helpers';
+import { nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong, holdExpirado, money } from '../../lib/helpers';
 import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge, displayStatus } from '../../components/ui';
 
 export function Dashboard({ data, go, openReservation }) {
@@ -69,6 +69,11 @@ export function Dashboard({ data, go, openReservation }) {
   // Pagamento aprovado para datas que entretanto já tinham sido ocupadas por
   // outra reserva (ver api/mp-webhook.js) — precisa de decisão humana.
   const conflitos = data.reservas.filter(r => r.conflitoDatas && r.status !== 'cancelada');
+  // Pagamentos que precisam de alguém (ver api/mp-webhook.js): pago a menos
+  // do que o sinal (a reserva não foi confirmada, mas as datas ficaram
+  // seguras) e estornos/contestações depois de pago.
+  const avisosPagamento = data.reservas.filter(r => r.status !== 'cancelada'
+    && ((r.pagamentoDivergente && r.status === 'pendente') || r.pagamentoEstornado));
 
   const stats = [
     { label: 'Reservas ativas',   value: ativasFuturas.length,   icon: CalendarDays, sub: `${ativasFuturas.filter(r => r.status === 'pendente').length} pendentes · ${ativasFuturas.filter(r => r.status === 'reservado').length} reservadas`, click: () => go('reservas') },
@@ -108,6 +113,25 @@ export function Dashboard({ data, go, openReservation }) {
   return (
     <div>
       <PageHead title="Painel de controle" sub={`Hoje, ${fmtLong(ymd(t))}`} />
+
+      {avisosPagamento.length > 0 && (
+        <Card style={{ padding: 16, marginBottom: 18, background: '#FDECEC', border: '1px solid #F2C4C4' }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#A23B3B', marginBottom: 8 }}>
+            {avisosPagamento.length} pagamento(s) do Mercado Pago precisa(m) de atenção
+          </div>
+          <div style={{ display: 'grid', gap: 6 }}>
+            {avisosPagamento.map(r => (
+              <button key={r.id} onClick={() => openReservation?.(r.id)}
+                style={{ textAlign: 'left', background: 'rgba(255,255,255,.7)', border: 'none', borderRadius: 8, padding: '8px 10px', cursor: 'pointer', fontSize: 13, color: C.ink, fontFamily: F.sans }}>
+                <b>{r.codigo}</b> · {r.hospede || '—'} · {aptName(r.apartamentoId)} —{' '}
+                {r.pagamentoEstornado
+                  ? `pagamento ${r.pagamentoEstornado.status === 'charged_back' ? 'contestado (chargeback)' : 'estornado'} em ${fmtShort(String(r.pagamentoEstornado.em || '').slice(0, 10) || ymd(t))}`
+                  : `pagou ${money(r.pagamentoDivergente.pago)} de ${money(r.pagamentoDivergente.esperado)} do sinal: não foi confirmada, as datas estão seguras`}
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {conflitos.length > 0 && (
         <Card style={{ padding: 16, marginBottom: 18, background: '#FBEFD9', border: '1px solid #EBD9C0' }}>

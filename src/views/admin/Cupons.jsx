@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, X, Tag, AlertCircle } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
+import { C } from '../../lib/constants';
 import { money, uid, today, parseYMD, fmtShort, ymd, addDays } from '../../lib/helpers';
-import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput,
-  Select, DateInput, Badge, MoneyInput } from '../../components/ui';
+import { PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, DateInput, MoneyInput } from '../../components/ui';
 import { iconBtn } from './Reservations';
 
 export function CuponsView({ data, update }) {

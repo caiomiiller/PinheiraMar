@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Waves, MapPin, MessageCircle, CalendarDays, ChevronDown,
-  Heart, ArrowRight, ChevronLeft, ChevronRight, Home, Users,
-  AlertCircle, X } from 'lucide-react';
-import { C, F, WHATSAPP_URL } from '../../lib/constants';
-import { money, ymd, today, parseYMD, addDays, isAvailable, nightlyRate,
-  stayBreakdown, nights, fmtShort, pad, WD } from '../../lib/helpers';
-import { useT } from '../../lib/translations';
-import { Btn, PhotoTile, Field, Modal } from '../../components/ui';
+import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
+  Home, Users, AlertCircle, X } from 'lucide-react';
+import { F, WHATSAPP_URL, fotoTopo } from '../../lib/constants';
+import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
+import { orcamentoApartamento } from '../../lib/precos';
+import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
+import { lerUltimaReserva } from '../../lib/dadosPublico';
+import { IdiomaProvider, useIdioma } from '../../lib/i18n';
+import { PhotoTile, Modal } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
 import { DestinoSection } from './DestinoSection';
@@ -48,12 +49,21 @@ const nomeCurtoResidencial = (r) => (RESIDENCIAL_BRAND_TEXT[r.id] || []).map(x =
 const catIsResidencial = (k) => typeof k === 'string' && k.startsWith('res:');
 const catResidencialId = (k) => (catIsResidencial(k) ? k.slice(4) : null);
 
-const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-// Extrai {dia, mês, dia da semana} de uma data 'yyyy-mm-dd' para o cartão de data grande da busca mobile.
-function bigDateParts(s) {
+// "Casa 108" é uma casa, não um apartamento: a contagem de cada residencial
+// separa as duas (a pedido do Caio). Casa = unidade cujo nome começa por "Casa".
+const ehCasa = (apt) => /^\s*casa(?![a-zà-ú])/i.test(apt?.nome || '');
+
+// Extrai {dia, mês, dia da semana} de uma data 'yyyy-mm-dd' para o cartão de
+// data grande da busca mobile — no idioma escolhido pelo visitante.
+const maiuscula = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+function bigDateParts(s, locale = 'pt-BR') {
   if (!s) return null;
   const d = parseYMD(s);
-  return { day: pad(d.getDate()), month: MONTHS_PT[d.getMonth()], wd: WD[d.getDay()] };
+  return {
+    day: pad(d.getDate()),
+    month: maiuscula(d.toLocaleDateString(locale, { month: 'long' })),
+    wd: maiuscula(d.toLocaleDateString(locale, { weekday: 'short' }).replace('.', '')),
+  };
 }
 
 // Dentro de UM residencial, encontra a combinação de apartamentos disponíveis
@@ -79,17 +89,29 @@ function findCombo(availableApts, hosp) {
   return best ? { ...best, enough: true } : { pick: [], cap: 0, enough: false };
 }
 
-export function PublicSite({ data, onCreate }) {
-  const td = today();
-
-  /* ── language (partilhado entre imóveis) ── */
-  const idiomasAtivos = (data.residenciais[0]?.idiomas || []).filter(i => i.ativo);
+// O idioma escolhido fica num contexto (lib/i18n.jsx) para valer em TODAS as
+// telas do hóspede — detalhe, reserva, confirmação, calendário e destino.
+export function PublicSite(props) {
+  const idiomasAtivos = (props.data.residenciais[0]?.idiomas || []).filter(i => i.ativo);
   const [lang, setLang] = useState(() => {
     const browser = navigator.language?.slice(0, 2);
     const match = idiomasAtivos.find(i => i.codigo === browser);
     return match ? match.codigo : 'pt';
   });
-  const tr = useT(lang);
+  useEffect(() => { try { document.documentElement.lang = { pt: 'pt-BR', es: 'es', en: 'en' }[lang] || 'pt-BR'; } catch { /* ignora */ } }, [lang]);
+  return (
+    <IdiomaProvider lang={lang}>
+      <PublicSiteConteudo {...props} lang={lang} setLang={setLang} idiomasAtivos={idiomasAtivos} />
+    </IdiomaProvider>
+  );
+}
+
+function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) {
+  const td = today();
+  const { tr, fmtCurta, locale, dado } = useIdioma();
+  const hojeBR = hojeISO();
+  // última noite com temporada cadastrada — o calendário não deixa passar daí
+  const ultimaNoite = useMemo(() => ultimaNoiteReservavel(data.seasons, hojeBR), [data.seasons, hojeBR]);
 
   /* ── state ── */
   const [ci, setCi] = useState('');
@@ -111,23 +133,22 @@ export function PublicSite({ data, onCreate }) {
   }, [liked]);
   const [detail, setDetail] = useState(null);
 
-  // Retorno do Mercado Pago (Checkout Pro): o hóspede saiu do site para
-  // pagar o sinal e volta aqui pela URL de retorno configurada em
-  // api/mp-create-preference.js (?mp=success|pending|failure&reserva=ID).
-  // A reserva já tinha sido gravada antes de sair (ver BookingModal.jsx),
-  // por isso só é preciso encontrá-la e mostrar o ecrã de confirmação —
-  // reaproveita o mesmo caminho (detail + done) do fluxo normal.
+  // Retorno do Mercado Pago (?mp=success|pending|failure&reserva=ID — ver
+  // server/mercadopago.js). O site público já não tem os dados das reservas
+  // (eram de todos os hóspedes!): a confirmação usa o que ficou guardado
+  // neste separador antes de ir pagar. Noutro aparelho/separador, mostra uma
+  // confirmação genérica — o e-mail leva os detalhes.
   useEffect(() => {
     let params;
     try { params = new URLSearchParams(window.location.search); } catch { return; }
     const status = params.get('mp');
     const reservaId = params.get('reserva');
     if (!status || !reservaId) return;
-    // limpa a URL logo — um refresh não deve reabrir o ecrã de confirmação
     try { window.history.replaceState({}, '', window.location.pathname); } catch { /* ignora */ }
-    const reserva = data.reservas.find(r => r.id === reservaId);
-    const apt = reserva ? data.apartamentos.find(a => a.id === reserva.apartamentoId) : null;
-    if (reserva && apt) { setDetail(apt); setDone({ reserva, apt, paymentStatus: status }); }
+    const info = lerUltimaReserva(reservaId);
+    const apt = info ? data.apartamentos.find(a => a.id === info.aptos?.[0]?.id) : null;
+    if (apt) setDetail(apt);
+    setDone({ info: info || { reservas: [] }, paymentStatus: status });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [activeCategory, setActiveCategory] = useState(null);
@@ -141,6 +162,7 @@ export function PublicSite({ data, onCreate }) {
   const [calCi, setCalCi] = useState('');
   const [calCo, setCalCo] = useState('');
   const resultsRef = useRef(null);
+  const searchInlineRef = useRef(null);
   const headerRef = useRef(null);
   const groupRefs = useRef({});
 
@@ -154,7 +176,7 @@ export function PublicSite({ data, onCreate }) {
       apt: a,
       available: valid ? isAvailable(data.reservas, a.id, ci, co) : true,
       fits: !hosp || a.capacidade >= hosp,
-      bd: valid ? stayBreakdown(a, data.seasons, ci, co, hosp || undefined) : null,
+      orc: valid ? orcamentoApartamento({ apt: a, seasons: data.seasons, taxas: data.taxasAdicionais, checkIn: ci, checkOut: co, hospedes: hosp || undefined }) : null,
     })).sort((x, y) => {
       const priceDiff = sortMode === 'price_desc' ? (y.apt.preco - x.apt.preco) : (x.apt.preco - y.apt.preco);
       return (Number(y.available) - Number(x.available)) ||
@@ -177,10 +199,17 @@ export function PublicSite({ data, onCreate }) {
   const mostrarFiltroResidencial = residenciaisComApt.length > 1;
   const residencialAtivo = data.residenciais.find(r => r.id === catResidencialId(activeCategory)) || null;
   const subtituloDisponibilidade = residencialAtivo
-    ? `Disponibilidade no ${residencialAtivo.nome} para estas datas.`
-    : mostrarFiltroResidencial
-      ? `Disponibilidade nos ${residenciaisComApt.length === 2 ? 'dois ' : ''}residenciais para estas datas.`
-      : 'Disponibilidade para estas datas.';
+    ? tr('ps_disp_no', residencialAtivo.nome)
+    : mostrarFiltroResidencial ? tr('ps_disp_nos', residenciaisComApt.length) : tr('ps_disp');
+
+  // "17 apartamentos e 1 casa" / "6 apartamentos" / "1 casa"
+  const contagemUnidades = (apts) => {
+    const casas = apts.filter(ehCasa).length;
+    const aptos = apts.length - casas;
+    if (!casas) return tr('ps_n_apartamentos', aptos);
+    if (!aptos) return tr('ps_n_casas', casas);
+    return tr('ps_n_aptos_casas', aptos, casas);
+  };
 
   const catFilter = (apt) => {
     if (!activeCategory) return true;
@@ -202,21 +231,41 @@ export function PublicSite({ data, onCreate }) {
     }
   }, []); // eslint-disable-line
 
+  // Abrir um apartamento põe ?apto=<id> na URL — antes o endereço não mudava
+  // e o botão "Compartilhar" enviava a página inicial.
   const openDetail = (apt) => {
-    try { window.history.pushState({ pmView: 'detail' }, ''); } catch { /* ignora */ }
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('apto', apt.id);
+      window.history.pushState({ pmView: 'detail' }, '', url.pathname + url.search + url.hash);
+    } catch { /* ignora */ }
     setDetail(apt);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // link recebido com ?apto=<id>: abre logo esse apartamento
+  useEffect(() => {
+    let id = null;
+    try { id = new URLSearchParams(window.location.search).get('apto'); } catch { /* ignora */ }
+    const apt = id && data.apartamentos.find(a => a.id === id && a.ativo !== false);
+    if (apt) setDetail(apt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Botão "Voltar" do navegador: fecha o que estiver aberto por cima da
   // pesquisa (detalhe do apartamento, reserva, confirmação) e devolve o
   // visitante à página principal, em vez de sair do site — consome a
   // entrada de histórico criada em openDetail() acima.
   useEffect(() => {
-    const handlePopState = () => { setDone(null); setBooking(null); setDetail(null); };
+    const handlePopState = () => {
+      let id = null;
+      try { id = new URLSearchParams(window.location.search).get('apto'); } catch { /* ignora */ }
+      setDone(null); setBooking(null);
+      setDetail(id ? (data.apartamentos.find(a => a.id === id) || null) : null);
+    };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [data.apartamentos]);
 
   /* ── tokens ── */
   // paleta do Grupo PinheiraMar: marinho (texto e ações), pedra (apoio)
@@ -230,7 +279,10 @@ export function PublicSite({ data, onCreate }) {
   /* ── search pill segments ── */
   const Seg = ({ label, children, last }) => (
     <div style={{ flex: 1, padding: '0 20px', borderRight: last ? 'none' : `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, minWidth: 0 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: GREY }}>{label}</div>
+      {/* 11.5px e tracking mais solto que antes (10px/.12em): versalete
+          condensada nesse tamanho é o pior caso de legibilidade para
+          presbiopia — público 40+ */}
+      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: GREY }}>{label}</div>
       {children}
     </div>
   );
@@ -238,7 +290,7 @@ export function PublicSite({ data, onCreate }) {
 
   /* ── cartão de data grande (busca mobile em ecrã cheio) — abre o calendário de disponibilidade visual ── */
   const DateCard = ({ label, value, onClick, compact, placeholder }) => {
-    const parts = bigDateParts(value);
+    const parts = bigDateParts(value, locale);
     return (
       <div>
         {/* rótulo legível (sem maiúsculas miúdas) — público 50+ */}
@@ -263,34 +315,31 @@ export function PublicSite({ data, onCreate }) {
     );
   };
 
-  // taxas obrigatórias (limpeza, estacionamento…) — somadas como na página do apartamento
-  const taxasObrigTotal = (data.taxasAdicionais || []).filter(tx => tx.tipo === 'obrigatoria').reduce((n, e) => n + (Number(e.preco) || 0), 0);
-
   /* ── reusable card ── */
-  const PCard = ({ apt, available = true, fits = true, bd = null, needsCombo = false }) => {
-    const rate = valid && bd ? Math.round(bd.total / bd.n) : apt.preco;
+  const PCard = ({ apt, available = true, fits = true, orc = null, needsCombo = false }) => {
     return (
       <div onClick={() => available && openDetail(apt)}
         style={{ cursor: available ? 'pointer' : 'default', display: 'flex', flexDirection: 'column' }}
         className="pm-unit-card">
-        <div className="pm-card-photo" style={{ position: 'relative', overflow: 'hidden', borderRadius: 4, aspectRatio: '4/3', background: LIGHT }}>
-          <PhotoTile apt={apt} h={240} radius={0} />
+        <div className="pm-card-photo" style={{ position: 'relative', overflow: 'hidden', borderRadius: 14, aspectRatio: '4/3', background: LIGHT }}>
+          {/* uma só etiqueta de vista, em cima e traduzida — a de baixo
+              ("FRENTE MAR") repetia a mesma informação (a pedido do Caio) */}
+          {/* altura 100%: a foto preenche a moldura 4:3 em qualquer largura —
+              com 240 fixos sobrava uma faixa cinzenta por baixo nos cartões
+              largos (lista de resultados no celular) */}
+          <PhotoTile apt={apt} h="100%" radius={0} rotulo={dado(apt.vista)} />
           <button onClick={e => { e.stopPropagation(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); }}
-            style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,.82)', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', backdropFilter: 'blur(4px)' }}>
-            <Heart size={15} fill={liked[apt.id] ? '#c0392b' : 'none'} color={liked[apt.id] ? '#c0392b' : GREY} strokeWidth={1.8} />
+            aria-label={liked[apt.id] ? tr('ps_desfavoritar', apt.nome) : tr('ps_favoritar', apt.nome)} aria-pressed={!!liked[apt.id]}
+            style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,.86)', border: 'none', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', backdropFilter: 'blur(4px)' }}>
+            <Heart size={18} fill={liked[apt.id] ? BRAND.vermelho : 'none'} color={liked[apt.id] ? BRAND.vermelho : GREY} strokeWidth={1.8} />
           </button>
           {!available && (
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.55)', display: 'grid', placeItems: 'center' }}>
               <button onClick={e => { e.stopPropagation(); setCalCi(''); setCalCo(''); setCalApt(apt); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: WHITE, padding: '7px 14px', border: `1px solid ${BORDER}`, cursor: 'pointer', fontFamily: F.sans }}>
-                <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', color: GREY }}>INDISPONÍVEL</span>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: ACCENT }}>Ver datas livres</span>
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: WHITE, padding: '8px 16px', border: `1px solid ${BORDER}`, borderRadius: 12, cursor: 'pointer', fontFamily: F.sans }}>
+                <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.06em', color: GREY, textTransform: 'uppercase' }}>{tr('ps_indisponivel')}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: ACCENT }}>{tr('ps_ver_datas_livres')}</span>
               </button>
-            </div>
-          )}
-          {apt.vista === 'Frente Mar' && (
-            <div className="pm-card-tag" style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(10,30,40,.72)', color: WHITE, fontSize: 10, fontWeight: 700, letterSpacing: '.1em', padding: '4px 10px' }}>
-              FRENTE MAR
             </div>
           )}
         </div>
@@ -301,32 +350,28 @@ export function PublicSite({ data, onCreate }) {
               junto com piso/vista, ecoando o exemplo (título / detalhes / preço),
               a pedido do Caio, 2026-09-23. */}
           <div className="pm-card-title-row" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</div>
-          <div style={{ fontSize: 13, color: GREY, marginTop: 3 }}>{apt.piso} · {apt.vista} · até {apt.capacidade} hóspedes</div>
+          <div style={{ fontSize: 14, color: GREY, marginTop: 3 }}>{dado(apt.piso)} · {dado(apt.vista)} · {tr('ps_ate_pessoas', apt.capacidade)}</div>
           {valid && !fits && (
             needsCombo
-              ? <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: '#C0392B', fontWeight: 800, marginTop: 6, letterSpacing: '.02em' }}>
-                  <AlertCircle size={13} /> Combine com outro apartamento — obrigatório para {hosp} hóspedes
+              ? <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13.5, color: '#B42318', fontWeight: 700, marginTop: 6 }}>
+                  <AlertCircle size={14} /> {tr('ps_combinar_obrigatorio', hosp)}
                 </div>
-              : <div style={{ fontSize: 12, color: ACCENT, fontWeight: 600, marginTop: 5, letterSpacing: '.02em' }}>Combinar com outro apartamento</div>
+              : <div style={{ fontSize: 13.5, color: ACCENT, fontWeight: 600, marginTop: 5 }}>{tr('ps_combinar')}</div>
           )}
-          {valid && bd ? (
-            // com datas: o número principal é o TOTAL da estadia, já com as
-            // taxas obrigatórias — o mesmo valor que aparece na página do
-            // apartamento, para não haver surpresa (público 50+)
+          {/* com datas: o TOTAL da estadia, já com as taxas obrigatórias — o
+              mesmo valor da página do apartamento e do servidor (sem a
+              "média por noite", que não batia com a conta quando o fim de
+              semana custa mais). Sem datas o cartão não mostra valor nenhum:
+              a diária muda muito com a temporada e o "a partir de" enganava;
+              uma frase só, acima da lista, pede as datas (a pedido do Caio,
+              2026-09). */}
+          {valid && orc && (
             <div style={{ marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontSize: 19, fontWeight: 800, color: BLACK }}>{money(bd.total + taxasObrigTotal)}</span>
-                <span style={{ fontSize: 13.5, color: GREY }}>total</span>
+                <span style={{ fontSize: 19, fontWeight: 700, color: BLACK }}>{money(orc.total)}</span>
+                <span style={{ fontSize: 14, color: GREY }}>{tr('ps_total')}</span>
               </div>
-              <div style={{ fontSize: 13, color: GREY, marginTop: 2 }}>{bd.n} noites · {money(rate)} por noite + taxas</div>
-            </div>
-          ) : (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 12.5, color: GREY }}>a partir de</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 18, fontWeight: 600, color: BLACK }}>{money(rate)}</span>
-                <span style={{ fontSize: 12.5, color: GREY }}>/noite</span>
-              </div>
+              <div style={{ fontSize: 14, color: GREY, marginTop: 2 }}>{tr('noites', orc.noites)}{orc.taxasTotal > 0 ? ` · ${tr('ps_taxas_incluidas')}` : ''}</div>
             </div>
           )}
         </div>
@@ -342,23 +387,23 @@ export function PublicSite({ data, onCreate }) {
     return scrollable ? (
       <div style={{ position: 'relative' }}>
         <div ref={ref} className="pm-row-scroll" style={{ display: 'flex', gap: 24, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
-          {items.map(({ apt, available, fits, bd }) => (
+          {items.map(({ apt, available, fits, orc }) => (
             <div key={apt.id} className="pm-row-item" style={{ minWidth: 260, flex: '0 0 260px' }}>
-              <PCard apt={apt} available={available} fits={fits} bd={bd} needsCombo={needsCombo} />
+              <PCard apt={apt} available={available} fits={fits} orc={orc} needsCombo={needsCombo} />
             </div>
           ))}
         </div>
         {items.length > 4 && (
           <div className="pm-row-arrows" style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button onClick={() => shift(-1)} style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
-            <button onClick={() => shift(1)}  style={{ width: 36, height: 36, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
+            <button onClick={() => shift(-1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
+            <button onClick={() => shift(1)}  style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
           </div>
         )}
       </div>
     ) : (
       <div className="pm-results-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))', gap: '40px 28px' }}>
-        {items.map(({ apt, available, fits, bd }) => (
-          <PCard key={apt.id} apt={apt} available={available} fits={fits} bd={bd} needsCombo={needsCombo} />
+        {items.map(({ apt, available, fits, orc }) => (
+          <PCard key={apt.id} apt={apt} available={available} fits={fits} orc={orc} needsCombo={needsCombo} />
         ))}
       </div>
     );
@@ -366,13 +411,19 @@ export function PublicSite({ data, onCreate }) {
 
   /* ── bloco de um imóvel (à la Booking: banner do imóvel + as suas unidades) ── */
   const PropertyGroup = ({ g }) => {
-    const { residencial: r, withInfo, availableApts, needsCombo, combo } = g;
+    const { residencial: r, withInfo, needsCombo, combo } = g;
     const filtered = withInfo.filter(w => catFilter(w.apt));
     const list = valid ? filtered : filtered.map(w => ({ ...w, available: true }));
     if (!list.length) return null;
+    // A contagem é a do que está à vista (com um filtro ativo dizia "17
+    // apartamentos" com só 2 no ecrã) e já não repete a localização, que
+    // está na etiqueta logo acima (a pedido do Caio). A casa conta à parte:
+    // "17 apartamentos e 1 casa"; com datas, "12 de 18 disponíveis".
+    const disponiveis = filtered.filter(w => w.available).length;
+    const temCasa = filtered.some(w => ehCasa(w.apt));
     const countLabel = valid
-      ? `${availableApts.length} de ${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} ${availableApts.length === 1 ? 'disponível' : 'disponíveis'}`
-      : `${withInfo.length} apartamento${withInfo.length > 1 ? 's' : ''} ${r.regiaoLabel}`;
+      ? (temCasa ? tr('ps_n_de_m_disponiveis_curto', disponiveis, filtered.length) : tr('ps_n_de_m_disponiveis', disponiveis, filtered.length))
+      : contagemUnidades(filtered.map(w => w.apt));
 
     return (
       <div ref={el => { groupRefs.current[r.id] = el; }} className="pm-pubsite-group" style={{ marginBottom: 72, scrollMarginTop: 140 }}>
@@ -381,7 +432,7 @@ export function PublicSite({ data, onCreate }) {
             style={{ width: RESIDENCIAL_LOGO_W[r.id] || 220, height: 'auto', maxWidth: '100%', flexShrink: 0, display: 'block' }}
             onError={e => { e.target.style.display = 'none'; }} />
           <div className="pm-pubsite-group-info" style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div className="pm-pubsite-group-region" style={{ fontSize: 14.5, color: GREY, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {r.regiaoLabel}</div>
+            <div className="pm-pubsite-group-region" style={{ fontSize: 14.5, color: GREY, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {dado(r.regiaoLabel)}</div>
           </div>
           <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
         </div>
@@ -389,19 +440,19 @@ export function PublicSite({ data, onCreate }) {
         <Faixa height={3} lit={FAIXA_INDEX[r.id] ?? null} style={{ marginBottom: 28 }} />
 
         {valid && needsCombo && combo && (
-          <div className="pm-pubsite-combo" style={{ border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
+          <div className="pm-pubsite-combo" style={{ border: `1px solid ${BORDER}`, borderRadius: 16, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
             <Users size={18} color={GREY} style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ fontSize: 14, color: BLACK, lineHeight: 1.65 }}>
-              <b>Para {hosp} hóspedes em {r.nome} é necessário combinar apartamentos.</b>
+              <b>{tr('ps_combo_titulo', hosp, r.nome)}</b>
               {combo.enough
-                ? <> Sugestão: <b>{combo.pick.map(a => `${a.nome} (${a.capacidade} pessoas)`).join(' + ')}</b> — capacidade total de {combo.cap} pessoas.</>
-                : <> Não há unidades disponíveis suficientes neste imóvel para estas datas.</>}
+                ? <> {tr('ps_combo_sugestao')} <b>{combo.pick.map(a => `${a.nome} (${tr('pessoas', a.capacidade)})`).join(' + ')}</b> — {tr('ps_combo_capacidade', combo.cap)}{combo.pick.length > 2 ? ` ${tr('ps_combo_tres')}` : ''}</>
+                : <> {tr('ps_combo_sem')}</>}
               {combo.enough && (
                 <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                   {combo.pick.map(a => (
                     <button key={a.id} onClick={() => openDetail(a)}
-                      style={{ background: BLACK, color: WHITE, border: 'none', padding: '8px 16px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em' }}>
-                      VER {a.nome.toUpperCase()}
+                      style={{ background: BLACK, color: WHITE, border: 'none', borderRadius: 12, minHeight: 44, padding: '0 16px', fontSize: 14, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em', textTransform: 'uppercase' }}>
+                      {tr('ps_ver_apto', a.nome)}
                     </button>
                   ))}
                 </div>
@@ -424,23 +475,69 @@ export function PublicSite({ data, onCreate }) {
   if (detail) {
     const scoped = buildScoped(data, detail.residencialId);
     const bookingScoped = booking ? buildScoped(data, booking.apt.residencialId) : null;
-    const doneScoped = done ? buildScoped(data, done.apt.residencialId) : null;
     return (
       <>
         <AptDetailPage apt={detail} data={scoped} ci={ci} co={co} hosp={hosp} valid={valid}
           setCi={setCi} setCo={setCo} setHosp={setHosp}
           liked={liked} setLiked={setLiked}
-          onBack={() => window.history.back()} onBook={(apt, apt2, g1, g2) => setBooking({ apt, apt2, g1, g2 })} tr={tr} />
-        {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td, 2))} hosp={hosp || 2} data={bookingScoped}
+          onBack={() => window.history.back()} onBook={(apt, apt2, g1, g2) => setBooking({ apt, apt2, g1, g2 })} ultimaNoite={ultimaNoite} />
+        {booking && <BookingModal sel={booking} ci={ci || ymd(td)} co={co || ymd(addDays(td, 2))} data={bookingScoped}
           onClose={() => setBooking(null)}
-          onCreate={onCreate}
-          onConfirmed={r => setDone(d => d || { reserva: r, apt: booking.apt })} />}
-        {done && <ConfirmationModal info={done} settings={doneScoped.settings} paymentStatus={done.paymentStatus} onClose={() => { setDone(null); setBooking(null); setDetail(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
+          onReservar={onReservar}
+          onConfirmed={info => { setBooking(null); setDone(d => d || { info }); }} />}
+        {done && <ConfirmationModal info={done.info} paymentStatus={done.paymentStatus} onClose={() => { setDone(null); setBooking(null); setDetail(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
       </>
     );
   }
 
   const r0 = data.residenciais[0] || {};
+
+  // Filtros de categoria — os mesmos no desktop (faixa por baixo do topo, com
+  // o nome) e no telemóvel (no cabeçalho, só o ícone). `icone(tamanho)`: no
+  // telemóvel, sem o texto ao lado, os ícones vão maiores.
+  const simbolo = (r) => (s) => (RESIDENCIAL_ICONS[r.id]
+    ? <img src={RESIDENCIAL_ICONS[r.id]} alt="" style={{ width: s + 6, height: s + 6, objectFit: 'contain', display: 'block' }}
+        onError={e => { e.target.style.display = 'none'; }} />
+    : <Home size={s} />);
+  const categorias = [
+    { key: null, icone: (s) => <Home size={s} />, label: tr('cat2') },
+    // um botão por residencial, com a sua logo — mostra só os
+    // apartamentos daquele imóvel (ficam antes dos filtros de vista
+    // e de lotação por serem o corte mais largo)
+    ...(mostrarFiltroResidencial ? [
+      ...residenciaisComApt.map(r => ({ key: `res:${r.id}`, icone: simbolo(r), label: nomeCurtoResidencial(r) })),
+      // separa "que imóvel" de "que tipo de apartamento": são dois
+      // cortes diferentes, e sem isto a marca do Caminho do Mar (ondas)
+      // fica colada ao ícone de "Frente Mar" (também ondas)
+      { sep: true },
+    ] : []),
+    ...(hasFrenteMar ? [{ key: 'frente_mar', icone: (s) => <Waves size={s} />, label: tr('cat1') }] : []),
+    // no telemóvel (só ícone) a lotação leva o número ao lado do ícone
+    { key: 'cap2', n: 2, icone: (s) => <Users size={s} />, label: tr('cat_cap2') },
+    { key: 'cap4', n: 4, icone: (s) => <Users size={s} />, label: tr('cat_cap4') },
+    { key: 'cap6', n: 6, icone: (s) => <Users size={s} />, label: tr('cat_cap6') },
+    { key: 'cap8', n: 8, icone: (s) => <Users size={s} />, label: tr('cat_cap8') },
+  ].map(c => (c.sep ? c : { ...c, nomeCompleto: c.n ? tr('ps_ate_pessoas', c.n) : c.label }));
+
+  // "Escolha as datas": abre o calendário da busca. No desktop ele abre no
+  // topo fixo; no telemóvel a busca fica acima da lista, então sobe até ela.
+  const abrirCalendario = () => {
+    setGuestOpen(false);
+    setCalOpen(true);
+    const el = searchInlineRef.current;
+    if (el && getComputedStyle(el).display !== 'none') el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // No telemóvel os filtros ficam no topo e a lista bem mais abaixo (depois
+  // da busca): ao escolher um, a página desce até aos apartamentos para se
+  // ver logo o efeito — senão o toque parecia não fazer nada.
+  const escolherCategoriaTopo = (key) => {
+    setActiveCategory(key);
+    setTimeout(() => {
+      const el = resultsRef.current;
+      if (el && el.getBoundingClientRect().top > window.innerHeight * 0.5) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
 
   return (
     <div style={{ background: WHITE, minHeight: '100vh', fontFamily: F.sans, color: BLACK }}>
@@ -449,40 +546,37 @@ export function PublicSite({ data, onCreate }) {
       <header ref={headerRef} className="pm-pubsite-header" style={{ borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 50, background: WHITE }}>
         <div className="pm-pubsite-header-row" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', height: 72, display: 'flex', alignItems: 'center', gap: 32 }}>
 
-          {/* marca PinheiraMar — garante que o cabeçalho nunca fica vazio no telemóvel
-              (onde a busca e o seletor de idioma ficam escondidos) */}
+          {/* assinatura horizontal do Grupo PinheiraMar (2b, cabeçalho do site) — só
+              no desktop: no telemóvel o cabeçalho leva os filtros (e o idioma),
+              sem logo, a pedido do Caio, 2026-09 (ver App.jsx); a marca
+              continua no rodapé */}
           <a href="/" className="pm-pubsite-brand" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
-            {/* horizontal no desktop (cabe melhor numa barra estreita); vertical, maior e
-                centrado no telemóvel — trocados por CSS na media query mobile em App.jsx */}
-            {/* assinatura horizontal do Grupo PinheiraMar (2b, cabeçalho do site) */}
-            <span className="pm-pubsite-brand-desktop" style={{ display: 'block' }}><GroupLogo variant="horizontal" size={24} /></span>
-            {/* no telemóvel, só o galo (marca do grupo) — mais compacto que a assinatura
-                horizontal completa, que fica apertada ao lado do menu de categorias */}
-            <span className="pm-pubsite-brand-mobile" style={{ display: 'none' }}>
-              <img src="/brand/galo-navy.png" alt="Grupo PinheiraMar" style={{ height: 34, width: 'auto', display: 'block' }} />
-            </span>
+            <span style={{ display: 'block' }}><GroupLogo variant="horizontal" size={24} /></span>
           </a>
 
           {/* centred search (desktop) */}
           <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'stretch', height: 44, border: `1px solid ${BORDER}`, background: WHITE, maxWidth: 680, width: '100%', position: 'relative' }}>
+            {/* barra em pílula, com o PROCURAR arredondado por dentro (caixas e
+                botões arredondados, a pedido do Caio). Sem overflow:hidden: o
+                calendário e o seletor de pessoas abrem por baixo dela. */}
+            <div style={{ display: 'flex', alignItems: 'stretch', height: 50, padding: 4, boxSizing: 'border-box', border: `1px solid ${BORDER}`, borderRadius: 999, background: WHITE, boxShadow: '0 2px 10px rgba(27,28,70,.06)', maxWidth: 680, width: '100%', position: 'relative' }}>
               <Seg label={tr('search_checkin')}>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => { setGuestOpen(false); setCalOpen(o => !o); }}>
-                  <span style={{ color: ci ? BLACK : '#AAA' }}>{ci ? fmtShort(ci) : 'Selecionar entrada'}</span>
+                  <span style={{ color: ci ? BLACK : '#6F6B64' }}>{ci ? fmtCurta(ci) : tr('ps_selecionar_entrada')}</span>
                 </div>
               </Seg>
               <Seg label={tr('search_checkout')}>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => { setGuestOpen(false); setCalOpen(o => !o); }}>
-                  <span style={{ color: co ? BLACK : '#AAA' }}>{co ? fmtShort(co) : 'Selecionar saída'}</span>
+                  <span style={{ color: co ? BLACK : '#6F6B64' }}>{co ? fmtCurta(co) : tr('ps_selecionar_saida')}</span>
                 </div>
               </Seg>
               {calOpen && (
                 <>
                   <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
                   <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
-                    <AvailabilityCalendar ci={ci} co={co}
+                    <AvailabilityCalendar ci={ci} co={co} ate={ultimaNoite}
                       onChange={(newCi, newCo) => {
                         setCi(newCi);
                         if (newCo && nights(newCi, newCo) < 1) setCo(''); else setCo(newCo);
@@ -494,24 +588,24 @@ export function PublicSite({ data, onCreate }) {
               <Seg label={tr('search_who')} last>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => setGuestOpen(o => !o)}>
-                  <span style={{ color: hosp ? BLACK : '#AAA' }}>{hosp ? `${hosp} hóspede${hosp > 1 ? 's' : ''}` : tr('search_add_guests')}</span>
+                  <span style={{ color: hosp ? BLACK : '#6F6B64' }}>{hosp ? tr('search_guests_label', hosp) : tr('search_add_guests')}</span>
                 </div>
                 {guestOpen && (
-                  <div style={{ position: 'absolute', top: 70, background: WHITE, border: `1px solid ${BORDER}`, padding: 20, zIndex: 100, minWidth: 220, boxShadow: '0 8px 32px rgba(0,0,0,.10)' }} onClick={e => e.stopPropagation()}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600 }}>Hóspedes</span>
+                  <div style={{ position: 'absolute', top: '100%', marginTop: 8, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, zIndex: 100, minWidth: 240, boxShadow: '0 8px 32px rgba(0,0,0,.10)' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
+                      <span style={{ fontSize: 15, fontWeight: 600 }}>{tr('search_guests')}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <button onClick={() => setHosp(h => Math.max(0,h-1))} style={{ width: 28, height: 28, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>−</button>
+                        <button aria-label={tr('m_menos_pessoa')} onClick={() => setHosp(h => Math.max(0,h-1))} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>−</button>
                         <span style={{ fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{hosp || '—'}</span>
-                        <button onClick={() => setHosp(h => h+1)} style={{ width: 28, height: 28, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>+</button>
+                        <button aria-label={tr('m_mais_pessoa')} onClick={() => setHosp(h => h+1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>+</button>
                       </div>
                     </div>
-                    <button onClick={() => setGuestOpen(false)} style={{ width: '100%', padding: '10px 0', background: BLACK, color: WHITE, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, letterSpacing: '.05em' }}>Confirmar</button>
+                    <button onClick={() => setGuestOpen(false)} style={{ width: '100%', padding: '11px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 700, fontSize: 13, letterSpacing: '.05em' }}>{tr('search_confirm')}</button>
                   </div>
                 )}
               </Seg>
               <button onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-                style={{ padding: '0 24px', background: BLACK, color: WHITE, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                style={{ padding: '0 24px', background: BLACK, color: WHITE, border: 'none', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 {tr('search_btn').toUpperCase()}
               </button>
             </div>
@@ -522,17 +616,40 @@ export function PublicSite({ data, onCreate }) {
             {!!(ci || co || hosp) && (
               <button onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, cursor: 'pointer', color: GREY, fontSize: 12.5, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
-                <X size={13} /> Limpar consulta
+                <X size={13} /> {tr('ps_limpar_consulta')}
               </button>
             )}
           </div>
 
-          {/* right side (escondido no telemóvel — o idioma muda no ecrã de busca) */}
+          {/* telemóvel: os filtros sobem para o cabeçalho, só com ícones (o nome
+              vai no aria-label/title) e com rolagem para o lado quando não
+              cabem — a pedido do Caio, 2026-09. No desktop ficam na faixa de
+              baixo, com o nome. Exceção: o filtro por residencial leva o nome
+              visível também no telemóvel — o ícone sozinho ("ondas") é ambíguo
+              com o de Frente Mar, e o title/aria-label não aparece em toque
+              (público 40+, 2026-09-26). */}
+          <nav className="pm-pubsite-hcats" aria-label={tr('ps_filtros')}
+            style={{ display: 'none', flex: 1, minWidth: 0, alignItems: 'center', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', padding: '2px 0' }}>
+            {categorias.map((cat, i) => {
+              if (cat.sep) return <div key={`sep${i}`} aria-hidden style={{ alignSelf: 'center', width: 1, height: 24, background: BORDER, flexShrink: 0 }} />;
+              const on = activeCategory === cat.key;
+              const comTexto = catIsResidencial(cat.key);
+              return (
+                <button key={String(cat.key)} type="button" onClick={() => escolherCategoriaTopo(on ? null : cat.key)}
+                  aria-label={cat.nomeCompleto} title={cat.nomeCompleto} aria-pressed={on}
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, minWidth: 48, padding: cat.n ? '0 14px 0 12px' : (comTexto ? '0 14px' : '0 12px'), flexShrink: 0, borderRadius: 999, border: `1px solid ${on ? 'rgba(27,28,70,.45)' : BORDER}`, background: on ? 'rgba(27,28,70,.08)' : WHITE, color: on ? BLACK : GREY, cursor: 'pointer', fontFamily: F.sans, fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                  {cat.icone(20)}{cat.n ? <span aria-hidden>{cat.n}</span> : null}{comTexto ? <span aria-hidden>{cat.label}</span> : null}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* idioma — à direita da busca no desktop e dos filtros no telemóvel */}
           {idiomasAtivos.length > 1 && (
             <div className="pm-pubsite-lang" style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
               {idiomasAtivos.map(id => (
-                <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo}
-                  style={{ width: 30, height: 30, border: lang === id.codigo ? `1px solid ${BLACK}` : `1px solid transparent`, background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
+                <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo} aria-label={id.nativo} aria-pressed={lang === id.codigo}
+                  style={{ width: 40, height: 40, borderRadius: '50%', border: lang === id.codigo ? `1px solid ${BLACK}` : `1px solid transparent`, background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
                   {id.bandeira}
                 </button>
               ))}
@@ -543,7 +660,7 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ BUSCA — sempre visível no telemóvel, sem esconder atrás de um botão. Público-alvo 50+:
              mais direto ver os campos logo de cara do que ter de descobrir onde tocar. ══ */}
-      <div className="pm-pubsite-search-inline" style={{ display: 'none', padding: '18px 16px 22px', borderBottom: `1px solid ${BORDER}`, background: WHITE }}>
+      <div ref={searchInlineRef} className="pm-pubsite-search-inline" style={{ display: 'none', padding: '18px 16px 22px', borderBottom: `1px solid ${BORDER}`, background: WHITE }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 16 }}>
           <div style={{ fontSize: 20, fontWeight: 500 }}>{tr('m_search_title')}</div>
           {!!(ci || co || hosp) && (
@@ -559,7 +676,7 @@ export function PublicSite({ data, onCreate }) {
             <DateCard label={tr('m_departure')} value={co} compact onClick={() => setCalOpen(o => !o)} />
           </div>
           {calOpen && (
-            <AvailabilityCalendar ci={ci} co={co}
+            <AvailabilityCalendar ci={ci} co={co} ate={ultimaNoite}
               onChange={(newCi, newCo) => {
                 setCi(newCi);
                 if (newCo && nights(newCi, newCo) < 1) setCo(''); else setCo(newCo);
@@ -571,9 +688,9 @@ export function PublicSite({ data, onCreate }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 64, padding: '8px 12px 8px 16px', border: `1.5px solid ${hosp ? BLACK : '#C9C6BF'}`, borderRadius: 14 }}>
               <span style={{ fontSize: 16, fontWeight: hosp ? 700 : 400, color: hosp ? BLACK : '#555' }}>{hosp ? tr('m_people_n', hosp) : tr('m_people_none')}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <button aria-label="Menos uma pessoa" disabled={!hosp} onClick={() => setHosp(h => Math.max(0, h - 1))} style={{ width: 46, height: 46, borderRadius: '50%', border: `1.5px solid ${hosp ? '#999' : BORDER}`, background: WHITE, color: hosp ? BLACK : '#BBB', cursor: hosp ? 'pointer' : 'default', fontSize: 22, display: 'grid', placeItems: 'center' }}>−</button>
+                <button aria-label={tr('m_menos_pessoa')} disabled={!hosp} onClick={() => setHosp(h => Math.max(0, h - 1))} style={{ width: 46, height: 46, borderRadius: '50%', border: `1.5px solid ${hosp ? '#999' : BORDER}`, background: WHITE, color: hosp ? BLACK : '#BBB', cursor: hosp ? 'pointer' : 'default', fontSize: 22, display: 'grid', placeItems: 'center' }}>−</button>
                 <span style={{ fontWeight: 800, fontSize: 18, minWidth: 20, textAlign: 'center', visibility: hosp ? 'visible' : 'hidden' }}>{hosp || 0}</span>
-                <button aria-label="Mais uma pessoa" onClick={() => setHosp(h => h + 1)} style={{ width: 46, height: 46, borderRadius: '50%', border: '1.5px solid #999', background: WHITE, color: BLACK, cursor: 'pointer', fontSize: 22, display: 'grid', placeItems: 'center' }}>+</button>
+                <button aria-label={tr('m_mais_pessoa')} onClick={() => setHosp(h => h + 1)} style={{ width: 46, height: 46, borderRadius: '50%', border: '1.5px solid #999', background: WHITE, color: BLACK, cursor: 'pointer', fontSize: 22, display: 'grid', placeItems: 'center' }}>+</button>
               </div>
             </div>
           </div>
@@ -588,26 +705,28 @@ export function PublicSite({ data, onCreate }) {
              toda antes do hóspede ver a busca/resultados; fica só no desktop ══ */}
       <section className="pm-pubsite-hero" style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
         <img
-          src={r0.heroImage}
+          src={fotoTopo(r0.heroImage)}
           alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          fetchpriority="high"
+          decoding="async"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%' }}
           onError={e => { e.target.style.display = 'none'; }}
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 40%, rgba(0,0,0,.72) 100%)' }} />
         <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>
-            Praia da Pinheira · Palhoça · Santa Catarina
+            {tr('ps_hero_local')}
           </div>
           <h1 style={{ fontSize: 'clamp(34px,4.6vw,62px)', fontWeight: 200, lineHeight: 1.08, margin: '0 0 16px', letterSpacing: '-.005em', color: '#fff', maxWidth: 760 }}>
-            A sua casa de verão,<br />perto do mar.
+            {tr('ps_hero_titulo_1')}<br />{tr('ps_hero_titulo_2')}
           </h1>
           <Faixa height={4} width={220} tone="negativo" style={{ marginBottom: 22 }} />
           <p style={{ fontSize: 16.5, color: 'rgba(255,255,255,.9)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 520 }}>
-            Apartamentos mobiliados e completos em {data.residenciais.length} residenciais do Grupo PinheiraMar. Escolha as datas e veja o que está livre.
+            {tr('ps_hero_texto', data.residenciais.length)}
           </p>
           <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            style={{ padding: '14px 32px', background: '#fff', color: BLACK, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-            Ver Apartamentos
+            style={{ padding: '14px 32px', background: '#fff', color: BLACK, border: 'none', borderRadius: 12, cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+            {tr('ps_ver_apartamentos')}
           </button>
         </div>
       </section>
@@ -615,44 +734,20 @@ export function PublicSite({ data, onCreate }) {
       {/* ══ CATEGORY FILTER STRIP ══ */}
       <div className="pm-pubsite-catbar" style={{ borderBottom: `1px solid ${BORDER}`, background: WHITE, position: 'sticky', top: 64, zIndex: 40 }}>
         <div className="pm-pubsite-catstrip" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {[
-            { key: null,         icon: <Home size={16} />,  label: tr('cat2') },
-            // um botão por residencial, com a sua logo — mostra só os
-            // apartamentos daquele imóvel (ficam antes dos filtros de vista
-            // e de lotação por serem o corte mais largo)
-            ...(mostrarFiltroResidencial ? [
-              ...residenciaisComApt.map(r => ({
-                key: `res:${r.id}`,
-                icon: RESIDENCIAL_ICONS[r.id]
-                  ? <img src={RESIDENCIAL_ICONS[r.id]} alt="" style={{ width: 22, height: 22, objectFit: 'contain', display: 'block' }}
-                      onError={e => { e.target.style.display = 'none'; }} />
-                  : <Home size={16} />,
-                label: nomeCurtoResidencial(r),
-              })),
-              // separa "que imóvel" de "que tipo de apartamento": são dois
-              // cortes diferentes, e sem isto a marca do Caminho do Mar (ondas)
-              // fica colada ao ícone de "Frente Mar" (também ondas)
-              { sep: true },
-            ] : []),
-            { key: 'frente_mar', icon: <Waves size={16} />, label: tr('cat1') },
-            { key: 'cap2',       icon: <Users size={16} />, label: tr('cat_cap2') },
-            { key: 'cap4',       icon: <Users size={16} />, label: tr('cat_cap4') },
-            { key: 'cap6',       icon: <Users size={16} />, label: tr('cat_cap6') },
-            { key: 'cap8',       icon: <Users size={16} />, label: tr('cat_cap8') },
-          ].filter(cat => cat.key !== 'frente_mar' || hasFrenteMar).map((cat, i) => {
+          {categorias.map((cat, i) => {
             if (cat.sep) return <div key={`sep${i}`} aria-hidden style={{ alignSelf: 'center', width: 1, height: 26, background: BORDER, margin: '0 10px', flexShrink: 0 }} />;
             const on = activeCategory === cat.key;
             return (
               <button key={String(cat.key)} className="pm-cat-btn" data-active={on ? 'true' : 'false'} onClick={() => setActiveCategory(on ? null : cat.key)}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 20px', border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 600, color: on ? BLACK : GREY, borderBottom: on ? `2px solid ${BLACK}` : '2px solid transparent', transition: 'all .15s' }}>
-                <span style={{ color: on ? BLACK : GREY }}>{cat.icon}</span>
+                <span style={{ color: on ? BLACK : GREY }}>{cat.icone(16)}</span>
                 {cat.label}
               </button>
             );
           })}
           {activeCategory && (
-            <button onClick={() => setActiveCategory(null)} style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 12, padding: '5px 12px', border: `1px solid ${BORDER}`, borderRadius: 20, background: WHITE, cursor: 'pointer', color: GREY, flexShrink: 0 }}>
-              ✕ Limpar filtro
+            <button onClick={() => setActiveCategory(null)} style={{ marginLeft: 'auto', alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '6px 12px', border: `1px solid ${BORDER}`, borderRadius: 20, background: WHITE, cursor: 'pointer', color: GREY, flexShrink: 0 }}>
+              <X size={14} aria-hidden="true" /> {tr('ps_limpar_filtro')}
             </button>
           )}
         </div>
@@ -660,25 +755,37 @@ export function PublicSite({ data, onCreate }) {
 
       {/* ══ RESULTADOS — um bloco por imóvel, como um motor de reservas de hotel ══ */}
       <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 80px', scrollMarginTop: 80 }}>
+        {/* sem datas: uma frase só, em vez de um preço "a partir de" em cada
+            cartão — e um toque nela abre logo o calendário */}
+        {!valid && (
+          <div style={{ marginBottom: 40 }}>
+            <button type="button" onClick={abrirCalendario}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 10, maxWidth: '100%', minHeight: 48, padding: '12px 18px', background: LIGHT, border: `1px solid ${BORDER}`, borderRadius: 14, cursor: 'pointer', fontFamily: F.sans, color: BLACK, textAlign: 'left' }}>
+              <CalendarDays size={19} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4 }}>{tr('ps_datas_para_preco')}</span>
+              <ChevronRight size={17} style={{ flexShrink: 0 }} />
+            </button>
+          </div>
+        )}
         {valid && (
           <div style={{ marginBottom: 44, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
             <div>
               <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: 0, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                {fmtShort(ci)} — {fmtShort(co)} · {nights(ci, co)} noite{nights(ci,co) > 1 ? 's' : ''}{hosp ? ` · ${hosp} hóspede${hosp > 1 ? 's' : ''}` : ''}
+                {fmtCurta(ci)} — {fmtCurta(co)} · {tr('noites', nights(ci, co))}{hosp ? ` · ${tr('pessoas', hosp)}` : ''}
                 <button onClick={() => { setCi(''); setCo(''); setHosp(0); }}
                   style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: GREY, background: 'none', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '5px 12px', cursor: 'pointer' }}>
-                  <X size={12} /> Limpar consulta
+                  <X size={12} /> {tr('ps_limpar_consulta')}
                 </button>
               </div>
               <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>{subtituloDisponibilidade}</div>
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: GREY, flexShrink: 0 }}>
-              Ordenar por
+              {tr('ps_ordenar')}
               <select value={sortMode} onChange={e => setSortMode(e.target.value)}
-                style={{ border: `1px solid ${BORDER}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: F.sans, color: BLACK, background: WHITE, cursor: 'pointer' }}>
-                <option value="default">Recomendados</option>
-                <option value="price_asc">Preço: menor primeiro</option>
-                <option value="price_desc">Preço: maior primeiro</option>
+                style={{ border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 10px', fontSize: 13, fontFamily: F.sans, color: BLACK, background: WHITE, cursor: 'pointer' }}>
+                <option value="default">{tr('ps_ordem_recomendados')}</option>
+                <option value="price_asc">{tr('ps_ordem_menor')}</option>
+                <option value="price_desc">{tr('ps_ordem_maior')}</option>
               </select>
             </label>
           </div>
@@ -687,14 +794,14 @@ export function PublicSite({ data, onCreate }) {
       </main>
 
       {/* ══ DESTINATION (partilhado — mesma zona/praia para os dois imóveis) ══ */}
-      <DestinoSection />
+      <DestinoSection residenciais={data.residenciais} />
 
       {/* ══ FOOTER — assinatura do grupo, residenciais e faixa como remate ══ */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, background: LIGHT }}>
         <div className="pm-pubsite-footer-grid" style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 40 }}>
           <div>
             <GroupLogo variant="principal" size={26} />
-            <div style={{ fontSize: 15, color: GREY, marginTop: 18, lineHeight: 1.6 }}>A sua casa de verão.</div>
+            <div style={{ fontSize: 15, color: GREY, marginTop: 18, lineHeight: 1.6 }}>{tr('ps_essencia')}</div>
           </div>
           {data.residenciais.map(r => (
             <div key={r.id}>
@@ -709,31 +816,37 @@ export function PublicSite({ data, onCreate }) {
             </div>
           ))}
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Horários</div>
-            <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
-              <div>Check-in a partir das {r0.checkInHora || '13:00'}</div>
-              <div>Check-out até às {r0.checkOutHora || '10:00'}</div>
+            <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>{tr('ps_horarios')}</div>
+            <div style={{ fontSize: 15, color: GREY, lineHeight: 1.9 }}>
+              {data.residenciais.map(r => (
+                <div key={r.id} style={{ marginBottom: data.residenciais.length > 1 ? 6 : 0 }}>
+                  {data.residenciais.length > 1 && <div style={{ color: BLACK }}>{nomeCurtoResidencial(r)}</div>}
+                  <div>{tr('ps_checkin_a_partir', r.checkInHora || '13:00')}</div>
+                  <div>{tr('ps_checkout_ate', r.checkOutHora || '10:00')}</div>
+                </div>
+              ))}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>Como chegar</div>
-            <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
-              <div>35 km de Florianópolis</div>
-              <div>48 km do Aeroporto</div>
+            <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>{tr('ps_como_chegar')}</div>
+            <div style={{ fontSize: 15, color: GREY, lineHeight: 1.9 }}>
+              <div>{tr('ps_km_floripa')}</div>
+              <div>{tr('ps_km_aeroporto')}</div>
               <div>BR-101 → Palhoça → Pinheira</div>
             </div>
           </div>
         </div>
-        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 12, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase' }}>
+        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 13, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase' }}>
           © {new Date().getFullYear()} Grupo PinheiraMar
         </div>
         <Faixa height={6} />
       </footer>
+      {done && <ConfirmationModal info={done.info} paymentStatus={done.paymentStatus} onClose={() => setDone(null)} />}
       {calApt && (
-        <Modal title={`Datas livres · ${calApt.nome}`}
-          subtitle="Escolha um período livre para ver este apartamento nos resultados."
+        <Modal title={tr('ps_datas_livres', calApt.nome)}
+          subtitle={tr('ps_datas_livres_sub')} rotuloFechar={tr('ap_fechar')}
           onClose={() => setCalApt(null)}>
-          <AvailabilityCalendar apt={calApt} reservas={data.reservas} ci={calCi} co={calCo} initialMonth={ci}
+          <AvailabilityCalendar apt={calApt} reservas={data.reservas} ci={calCi} co={calCo} initialMonth={ci} ate={ultimaNoite}
             onChange={(nci, nco) => {
               setCalCi(nci); setCalCo(nco);
               if (nci && nco) { setCi(nci); setCo(nco); setCalApt(null); }

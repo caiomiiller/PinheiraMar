@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, X, AlertCircle } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
+import { C } from '../../lib/constants';
 import { money, uid } from '../../lib/helpers';
-import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, DragGrip, MoneyInput, ConfirmDialog } from '../../components/ui';
-import { useReorder } from '../../hooks/useReorder';
+import { PageHead, Btn, Modal, Field, TextInput, Select, DragGrip, MoneyInput, ConfirmDialog } from '../../components/ui';
+import { useReorder, reordenarPorIds } from '../../hooks/useReorder';
 import { iconBtn } from './Reservations';
 
 export function TaxasView({ data, update }) {
@@ -20,7 +20,7 @@ export function TaxasView({ data, update }) {
     setEditing(null);
   };
   const remove = (id) => update(prev => ({ ...prev, taxasAdicionais: (prev.taxasAdicionais || []).filter(x => x.id !== id) }));
-  const dnd = useReorder(taxas, arr => update(prev => ({ ...prev, taxasAdicionais: arr })));
+  const dnd = useReorder(taxas, arr => update(prev => ({ ...prev, taxasAdicionais: reordenarPorIds(prev.taxasAdicionais || [], arr) })));
 
   const TIPO_LABEL = { obrigatoria: 'Obrigatória', opcional: 'Opcional' };
   const POR_LABEL  = { reserva: 'Reserva', noite: 'Noite', hospede: 'Hóspede' };

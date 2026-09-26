@@ -1,10 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Download, CreditCard, Wallet, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
 import { C, F } from '../../lib/constants';
-import { money, nights, parseYMD, ymd, today, fmtLong, fmtShort, holdExpirado } from '../../lib/helpers';
-import { buildCSV, downloadBlob } from '../../lib/csvUtils';
-import { Card, PageHead, Badge, Select, Field, Btn, DateInput, STATUS } from '../../components/ui';
-import * as XLSX from 'xlsx';
+import { money, nights, parseYMD, ymd, today, fmtShort, holdExpirado } from '../../lib/helpers';
+import { Card, PageHead, Badge, Btn, DateInput, STATUS } from '../../components/ui';
 
 export function Financeiro({ data, go }) {
   const t = today();

@@ -1,20 +1,43 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy,
-  ChevronDown, GripVertical, X, Check, AlertCircle, CalendarDays,
-  ChevronLeft, ChevronRight, Minus, Tag, Clock, Info, Users, Wallet, LogIn, LogOut,
-  Car, Sparkles, PawPrint, Umbrella, BedDouble, Baby, Percent, Wind, Waves,
-  Utensils, Wifi, Flame, Shield, Gift, Sun, Shirt, Sofa } from 'lucide-react';
+import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy, ChevronDown,
+  X, Check, AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Minus, Tag,
+  Clock, Info, Users, Wallet, LogIn, LogOut, Car, Sparkles, PawPrint, Umbrella,
+  BedDouble, Baby, Percent, Wind, Waves, Utensils, Wifi, Flame, Shield, Gift,
+  Sun, Shirt, Sofa } from 'lucide-react';
 import { C, F, THEMES } from '../../lib/constants';
-import { money, nights, ymd, today, parseYMD, fmtLong, fmtShort, uid, code,
-  isAvailable, stayBreakdown, nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS,
-  WD, HOLIDAY_COLORS, MS, seasonForDate, aptRates, roomFullName, overlaps, capacidadeBaseOf } from '../../lib/helpers';
-import { mkExtrasObrigatorios, buildCSV, downloadBlob, rowToReserva,
-  EXTRA_PRESETS, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
-import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput,
-  NumberInput, Select, Textarea, DragGrip, duplicateInList, Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus } from '../../components/ui';
-import { useReorder } from '../../hooks/useReorder';
-import { sendConfirmationEmail } from '../../lib/email';
-import * as XLSX from 'xlsx';
+import { money, nights, ymd, today, parseYMD, fmtShort, uid, code, isAvailable, stayBreakdown,
+  nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS, WD, HOLIDAY_COLORS, MS,
+  seasonForDate, aptRates, roomFullName, overlaps, capacidadeBaseOf } from '../../lib/helpers';
+import { buildCSV, downloadBlob, rowToReserva, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
+import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput, Select, Textarea, duplicateInList,
+  Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus } from '../../components/ui';
+import { moverPorId } from '../../hooks/useReorder';
+import { enviarConfirmacaoReserva, carregarAdmin } from '../../lib/dadosAdmin';
+import { migrarDados } from '../../lib/migracoes';
+import { extrasObrigatorios, quantidadeTaxa } from '../../lib/precos';
+import { aplicarEdicaoReserva } from '../../lib/reservas';
+
+// A biblioteca do Excel é pesada (~400 KB): só é descarregada quando o
+// gestor exporta ou importa uma planilha.
+const carregarXLSX = () => import('xlsx');
+
+// Motivos devolvidos pelo servidor quando o e-mail de confirmação não sai.
+export function textoFalhaEmail(motivo) {
+  return ({
+    nao_configurado: 'o envio de e-mails não está configurado no servidor',
+    sem_email: 'a reserva não tem e-mail',
+    recusado: 'o EmailJS recusou o envio',
+    rede: 'sem conexão com o servidor',
+    demo: 'modo demonstração — nenhum e-mail é enviado',
+    nao_autorizado: 'a sessão expirou — entre de novo no painel',
+    http_401: 'a sessão expirou — entre de novo no painel',
+    reserva_nao_encontrada: 'a reserva ainda não está salva no servidor',
+    reserva_cancelada: 'a reserva está cancelada',
+    reserva_bloqueio: 'é um bloqueio, não uma reserva de hóspede',
+    configuracao_pendente: 'falta aplicar o SQL de segurança no Supabase (README, passo 6)',
+    servico_indisponivel: 'o servidor não conseguiu ler os dados agora',
+  })[motivo] || (motivo ? `erro: ${motivo}` : 'erro desconhecido');
+}
 
 // residencial de um apartamento — usado para a etiqueta de cor por imóvel
 // (este ambiente é partilhado pelos dois residenciais; a etiqueta é só
@@ -222,12 +245,26 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     return () => window.removeEventListener('mouseup', onUp);
   }, [dragSel, days]);
 
-  const save = (r) => {
-    update(prev => {
-      const exists = prev.reservas.some(x => x.id === r.id);
-      return { ...prev, reservas: exists ? prev.reservas.map(x => x.id === r.id ? r : x) : [...prev.reservas, r] };
+  // `original` = a reserva tal como estava quando o formulário abriu: só o
+  // que o gestor mudou é aplicado sobre a versão mais recente do banco (ver
+  // aplicarEdicaoReserva em lib/reservas.js). O e-mail de uma reserva nova
+  // sai pelo servidor, e só depois de a reserva estar gravada.
+  const save = (r, { original, enviarEmailAoGravar = false } = {}) => {
+    const p = update(prev => {
+      const atual = prev.reservas.find(x => x.id === r.id);
+      if (!atual) return { ...prev, reservas: [...prev.reservas, r] };
+      return { ...prev, reservas: prev.reservas.map(x => (x.id === r.id ? aplicarEdicaoReserva(x, original, r) : x)) };
     });
     setEditing(null); setPrefill(null);
+    if (enviarEmailAoGravar) {
+      p.then(() => enviarConfirmacaoReserva(r.id))
+        .then(res => setImportMsg(res.ok
+          ? { ok: true, text: `E-mail de confirmação enviado para ${r.email}.` }
+          : { ok: false, text: `A reserva foi salva, mas o e-mail de confirmação não saiu (${textoFalhaEmail(res.motivo)}). Pode reenviar pela própria reserva.` }))
+        .catch(() => { /* a falha ao salvar já aparece na barra de sincronização */ });
+    }
+    p.catch(() => {});
+    return p;
   };
   const duplicate = (id) => update(prev => ({ ...prev, reservas: duplicateInList(prev.reservas, id, r => ({ ...r, id: uid(), codigo: code(), status: 'pendente', extras: (r.extras || []).map(e => ({ ...e, id: uid() })) })) }));
   const remove = (id) => { update(prev => ({ ...prev, reservas: prev.reservas.filter(x => x.id !== id) })); setEditing(null); };
@@ -237,10 +274,13 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   const [dbOpen, setDbOpen] = useState(false);
   const [importMsg, setImportMsg] = useState(null); // { ok, text }
 
+  const [restaurar, setRestaurar] = useState(null); // { obj, nome } — backup JSON à espera de confirmação
+  const carimbo = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
   const exportCSV = () => downloadBlob(buildCSV(data.reservas, data.apartamentos), 'reservas-pinheiramar.csv', 'text/csv;charset=utf-8');
-  const exportJSON = () => downloadBlob(JSON.stringify(data, null, 2), 'pinheiramar-backup.json', 'application/json');
-  const exportXLSX = () => {
+  const exportJSON = () => downloadBlob(JSON.stringify(data, null, 2), `pinheiramar-backup-${carimbo()}.json`, 'application/json');
+  const exportXLSX = async () => {
     try {
+      const XLSX = await carregarXLSX();
       const rows = data.reservas.map(r => reservaToRow(r, data.apartamentos));
       const ws = XLSX.utils.json_to_sheet(rows, { header: CSV_COLS });
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Reservations');
@@ -256,36 +296,44 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const obj = JSON.parse(reader.result);
+          const bruto = JSON.parse(reader.result);
+          const obj = bruto?.data && Array.isArray(bruto.data.reservas) ? bruto.data : bruto;
           if (!obj || !Array.isArray(obj.apartamentos) || !Array.isArray(obj.reservas)) throw new Error('estrutura não reconhecida');
-          update(() => obj);
-          setImportMsg({ ok: true, text: `Backup restaurado — ${obj.reservas.length} reservas e ${obj.apartamentos.length} apartamentos.` });
+          // Restaurar SUBSTITUI tudo — antes acontecia logo ao escolher o
+          // arquivo, sem perguntar. Agora pede confirmação (ver abaixo).
+          setRestaurar({ obj, nome: file.name });
         } catch (err) { setImportMsg({ ok: false, text: 'JSON inválido: ' + err.message }); }
       };
       reader.readAsText(file); return;
     }
     (async () => {
       try {
+        const XLSX = await carregarXLSX();
         const buf = await file.arrayBuffer();
         const wb = XLSX.read(buf, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
         const existing = new Set(data.reservas.map(r => r.codigo));
-        const obrig = mkExtrasObrigatorios(data.taxasAdicionais);
-        const obrigTotal = obrig.reduce((s, e) => s + e.preco, 0);
         const novos = []; let skipped = 0;
         rows.forEach(row => {
           const r = rowToReserva(row, data.apartamentos);
           if (!r || existing.has(r.codigo)) { skipped++; return; }
-          // Attach mandatory extras; adjust total if extras were empty
-          r.extras = obrig.map(e => ({ ...e, id: uid() }));
-          r.total = r.total + obrigTotal;
-          r.sinal = Math.round(r.total * 0.5);
+          // O total da planilha já é o valor final da reserva: as taxas
+          // obrigatórias NÃO são somadas por cima (antes eram, e o total
+          // importado ficava maior do que o real — decisão do Caio,
+          // 2026-09-26). O sinal usa a % do residencial (antes, 50% fixo).
+          const resid = residencialOf(data, data.apartamentos.find(a => a.id === r.apartamentoId));
+          r.sinal = Math.round(r.total * ((Number(resid?.sinalPct) || 50) / 100));
           existing.add(r.codigo); novos.push(r);
         });
-        if (novos.length) update(prev => ({ ...prev, reservas: [...prev.reservas, ...novos] }));
+        if (novos.length) {
+          update(prev => {
+            const ja = new Set(prev.reservas.map(x => x.codigo));
+            return { ...prev, reservas: [...prev.reservas, ...novos.filter(x => !ja.has(x.codigo))] };
+          }).catch(() => {});
+        }
         setImportMsg({ ok: novos.length > 0, text: `Importação concluída — ${novos.length} reserva(s) adicionada(s)${skipped ? `, ${skipped} ignorada(s) (duplicadas ou apartamento não encontrado)` : ''}.` });
-      } catch (err) { setImportMsg({ ok: false, text: 'Não foi possível ler o ficheiro: ' + err.message }); }
+      } catch (err) { setImportMsg({ ok: false, text: 'Não foi possível ler o arquivo: ' + err.message }); }
     })();
   };
 
@@ -297,7 +345,15 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   ];
 
   const [manualOrder, setManualOrder] = useState(false);
-  const dndRes = useReorder(data.reservas, arr => update(prev => ({ ...prev, reservas: arr })));
+  // Ordem manual da lista: arrastar uma linha para cima de outra. (Antes
+  // chamava funções que o useReorder não tem e dava erro ao arrastar.)
+  // Grava só "mover esta para ali" sobre a lista mais recente.
+  const [arrastoRes, setArrastoRes] = useState({ de: null, sobre: null });
+  const soltarRes = () => {
+    const { de, sobre } = arrastoRes;
+    setArrastoRes({ de: null, sobre: null });
+    if (de && sobre && de !== sobre) update(prev => ({ ...prev, reservas: moverPorId(prev.reservas, de, sobre) })).catch(() => {});
+  };
   // Ordenação por coluna na Lista — clicar num cabeçalho ordena por ele
   // (clicar de novo inverte), a pedido do Caio (2026-09-24), para poder
   // analisar a partir da coluna que precisar em cada momento. 'checkIn' é o
@@ -470,7 +526,6 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       {/* month grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                         {MONTHS.map((m, idx) => {
-                          const isCurrent = pickerYear === pickerMonth + 1 && idx === pickerMonth; // highlight active
                           const isThisMonth = pickerYear === td.getFullYear() && idx === td.getMonth();
                           const active = idx === pickerMonth;
                           return (
@@ -792,10 +847,12 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               </tr></thead>
               <tbody>
                 {listFiltered.slice(0, listCap).map((r, idx) => (
-                  <tr key={r.id} style={{ borderTop: `1px solid ${C.line}`, opacity: dndRes.dragging === r.id ? 0.4 : 1, outline: dndRes.over === r.id ? `2px dashed ${C.coral}` : 'none' }}
-                    draggable={manualOrder} onDragStart={manualOrder ? () => dndRes.onDragStart(r.id) : undefined}
-                    onDragOver={manualOrder ? e => { e.preventDefault(); dndRes.onDragOver(r.id); } : undefined}
-                    onDrop={manualOrder ? () => dndRes.onDrop() : undefined}>
+                  <tr key={r.id} style={{ borderTop: `1px solid ${C.line}`, opacity: arrastoRes.de === r.id ? 0.4 : 1, outline: arrastoRes.sobre === r.id && arrastoRes.de !== r.id ? `2px dashed ${C.coral}` : 'none' }}
+                    draggable={manualOrder}
+                    onDragStart={manualOrder ? (e) => { setArrastoRes({ de: r.id, sobre: null }); try { e.dataTransfer.setData('text/plain', r.id); } catch { /* ignora */ } } : undefined}
+                    onDragOver={manualOrder ? e => { e.preventDefault(); if (arrastoRes.sobre !== r.id) setArrastoRes(a => ({ ...a, sobre: r.id })); } : undefined}
+                    onDragEnd={manualOrder ? () => setArrastoRes({ de: null, sobre: null }) : undefined}
+                    onDrop={manualOrder ? (e) => { e.preventDefault(); soltarRes(); } : undefined}>
                     <td style={{ padding: '11px 10px', color: C.inkSoft, cursor: manualOrder ? 'grab' : 'default', fontSize: 16 }}>{manualOrder ? '⠿' : ''}</td>
                     <td style={{ padding: '11px 14px', fontFamily: F.disp, color: C.ocean }}>{r.codigo}</td>
                     <td style={{ padding: '11px 14px' }}><ResPill residencial={aptResidencial(r.apartamentoId)} /></td>
@@ -867,6 +924,29 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
           message={<>Eliminar definitivamente a reserva <b>{deleteConfirm.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
           onConfirm={() => { remove(deleteConfirm.id); setDeleteConfirm(null); }}
           onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
+
+      {restaurar && (
+        <ConfirmDialog
+          title="Restaurar backup?"
+          confirmLabel="Restaurar e substituir tudo"
+          message={<>O arquivo <b>{restaurar.nome}</b> tem <b>{restaurar.obj.reservas.length} reservas</b> e <b>{restaurar.obj.apartamentos.length} apartamentos</b>. Hoje o sistema tem <b>{data.reservas.length} reservas</b> e <b>{data.apartamentos.length} apartamentos</b>.<br /><br />Restaurar <b>substitui todos os dados</b> pelos do backup — inclusive reservas feitas pelo site depois da data do backup. Antes de substituir, uma cópia dos dados atuais será baixada para este computador.</>}
+          onCancel={() => setRestaurar(null)}
+          onConfirm={async () => {
+            const { obj } = restaurar;
+            setRestaurar(null);
+            // a cópia de segurança sai dos dados MAIS RECENTES do banco (não só
+            // do que este painel tinha em memória) — assim inclui também as
+            // reservas feitas pelo site desde a última atualização do painel
+            let atuais = data;
+            try { atuais = (await carregarAdmin()).data || data; } catch { /* sem rede: guarda o que o painel tem */ }
+            downloadBlob(JSON.stringify(atuais, null, 2), `pinheiramar-antes-de-restaurar-${carimbo()}.json`, 'application/json');
+            const novo = migrarDados(obj).data;
+            update(() => novo, { permitirReducao: true })
+              .then(() => setImportMsg({ ok: true, text: `Backup restaurado — ${novo.reservas.length} reservas e ${novo.apartamentos.length} apartamentos. A cópia dos dados anteriores foi baixada.` }))
+              .catch(e => setImportMsg({ ok: false, text: e?.codigo === 'descartada' ? 'A restauração foi cancelada.' : `Não foi possível restaurar (${e?.codigo || e?.message || 'erro'}). Nada foi alterado.` }));
+          }}
         />
       )}
     </div>
@@ -955,6 +1035,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   // estado do envio manual em curso: null | 'a-enviar' | 'enviado' | 'falhou'
   const [emailEnviadoEm, setEmailEnviadoEm] = useState(i.emailEnviadoEm || null);
   const [envio, setEnvio] = useState(null);
+  const [motivoEnvio, setMotivoEnvio] = useState(null);
   // checkinRealizado/checkoutRealizado: independentes do status (que agora
   // representa só o pagamento) — marcam se o hóspede já chegou/saiu de facto.
   // Ver ui.jsx (CheckinBadge/CheckoutBadge) e Dashboard.jsx.
@@ -972,13 +1053,23 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const [novaData, setNovaData] = useState(ymd(today()));
   const [novoValor, setNovoValor] = useState('');
   const [extras, setExtras] = useState(() => {
-    if (!isNew && i.extras && i.extras.length > 0) {
-      // Edição: preservar extras existentes (já tinham as obrigatórias quando foram criadas)
-      return i.extras.map(e => ({ id: e.id || uid(), nome: e.nome, qtd: e.qtd, preco: e.preco }));
+    if (!isNew) {
+      // Edição: os extras tal como estão gravados (com taxaId/por/tipo).
+      // Antes, uma reserva antiga SEM extras (ex.: as importadas) recebia as
+      // taxas obrigatórias ao abrir — e salvar somava-as ao total dela.
+      return (i.extras || []).map(e => ({ ...e, id: e.id || uid() }));
     }
-    // Nova reserva: pré-carregar as taxas obrigatórias
-    return mkExtrasObrigatorios(data.taxasAdicionais);
+    // Nova reserva: pré-carregar as taxas obrigatórias, com a quantidade
+    // certa para "por noite"/"por hóspede" (antes era sempre 1)
+    return extrasObrigatorios(data.taxasAdicionais, { noites: Math.max(1, nights(ci, co)), hospedes: adultos + criancas })
+      .map(({ subtotal, ...e }) => ({ ...e, id: uid(), auto: true }));
   });
+  // as taxas "por noite"/"por hóspede" pré-carregadas acompanham as datas e
+  // o nº de hóspedes, até o gestor mexer à mão na quantidade
+  useEffect(() => {
+    const ctx = { noites: Math.max(1, nights(ci, co)), hospedes: adultos + criancas };
+    setExtras(x => (x.some(e => e.auto) ? x.map(e => (e.auto ? { ...e, qtd: quantidadeTaxa({ por: e.por }, ctx) } : e)) : x));
+  }, [ci, co, adultos, criancas]);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -1032,10 +1123,26 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aptId, ci, co, status, adultos, criancas]);
 
-  const acomod = status === 'bloqueio' ? 0 : Math.round(precoNoite * n);
-  const extrasVal = status === 'bloqueio' ? 0 : extras.reduce((s, e) => s + (Number(e.qtd) || 0) * (Number(e.preco) || 0), 0);
-  const total = acomod + extrasVal;
-  const sinal = Math.round(total * (residencial.sinalPct / 100));
+  // Estadia: fica a que está GRAVADA na reserva enquanto o gestor não mexer
+  // no preço por noite, nas datas, no apartamento ou no estado. Antes era
+  // sempre refeita como "preço por noite (arredondado) × noites": bastava
+  // abrir e salvar uma reserva do site (ex.: para pôr uma nota) para o total
+  // mudar R$ 1–2 — e o sinal com ele, o que fazia o pagamento certo do
+  // Mercado Pago parecer "a menos".
+  const somaExtras = (lista) => (lista || []).reduce((s, e) => s + (Number(e.qtd) || 0) * (Number(e.preco) || 0), 0);
+  const estadiaGravada = !isNew && i.total != null ? Math.round((Number(i.total) - somaExtras(i.extras)) * 100) / 100 : null;
+  const mesmaEstadia = !isNew && estadiaGravada != null && estadiaGravada >= 0 && i.status !== 'bloqueio' && status !== 'bloqueio'
+    && i.precoNoite != null && Math.round(Number(precoNoite) * 100) === Math.round(Number(i.precoNoite) * 100)
+    && ci === i.checkIn && co === i.checkOut && aptId === i.apartamentoId;
+  const acomod = status === 'bloqueio' ? 0 : (mesmaEstadia ? estadiaGravada : Math.round(precoNoite * n));
+  const extrasVal = status === 'bloqueio' ? 0 : somaExtras(extras);
+  const total = Math.round((acomod + extrasVal) * 100) / 100;
+  // Sinal: fica o gravado enquanto o total não mudar; a 2ª metade de uma
+  // reserva conjunta nunca leva sinal (o pagamento está todo na 1ª).
+  const metadeConjunta = !isNew && !!i.pagamentoRef && i.pagamentoRef !== i.id;
+  const sinal = metadeConjunta ? (Number(i.sinal) || 0)
+    : (!isNew && i.sinal != null && Math.abs(total - Number(i.total)) < 0.005) ? Number(i.sinal)
+    : Math.round(total * (residencial.sinalPct / 100));
   const free = isAvailable(data.reservas, aptId, ci, co, i.id);
   const overCap = status !== 'bloqueio' && totalGuests > apt.capacidade;
   // Telefone/Email deixaram de ser obrigatórios para gravar (a pedido do
@@ -1071,7 +1178,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const marcarComoPaga = () => { if (restante > 0) commitRegistro('Pagamento — saldo restante', ymd(today()), restante); };
 
   const addExtra = (preset) => setExtras(x => [...x, { id: uid(), nome: preset?.nome || '', qtd: 1, preco: preset?.preco ?? 0 }]);
-  const updExtra = (id, patch) => setExtras(x => x.map(e => e.id === id ? { ...e, ...patch } : e));
+  const updExtra = (id, patch) => setExtras(x => x.map(e => e.id === id ? { ...e, ...patch, ...('qtd' in patch ? { auto: false } : {}) } : e));
   const delExtra = (id) => setExtras(x => x.filter(e => e.id !== id));
   const ORIGENS = [...new Set([origem, 'Manual', 'Site', 'Telefone', 'WhatsApp', 'Booking', 'Airbnb'])];
 
@@ -1087,8 +1194,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     adultos: status === 'bloqueio' ? 0 : adultos, criancas: status === 'bloqueio' ? 0 : criancas,
     hospedes: status === 'bloqueio' ? 0 : totalGuests,
     precoNoite: status === 'bloqueio' ? 0 : Math.round((Number(precoNoite) || 0) * 100) / 100,
-    precoTabela: status === 'bloqueio' ? 0 : bd.total,
-    extras: status === 'bloqueio' ? [] : extras.map(e => ({ id: e.id, nome: e.nome, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
+    precoTabela: status === 'bloqueio' ? 0 : (mesmaEstadia && i.precoTabela != null ? i.precoTabela : bd.total),
+    extras: status === 'bloqueio' ? [] : extras.map(({ auto, ...e }) => ({ ...e, qtd: Number(e.qtd) || 0, preco: Number(e.preco) || 0 })),
     total, sinal, valorPago: status === 'bloqueio' ? 0 : valorPago,
     registrosPagamento: status === 'bloqueio' ? [] : registrosPagamento,
     checkinRealizado: status === 'bloqueio' ? false : checkinRealizado,
@@ -1096,6 +1203,17 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     enviarEmail, nota, criadoEm: i.criadoEm || ymd(today()),
     ...(emailEnviadoEm ? { emailEnviadoEm } : {}),
   });
+
+  // O (re)envio do e-mail vai com os dados SALVOS (o servidor lê do banco).
+  // Se o gestor mudou algo que aparece no e-mail, pede para salvar antes.
+  const chaveExtras = (lista) => JSON.stringify((lista || []).map(e => [e.nome, Number(e.qtd) || 0, Number(e.preco) || 0]));
+  const mudouParaEmail = !isNew && (
+    email.trim() !== String(i.email || '').trim() || aptId !== i.apartamentoId || ci !== i.checkIn || co !== i.checkOut
+    || nome.trim() !== String(i.nome ?? (i.hospede ? i.hospede.split(' ')[0] : '')).trim()
+    || sobrenome.trim() !== String(i.sobrenome ?? (i.hospede ? i.hospede.split(' ').slice(1).join(' ') : '')).trim()
+    || adultos !== (i.adultos ?? (i.hospedes || 2)) || criancas !== (i.criancas ?? 0)
+    || (i.precoNoite != null && Math.round(Number(precoNoite) * 100) !== Math.round(Number(i.precoNoite) * 100))
+    || chaveExtras(extras) !== chaveExtras(i.extras));
 
   return (
     <>
@@ -1112,11 +1230,10 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
         <Btn variant="primary" disabled={!canSave} style={{ opacity: canSave ? 1 : .5 }}
           onClick={() => {
             const r = montarReserva();
-            onSave(r);
-            // só envia ao CRIAR a reserva — reeditar uma reserva existente com a
-            // caixa ainda marcada não reenvia o e-mail.
-            if (isNew && enviarEmail) sendConfirmationEmail(r, apt, data.settings);
-          }}>{isNew ? 'Salvar reserva' : 'Guardar alterações'}</Btn>
+            // só envia ao CRIAR a reserva (e depois de gravada) — reeditar uma
+            // reserva existente com a caixa ainda marcada não reenvia o e-mail.
+            onSave(r, { original: isNew ? undefined : i, enviarEmailAoGravar: isNew && enviarEmail && !!r.email });
+          }}>{isNew ? 'Salvar reserva' : 'Salvar alterações'}</Btn>
       </>}>
       <div style={{ display: 'grid', gap: 20, gridTemplateColumns: 'minmax(0, 1fr)' }}>
 
@@ -1197,7 +1314,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
           <div style={{ display: 'grid', gap: 12 }}>
             <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Nome" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Primeiro nome" /></Field>
-              <Field label="Sobrenome" required><TextInput value={sobrenome} onChange={e => setSobrenome(e.target.value)} placeholder="Apelido" /></Field>
+              <Field label="Sobrenome" required><TextInput value={sobrenome} onChange={e => setSobrenome(e.target.value)} placeholder="Sobrenome" /></Field>
             </div>
             <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Telefone"><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
@@ -1214,21 +1331,21 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               </label>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <Btn size="sm" variant="ghost" disabled={!email.trim() || envio === 'a-enviar'}
+                <Btn size="sm" variant="ghost" disabled={!email.trim() || envio === 'a-enviar' || mudouParaEmail}
                   onClick={async () => {
                     setEnvio('a-enviar');
-                    const agora = new Date().toISOString();
-                    const okEnvio = await sendConfirmationEmail(
-                      { ...montarReserva(), enviarEmail: true }, apt, data.settings);
-                    setEnvio(okEnvio ? 'enviado' : 'falhou');
-                    if (okEnvio) setEmailEnviadoEm(agora);
+                    const res = await enviarConfirmacaoReserva(i.id);
+                    setEnvio(res.ok ? 'enviado' : 'falhou');
+                    setMotivoEnvio(res.motivo || null);
+                    if (res.ok) setEmailEnviadoEm(res.enviadoEm || new Date().toISOString());
                   }}>
                   {emailEnviadoEm ? 'Reenviar e-mail de confirmação' : 'Enviar e-mail de confirmação'}
                 </Btn>
                 <span style={{ fontSize: 12.5, color: envio === 'falhou' ? '#A24C4C' : C.inkSoft }}>
-                  {envio === 'a-enviar' ? 'A enviar…'
+                  {envio === 'a-enviar' ? 'Enviando…'
                     : envio === 'enviado' ? 'Enviado agora.'
-                    : envio === 'falhou' ? 'Não foi possível enviar — ver a configuração do EmailJS.'
+                    : envio === 'falhou' ? `Não foi possível enviar — ${textoFalhaEmail(motivoEnvio)}.`
+                    : mudouParaEmail ? 'Salve as alterações primeiro — o e-mail vai com os dados salvos.'
                     : !email.trim() ? 'Preencha o e-mail para poder enviar.'
                     : emailEnviadoEm ? `Último envio: ${fmtShort(emailEnviadoEm.slice(0, 10))}.`
                     : 'Ainda não foi enviado nenhum e-mail para este hóspede.'}

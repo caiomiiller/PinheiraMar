@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, X, Check, Copy, Wallet } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, Wallet } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { uid, money, today, parseYMD, fmtLong, ymd, addDays, roomFullName, isTarifaRapida } from '../../lib/helpers';
-import { Card, PageHead, Btn, Modal, Field, TextInput, DateInput,
-  NumberInput, Badge, duplicateInList, DragGrip, PhotoTile, MoneyInput, ConfirmDialog } from '../../components/ui';
-import { useReorder } from '../../hooks/useReorder';
+import { Card, PageHead, Btn, Modal, Field, TextInput, DateInput, NumberInput, duplicateInList,
+  DragGrip, PhotoTile, MoneyInput, ConfirmDialog } from '../../components/ui';
+import { useReorder, reordenarPorIds } from '../../hooks/useReorder';
 import { iconBtn, secTitle } from './Reservations';
 
 export function Seasons({ data, update }) {
@@ -26,7 +26,7 @@ export function Seasons({ data, update }) {
   // em `seasonForDate` para a temporada atual do Painel não "ver" essas
   // tarifas pontuais — um só critério, partilhado pelos dois lugares.
   const visibleSeasons = data.seasons.filter(s => !isTarifaRapida(s));
-  const dnd = useReorder(visibleSeasons, (arr) => update(prev => ({ ...prev, seasons: [...prev.seasons.filter(isTarifaRapida), ...arr] })));
+  const dnd = useReorder(visibleSeasons, (arr) => update(prev => ({ ...prev, seasons: [...prev.seasons.filter(isTarifaRapida), ...reordenarPorIds(prev.seasons.filter(s => !isTarifaRapida(s)), arr)] })));
   const priceRange = (s) => {
     const vals = data.apartamentos.map(a => Number(s.precos?.[a.id]?.diaSemana) || 0).filter(Boolean);
     if (!vals.length) return '—';

@@ -1,21 +1,51 @@
 import React, { useState } from 'react';
-import { X, Check, Info, ChevronDown, Minus, Plus } from 'lucide-react';
-import { C, F } from '../lib/constants';
-import { mkExtrasObrigatorios } from '../lib/csvUtils';
-import { money, nights, ymd, uid, stayBreakdown, code, today, fmtShort, novoPrazoPagamento } from '../lib/helpers';
-import { sendConfirmationEmail } from '../lib/email';
-import { Btn, Modal, Field, TextInput, NumberInput, PhotoTile } from './ui';
+import { ChevronDown, Minus, Plus, PawPrint, Umbrella, SquareParking, Sparkles, Users, Home, AlertCircle, MessageCircle } from 'lucide-react';
+import { C } from '../lib/constants';
+import { money } from '../lib/helpers';
+import { orcamentoReserva } from '../lib/precos';
+import { validarHospede } from '../lib/reservas';
+import { guardarUltimaReserva } from '../lib/dadosPublico';
+import { useIdioma } from '../lib/i18n';
+import { WHATSAPP_URL } from '../lib/constants';
+import { Btn, Modal, Field, TextInput, PhotoTile } from './ui';
+import { LinhasOrcamento } from './LinhasOrcamento';
 
-export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onConfirmed }) {
+// Ícone de linha (Lucide) para cada serviço extra, pelo nome — antes eram emojis.
+function IconeExtra({ nome }) {
+  const s = String(nome || '').toLowerCase();
+  const p = { size: 24, strokeWidth: 1.5, color: C.ocean };
+  if (s.includes('pet') || s.includes('animal')) return <PawPrint {...p} />;
+  if (s.includes('praia') || s.includes('cadeira') || s.includes('guarda')) return <Umbrella {...p} />;
+  if (s.includes('estacion') || s.includes('vaga') || s.includes('garagem')) return <SquareParking {...p} />;
+  return <Sparkles {...p} />;
+}
+
+// Botão −/+ de 44 px (alvo de toque confortável para o público 50+).
+function BotaoContador({ tipo, onClick, disabled, rotulo }) {
+  return (
+    <button type="button" aria-label={rotulo} onClick={onClick} disabled={disabled}
+      style={{ width: 44, height: 44, borderRadius: '50%', border: `1.5px solid ${disabled ? '#ddd' : '#8a8a8a'}`, background: '#fff', color: disabled ? '#bbb' : '#222', cursor: disabled ? 'default' : 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+      {tipo === 'menos' ? <Minus size={18} /> : <Plus size={18} />}
+    </button>
+  );
+}
+
+const MENSAGEM_ERRO = {
+  indisponivel: 'err_indisponivel', preco_mudou: 'err_preco_mudou', minimo_noites: 'err_minimo_noites', maximo_noites: 'err_maximo_noites',
+  capacidade: 'err_capacidade', data_passada: 'err_datas', datas_invalidas: 'err_datas', datas_fechadas: 'err_datas_fechadas',
+  estadia_longa: 'err_estadia_longa', apartamento_inexistente: 'err_generico', apartamentos_invalidos: 'err_generico',
+  muitas_pendentes: 'err_muitas_pendentes',
+};
+
+export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirmed }) {
+  const { tr, lang, fmtCurta, dado } = useIdioma();
   const { apt, apt2, g1: initG1, g2: initG2 } = sel;
   const hasApt2 = !!apt2;
 
   const taxasOpc = (data.taxasAdicionais || []).filter(tx => tx.tipo === 'opcional');
   const hasExtras = taxasOpc.length > 0;
 
-  // ── passos do fluxo: resumo da estadia → extras (se houver) → dados do hóspede → revisão e confirmação ──
-  // O "resumo" vem primeiro (como no Airbnb): o cliente confere apartamento,
-  // datas, pessoas e preço antes de preencher qualquer dado.
+  // passos: resumo da estadia → extras (se houver) → dados do hóspede → revisão
   const steps = hasExtras ? ['resumo', 'extras', 'dados', 'revisao'] : ['resumo', 'dados', 'revisao'];
   const [step, setStep] = useState(steps[0]);
   const stepIdx = steps.indexOf(step);
@@ -25,355 +55,278 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
   const [extrasQty, setExtrasQty] = useState(() => Object.fromEntries(taxasOpc.map(t => [t.id, 0])));
   const [extrasScope, setExtrasScope] = useState(() => Object.fromEntries(taxasOpc.map(t => [t.id, t.por === 'noite' ? 'per_apt' : 'group'])));
 
-  const extrasObrig = mkExtrasObrigatorios(data.taxasAdicionais);
-  const extrasOpc1 = taxasOpc.filter(t => extrasQty[t.id] > 0).map(t => ({ ...t, qtd: extrasQty[t.id], subtotal: t.preco * extrasQty[t.id] }));
-  const extrasOpc2 = hasApt2 ? taxasOpc.filter(t => extrasQty[t.id] > 0 && extrasScope[t.id] === 'per_apt').map(t => ({ ...t, qtd: extrasQty[t.id], subtotal: t.preco * extrasQty[t.id] })) : [];
-
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [tel, setTel] = useState('');
-  // Precisam de vir antes do stayBreakdown abaixo — o preço já inclui
-  // automaticamente o "Adulto extra" por hóspede acima da capacidade base
-  // do apartamento (ver helpers.js/nightlyRate), a pedido do Caio, 2026-09-17.
-  const [g, setG] = useState(Math.min(initG1 || hosp, apt.capacidade));
-  const [gB, setGB] = useState(Math.min(initG2 || 1, apt2 ? apt2.capacidade : 8));
-  const ok = nome.trim() && email.trim() && tel.trim();
+  const [website, setWebsite] = useState(''); // campo-isca: invisível para pessoas, robôs preenchem
+  const [erroCampos, setErroCampos] = useState({});
+  const [g, setG] = useState(Math.max(1, Math.min(initG1 || 2, apt.capacidade)));
+  const [gB, setGB] = useState(Math.max(1, Math.min(initG2 || 1, apt2 ? apt2.capacidade : 8)));
 
-  const bd = stayBreakdown(apt, data.seasons, ci, co, g);
-  const bd2 = apt2 ? stayBreakdown(apt2, data.seasons, ci, co, gB) : null;
-  const obrigTotal = extrasObrig.reduce((s, e) => s + e.preco * e.qtd, 0);
-  const opc1Total = extrasOpc1.reduce((s, e) => s + e.subtotal, 0);
-  const opc2Total = extrasOpc2.reduce((s, e) => s + e.subtotal, 0);
-  const total1 = bd.total + obrigTotal + opc1Total;
-  const total2 = apt2 && bd2 ? bd2.total + obrigTotal + opc2Total : 0;
-  const totalComExtras = total1 + total2;
-  const sinal = Math.round(totalComExtras * (data.settings.sinalPct / 100));
+  // O preço mostrado sai da MESMA função que o servidor usa para cobrar.
+  const opcionais = taxasOpc.filter(t => (extrasQty[t.id] || 0) > 0)
+    .map(t => ({ taxaId: t.id, unidades: extrasQty[t.id], escopo: hasApt2 ? extrasScope[t.id] : 'group' }));
+  const orc = orcamentoReserva({
+    itens: [{ apt, hospedes: g }, hasApt2 ? { apt: apt2, hospedes: gB } : null].filter(Boolean),
+    seasons: data.seasons, taxas: data.taxasAdicionais, checkIn: ci, checkOut: co, opcionais, sinalPct: data.settings.sinalPct,
+  });
+  const o1 = orc?.partes[0]?.orcamento;
+  const o2 = orc?.partes[1]?.orcamento;
+  const total = orc?.total || 0;
+  const sinal = orc?.sinal || 0;
+  const noites = o1?.noites || 0;
+  const opcTotal = [o1, o2].filter(Boolean).reduce((s, o) => s + o.opcionais.reduce((a, e) => a + e.subtotal, 0), 0);
 
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
   const cancelPol = data.settings.politicas?.cancelamento;
 
-  const getIcon = (n) => { const s = n.toLowerCase(); if (s.includes('pet') || s.includes('animal')) return '🐾'; if (s.includes('praia') || s.includes('cadeira') || s.includes('guarda')) return '🏖️'; if (s.includes('estacion') || s.includes('vaga')) return '🚗'; return '✨'; };
-
-  const buildR = (aptX, bdX, guests, allExtras, totalVal, isB) => ({
-    id: uid(), codigo: isB ? code() + '-B' : code(),
-    apartamentoId: aptX.id, checkIn: ci, checkOut: co,
-    nome: nome.trim().split(' ')[0], sobrenome: nome.trim().split(' ').slice(1).join(' '),
-    hospede: nome.trim(), email: email.trim(), telefone: tel.trim(), pais: 'Brasil',
-    adultos: guests, criancas: 0, hospedes: guests,
-    precoNoite: Math.round(bdX.total / Math.max(1, bdX.n)), precoTabela: bdX.total,
-    extras: allExtras, total: totalVal, sinal: isB ? 0 : sinal,
-    // status começa 'pendente' (cinza, sem pagamento): hoje, ao concluir
-    // este passo, o hóspede ainda não pagou nada de facto — o texto de
-    // confirmação (ConfirmationModal) pede para efetuar o sinal. Quando o
-    // Mercado Pago confirma o pagamento (api/mp-webhook.js), o status passa
-    // automaticamente a 'reservado' (amarelo, 50% pago); para reservas por
-    // telefone/WhatsApp a equipa muda o Estado manualmente no admin.
-    status: 'pendente', origem: 'Site', checkinRealizado: false, checkoutRealizado: false, enviarEmail: true,
-    nota: isB ? `Reserva conjunta com ${apt.nome}` : hasApt2 ? `Reserva conjunta com ${apt2.nome}` : '',
-    criadoEm: ymd(today()),
-  });
-
-  // 'A processar…' enquanto a reserva é gravada e o pagamento (se
-  // configurado) é preparado — evita duplo clique e dá feedback ao hóspede
-  // durante o intervalo até o redirecionamento para o Mercado Pago.
   const [paying, setPaying] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState(null);
+  const nomes = hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome;
+
+  const dadosOk = validarHospede({ nome, email, telefone: tel });
 
   const handleConfirm = async () => {
-    setPaying(true);
-    const base1 = buildR(apt, bd, g, [...extrasObrig, ...extrasOpc1], total1, false);
-
-    // O link de pagamento é pedido ANTES de gravar, para se saber se esta
-    // reserva vai mesmo passar pelo checkout: só nesse caso ela nasce
-    // provisória (com prazo), porque só nesse caso pode ficar pendurada por
-    // um pagamento que falha. Sem o Mercado Pago configurado — ou se ele
-    // recusar o pedido — segue o fluxo manual de sempre e a reserva nasce
-    // sem prazo, à espera do contacto da equipa.
-    let initPoint = null;
-    try {
-      const resp = await fetch('/api/mp-create-preference', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reservaId: base1.id, codigo: base1.codigo,
-          hospede: { nome: base1.hospede, email: base1.email },
-          valor: base1.sinal,
-          descricao: `Sinal — ${data.settings.nome} — ${apt.nome}`,
-          origin: window.location.origin,
-        }),
-      });
-      if (resp.ok) initPoint = (await resp.json())?.init_point || null;
-    } catch (err) {
-      console.warn('[pagamento] Mercado Pago indisponível — seguindo com confirmação manual do sinal.', err);
+    if (!dadosOk.ok) { setErroCampos(dadosOk.erros); setStep('dados'); return; }
+    if (!orc) return;
+    setPaying(true); setErroEnvio(null);
+    const pedido = {
+      itens: [{ apartamentoId: apt.id, hospedes: g }, ...(hasApt2 ? [{ apartamentoId: apt2.id, hospedes: gB }] : [])],
+      checkIn: ci, checkOut: co, opcionais,
+      hospede: { nome: nome.trim(), email: email.trim(), telefone: tel.trim() },
+      totalEsperado: total, sinalEsperado: sinal, idioma: lang, website,
+    };
+    const r = await onReservar(pedido);
+    if (r.ok) {
+      const info = { reservas: r.reservas, total: r.total, sinal: r.sinal, aptos: [apt, apt2].filter(Boolean).map(a => ({ id: a.id, nome: a.nome, vista: a.vista, residencialId: a.residencialId })), sinalPct: data.settings.sinalPct };
+      if (r.initPoint) { guardarUltimaReserva(info); window.location.href = r.initPoint; return; }
+      setPaying(false);
+      onConfirmed(info);
+      return;
     }
-
-    // `pagamentoRef` prende as duas metades de uma reserva conjunta ao mesmo
-    // pagamento, para o webhook confirmar (ou libertar) as duas de uma vez —
-    // sem isto, a segunda unidade expirava mesmo com o sinal pago.
-    const provisoria = (r) => (initPoint ? { ...r, expiraEm: novoPrazoPagamento(), pagamentoRef: base1.id } : r);
-
-    // espera a reserva estar mesmo gravada (Supabase, quando configurado)
-    // antes de redirecionar — sem isto, sair da página a meio da gravação
-    // podia perder a reserva.
-    // O e-mail de confirmação só sai daqui quando NÃO há pagamento online:
-    // nesse fluxo a reserva vale desde já e a equipa entra em contacto. Com
-    // checkout pelo Mercado Pago, quem envia é o webhook, depois de o
-    // pagamento ser aprovado (api/mp-webhook.js) — senão um hóspede com o
-    // pagamento recusado recebia um e-mail a confirmar uma reserva que ia
-    // ser libertada minutos depois.
-    const r1 = provisoria(base1);
-    await onCreate(r1);
-    if (!initPoint) sendConfirmationEmail(r1, apt, data.settings);
-    if (apt2 && bd2) {
-      const r2 = provisoria(buildR(apt2, bd2, gB, [...extrasObrig, ...extrasOpc2], total2, true));
-      await onCreate(r2);
-      if (!initPoint) sendConfirmationEmail(r2, apt2, data.settings);
-    }
-
-    if (initPoint) { window.location.href = initPoint; return; }
     setPaying(false);
-    onConfirmed(r1);
+    if (r.erro === 'dados_hospede') { setErroCampos(r.campos || {}); setStep('dados'); return; }
+    setErroEnvio(r);
   };
 
-  // ── props partilhadas do Modal: seta de voltar (exceto no 1º passo) + barra de progresso ──
-  const modalNav = {
-    onClose,
-    onBack: stepIdx > 0 ? goBack : undefined,
-    progress: { step: stepIdx + 1, total: steps.length },
-    wide: true,
-  };
+  const modalNav = { onClose, onBack: stepIdx > 0 ? goBack : undefined, progress: { step: stepIdx + 1, total: steps.length }, wide: true, rotuloVoltar: tr('ap_voltar'), rotuloFechar: tr('ap_fechar') };
+  const row = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: `1px solid ${C.line}` };
 
-  // ── Passo: Resumo da estadia ───────────────────────────────────────────────
-  if (step === 'resumo') {
-    const stepBtn = (label, onClick, disabled) => (
-      <button aria-label={label} onClick={onClick} disabled={disabled}
-        style={{ width: 44, height: 44, borderRadius: '50%', border: `1.5px solid ${disabled ? '#ddd' : '#999'}`, background: '#fff', color: disabled ? '#bbb' : '#222', cursor: disabled ? 'default' : 'pointer', fontSize: 20, display: 'grid', placeItems: 'center' }}>
-        {label === 'Menos' ? <Minus size={18} /> : <Plus size={18} />}
-      </button>
-    );
-    const row = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: `1px solid ${C.line}` };
+  if (!orc) {
     return (
-      <Modal {...modalNav} title="Confira sua estadia" subtitle={hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}
-        footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52, fontSize: 16 }} onClick={goNext}>Continuar</Btn>}>
-        <div>
+      <Modal {...modalNav} title={tr('bk_titulo_resumo')} footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52 }} onClick={onClose}>{tr('bk_escolher_datas')}</Btn>}>
+        <p style={{ fontSize: 16 }}>{tr('bk_sem_datas')}</p>
+      </Modal>
+    );
+  }
+
+  // ── Passo: resumo da estadia ─────────────────────────────────────────────
+  if (step === 'resumo') {
+    return (
+      <Modal {...modalNav} title={tr('bk_titulo_resumo')} subtitle={nomes}
+        footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52, fontSize: 16 }} onClick={goNext}>{tr('bk_continuar')}</Btn>}>
+        <div style={{ fontSize: 15.5 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
             <div style={{ width: 72, height: 72, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={72} radius={12} /></div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 16 }}>{hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}</div>
-              <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{apt.piso} · {apt.vista}</div>
+              <div style={{ fontWeight: 700, fontSize: 17 }}>{nomes}</div>
+              <div style={{ fontSize: 15, color: C.inkSoft, marginTop: 2 }}>{dado(apt.piso)} · {dado(apt.vista)}</div>
             </div>
           </div>
 
           <div style={row}>
             <div>
-              <div style={{ fontSize: 14, color: C.inkSoft }}>Datas</div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{fmtShort(ci)} – {fmtShort(co)}</div>
-              <div style={{ fontSize: 14, color: C.inkSoft }}>{bd.n} noite{bd.n > 1 ? 's' : ''}</div>
+              <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('bk_datas')}</div>
+              <div style={{ fontSize: 17, fontWeight: 700, marginTop: 2 }}>{fmtCurta(ci)} – {fmtCurta(co)}</div>
+              <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('noites', noites)}</div>
             </div>
-            {/* as datas mudam-se na página do apartamento (com o calendário de disponibilidade) */}
-            <button onClick={onClose} style={{ minHeight: 44, padding: '0 16px', border: '1px solid #ccc', borderRadius: 999, background: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', color: '#222' }}>Alterar</button>
+            <button type="button" onClick={onClose} style={{ minHeight: 44, padding: '0 16px', border: '1px solid #bbb', borderRadius: 999, background: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', color: '#222' }}>{tr('bk_alterar')}</button>
           </div>
 
           {!hasApt2 ? (
             <div style={row}>
               <div>
-                <div style={{ fontSize: 14, color: C.inkSoft }}>Pessoas</div>
-                <div style={{ fontSize: 16, fontWeight: 700, marginTop: 2 }}>{g} pessoa{g > 1 ? 's' : ''}</div>
-                <div style={{ fontSize: 13, color: C.inkSoft }}>máximo {apt.capacidade}</div>
+                <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('bk_pessoas')}</div>
+                <div style={{ fontSize: 17, fontWeight: 700, marginTop: 2 }}>{tr('pessoas', g)}</div>
+                <div style={{ fontSize: 14, color: C.inkSoft }}>{tr('bk_maximo', apt.capacidade)}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {stepBtn('Menos', () => setG(v => Math.max(1, v - 1)), g <= 1)}
-                <b style={{ minWidth: 18, textAlign: 'center', fontSize: 17 }}>{g}</b>
-                {stepBtn('Mais', () => setG(v => Math.min(apt.capacidade, v + 1)), g >= apt.capacidade)}
+                <BotaoContador tipo="menos" rotulo={tr('bk_menos_pessoa')} onClick={() => setG(v => Math.max(1, v - 1))} disabled={g <= 1} />
+                <b style={{ minWidth: 18, textAlign: 'center', fontSize: 18 }}>{g}</b>
+                <BotaoContador tipo="mais" rotulo={tr('bk_mais_pessoa')} onClick={() => setG(v => Math.min(apt.capacidade, v + 1))} disabled={g >= apt.capacidade} />
               </div>
             </div>
           ) : (
-            <div style={row}>
-              <div style={{ fontSize: 14, color: C.inkSoft }}>Pessoas</div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>{g} + {gB} pessoas</div>
+            <div style={{ ...row, alignItems: 'flex-start', flexDirection: 'column' }}>
+              <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('bk_pessoas_por_apto')}</div>
+              {[[apt, g, setG], [apt2, gB, setGB]].map(([a, val, set]) => (
+                <div key={a.id} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <div><div style={{ fontWeight: 700, fontSize: 16 }}>{a.nome}</div><div style={{ fontSize: 14, color: C.inkSoft }}>{tr('bk_maximo', a.capacidade)}</div></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <BotaoContador tipo="menos" rotulo={tr('bk_menos_pessoa_em', a.nome)} onClick={() => set(v => Math.max(1, v - 1))} disabled={val <= 1} />
+                    <b style={{ minWidth: 18, textAlign: 'center', fontSize: 18 }}>{val}</b>
+                    <BotaoContador tipo="mais" rotulo={tr('bk_mais_pessoa_em', a.nome)} onClick={() => set(v => Math.min(a.capacidade, v + 1))} disabled={val >= a.capacidade} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
           <div style={{ padding: '16px 0', borderBottom: `1px solid ${C.line}` }}>
-            <div style={{ fontSize: 14, color: C.inkSoft }}>Preço total{hasApt2 ? ' combinado' : ''}</div>
-            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}>{money(totalComExtras)}</div>
-            <div style={{ marginTop: 10, fontSize: 14.5, color: '#444', display: 'grid', gap: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span>Estadia ({bd.n} noite{bd.n > 1 ? 's' : ''}{hasApt2 ? `, ${apt.nome}` : ''})</span><span>{money(bd.total)}</span></div>
-              {hasApt2 && bd2 && <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span>Estadia ({apt2.nome})</span><span>{money(bd2.total)}</span></div>}
-              {extrasObrig.map(e => (
-                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span>{e.nome}{hasApt2 ? ' (×2)' : ''}</span><span>{money(e.preco * e.qtd * (hasApt2 ? 2 : 1))}</span></div>
-              ))}
+            <div style={{ fontSize: 15, color: C.inkSoft }}>{hasApt2 ? tr('bk_total_combinado') : tr('bk_total')}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginTop: 2 }}>{money(total)}</div>
+            <div style={{ marginTop: 10, fontSize: 15, color: '#444', display: 'grid', gap: 10 }}>
+              <LinhasOrcamento o={o1} titulo={hasApt2 ? apt.nome : null} />
+              {o2 && <LinhasOrcamento o={o2} titulo={apt2.nome} />}
             </div>
           </div>
 
           <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, background: C.espuma, display: 'grid', gap: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 15.5, fontWeight: 800, color: C.coralDeep }}>
-              <span>Sinal para reservar ({data.settings.sinalPct}%)</span><span>{money(sinal)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 16.5, fontWeight: 700, color: C.coralDeep }}>
+              <span>{tr('bk_sinal_para_reservar', data.settings.sinalPct)}</span><span>{money(sinal)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 14.5, color: '#444' }}>
-              <span>Restante</span><span>{money(totalComExtras - sinal)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 15, color: '#444' }}>
+              <span>{tr('bk_restante')}</span><span>{money(total - sinal)}</span>
             </div>
-            <div style={{ fontSize: 13.5, color: C.inkSoft, marginTop: 2 }}>Nada é cobrado até você confirmar no último passo.</div>
+            <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{tr('bk_nada_cobrado')}</div>
           </div>
         </div>
       </Modal>
     );
   }
 
-  // ── Passo: Extras opcionais ──────────────────────────────────────────────
+  // ── Passo: extras opcionais ──────────────────────────────────────────────
   if (step === 'extras') return (
-    <Modal {...modalNav} title="Serviços extras" subtitle="Adicione serviços à sua estadia (opcional)"
-      footer={<Btn variant="primary" style={{ width: '100%' }} onClick={goNext}>Continuar</Btn>}>
+    <Modal {...modalNav} title={tr('bk_titulo_extras')} subtitle={tr('bk_sub_extras')}
+      footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52, fontSize: 16 }} onClick={goNext}>{tr('bk_continuar')}</Btn>}>
       <div style={{ display: 'grid', gap: 12 }}>
         {taxasOpc.map(taxa => {
           const qty = extrasQty[taxa.id] || 0;
           return (
-            <div key={taxa.id} style={{ display: 'grid', gridTemplateColumns: '52px 1fr auto', gap: 14, alignItems: 'center', background: C.espuma, borderRadius: 12, padding: '14px 16px', border: qty > 0 ? `2px solid ${C.coral}` : `2px solid transparent` }}>
-              <div style={{ width: 52, height: 52, borderRadius: 10, background: '#e8f4f1', display: 'grid', placeItems: 'center', fontSize: 26 }}>{getIcon(taxa.nome)}</div>
+            <div key={taxa.id} style={{ display: 'grid', gridTemplateColumns: '48px 1fr auto', gap: 14, alignItems: 'center', background: C.espuma, borderRadius: 12, padding: '14px 16px', border: qty > 0 ? `2px solid ${C.ocean}` : '2px solid transparent' }}>
+              <div style={{ width: 48, height: 48, borderRadius: 10, background: '#fff', display: 'grid', placeItems: 'center' }}><IconeExtra nome={taxa.nome} /></div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14.5 }}>{taxa.nome}</div>
-                <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 2 }}>{money(taxa.preco)} por {taxa.por}</div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{taxa.nome}</div>
+                <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{money(taxa.preco)} {tr('bk_por_' + (taxa.por || 'reserva'))}</div>
                 {hasApt2 && qty > 0 && (
-                  <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                    {['group','per_apt'].map(sc => (
-                      <button key={sc} onClick={() => setExtrasScope(s => ({ ...s, [taxa.id]: sc }))}
-                        style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, background: extrasScope[taxa.id] === sc ? C.coral : '#ddd', color: extrasScope[taxa.id] === sc ? '#fff' : '#444' }}>
-                        {sc === 'group' ? '👥 Grupo (1×)' : '🏠 Por apto (2×)'}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                    {['group', 'per_apt'].map(sc => (
+                      <button type="button" key={sc} onClick={() => setExtrasScope(s => ({ ...s, [taxa.id]: sc }))}
+                        style={{ minHeight: 36, fontSize: 14, padding: '0 12px', borderRadius: 20, cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${extrasScope[taxa.id] === sc ? C.ocean : '#ccc'}`, background: extrasScope[taxa.id] === sc ? 'rgba(27,28,70,.07)' : '#fff', color: C.ink }}>
+                        {sc === 'group' ? <><Users size={15} /> {tr('bk_escopo_grupo')}</> : <><Home size={15} /> {tr('bk_escopo_apto')}</>}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button onClick={() => setExtrasQty(q => ({ ...q, [taxa.id]: Math.max(0, (q[taxa.id]||0)-1) }))} style={{ width: 30, height: 30, borderRadius: '50%', border: '1px solid #bbb', background: '#fff', cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>−</button>
-                <b style={{ minWidth: 20, textAlign: 'center', fontSize: 16 }}>{qty}</b>
-                <button onClick={() => setExtrasQty(q => ({ ...q, [taxa.id]: (q[taxa.id]||0)+1 }))} style={{ width: 30, height: 30, borderRadius: '50%', border: '1px solid #bbb', background: '#fff', cursor: 'pointer', fontSize: 18, display: 'grid', placeItems: 'center' }}>+</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <BotaoContador tipo="menos" rotulo={tr('bk_menos_extra', taxa.nome)} onClick={() => setExtrasQty(q => ({ ...q, [taxa.id]: Math.max(0, (q[taxa.id] || 0) - 1) }))} disabled={qty <= 0} />
+                <b style={{ minWidth: 20, textAlign: 'center', fontSize: 17 }}>{qty}</b>
+                <BotaoContador tipo="mais" rotulo={tr('bk_mais_extra', taxa.nome)} onClick={() => setExtrasQty(q => ({ ...q, [taxa.id]: (q[taxa.id] || 0) + 1 }))} />
               </div>
             </div>
           );
         })}
-        {(opc1Total + opc2Total) > 0 && <div style={{ textAlign: 'right', fontWeight: 700, fontSize: 14, color: C.ocean }}>Extras: {money(opc1Total + opc2Total)}</div>}
+        {opcTotal > 0 && <div style={{ textAlign: 'right', fontWeight: 700, fontSize: 16, color: C.ocean }}>{tr('bk_extras_total')}: {money(opcTotal)}</div>}
       </div>
     </Modal>
   );
 
-  // ── Passo: Dados do hóspede ────────────────────────────────────────────────
+  // ── Passo: dados do hóspede ──────────────────────────────────────────────
   if (step === 'dados') {
-    const canNext = ok && (!hasApt2 || (g > 0 && gB > 0));
+    const avancar = () => { if (dadosOk.ok) { setErroCampos({}); goNext(); } else setErroCampos(dadosOk.erros); };
+    const erroDe = (c) => erroCampos[c] ? <div role="alert" style={{ color: '#B42318', fontSize: 14, marginTop: 5 }}>{tr('bk_erro_' + c)}</div> : null;
     return (
-      <Modal {...modalNav} title="Seus dados" subtitle={hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}
-        footer={<Btn variant="primary" disabled={!canNext} style={{ width: '100%', opacity: canNext ? 1 : .5 }} onClick={() => canNext && goNext()}>Continuar</Btn>}>
+      <Modal {...modalNav} title={tr('bk_titulo_dados')} subtitle={nomes}
+        footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52, fontSize: 16 }} onClick={avancar}>{tr('bk_continuar')}</Btn>}>
         <div style={{ display: 'grid', gap: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Check-in"><div style={readBox}>{fmtShort(ci)}</div></Field>
-            <Field label="Check-out"><div style={readBox}>{fmtShort(co)}</div></Field>
-          </div>
-          <Field label="Nome completo" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Como no documento" /></Field>
-          <Field label="Email" required><TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" /></Field>
-          <Field label="Telefone" required><TextInput value={tel} onChange={e => setTel(e.target.value)} placeholder="(00) 00000-0000" /></Field>
-          {!hasApt2 ? null : (
-            <div>
-              <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#666', marginBottom: 8 }}>Hóspedes por apartamento</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div style={{ background: C.espuma, borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>{apt.nome}</div>
-                  <NumberInput min={1} max={apt.capacidade} value={g} onChange={e => setG(Math.min(apt.capacidade, Math.max(1, +e.target.value || 1)))} />
-                </div>
-                <div style={{ background: C.espuma, borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>{apt2.nome}</div>
-                  <NumberInput min={1} max={apt2.capacidade} value={gB} onChange={e => setGB(Math.min(apt2.capacidade, Math.max(1, +e.target.value || 1)))} />
-                </div>
-              </div>
-              <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 5, textAlign: 'right' }}>Total: {g + gB} pessoas</div>
-            </div>
-          )}
+          <Field label={tr('bk_nome')} required>
+            <TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder={tr('bk_nome_ph')} autoComplete="name" />
+            {erroDe('nome')}
+          </Field>
+          <Field label={tr('bk_email')} required>
+            <TextInput type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@exemplo.com" autoComplete="email" />
+            {erroDe('email')}
+          </Field>
+          <Field label={tr('bk_telefone')} required>
+            <TextInput type="tel" inputMode="tel" value={tel} onChange={e => setTel(e.target.value)} placeholder="(48) 99999-9999" autoComplete="tel" />
+            {erroDe('telefone')}
+          </Field>
+          {/* campo-isca anti-robôs (escondido de pessoas e de leitores de tela) */}
+          <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={e => setWebsite(e.target.value)} name="website"
+            style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
+          <p style={{ fontSize: 14, color: C.inkSoft, margin: 0, lineHeight: 1.5 }}>{tr('bk_privacidade')}</p>
         </div>
       </Modal>
     );
   }
 
-  // ── Passo: Revisão e confirmação ───────────────────────────────────────────
+  // ── Passo: revisão e confirmação ─────────────────────────────────────────
+  const textoErro = erroEnvio ? tr(MENSAGEM_ERRO[erroEnvio.erro] || 'err_generico', erroEnvio) : null;
   return (
-    <Modal {...modalNav} title="Revisar e confirmar" subtitle={hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}
-      footer={<Btn variant="accent" disabled={!ok || paying} style={{ width: '100%', opacity: ok && !paying ? 1 : .5 }} onClick={handleConfirm}>{paying ? 'A processar…' : 'Confirmar reserva'}</Btn>}>
-      <div>
+    <Modal {...modalNav} title={tr('bk_titulo_revisao')} subtitle={nomes}
+      footer={<Btn variant="accent" disabled={paying} style={{ width: '100%', minHeight: 52, fontSize: 16, opacity: paying ? .6 : 1 }} onClick={handleConfirm}>{paying ? tr('bk_processando') : tr('bk_confirmar')}</Btn>}>
+      <div style={{ fontSize: 15.5 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}`, marginBottom: 4 }}>
           <div style={{ width: 64, height: 64, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={64} radius={12} /></div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>{hasApt2 ? `${apt.nome} + ${apt2.nome}` : apt.nome}</div>
-            <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 2 }}>{apt.piso} · {apt.vista}</div>
+            <div style={{ fontWeight: 700, fontSize: 16.5 }}>{nomes}</div>
+            <div style={{ fontSize: 14.5, color: C.inkSoft, marginTop: 2 }}>{dado(apt.piso)} · {dado(apt.vista)}</div>
           </div>
         </div>
 
-        <RevRow label="Datas" value={`${fmtShort(ci)} – ${fmtShort(co)} · ${bd.n} noite${bd.n > 1 ? 's' : ''}`} />
-        <RevRow label="Hóspedes" value={hasApt2 ? `${g} + ${gB} pessoas` : `${g} pessoa${g > 1 ? 's' : ''}`} />
-        <RevRow label="Nome" value={nome.trim() || '—'} />
-        <RevRow label="Email" value={email.trim() || '—'} />
+        <RevRow label={tr('bk_datas')} value={`${fmtCurta(ci)} – ${fmtCurta(co)} · ${tr('noites', noites)}`} />
+        <RevRow label={tr('bk_pessoas')} value={hasApt2 ? `${g} + ${gB} = ${tr('pessoas', g + gB)}` : tr('pessoas', g)} />
+        <RevRow label={tr('bk_nome')} value={nome.trim() || '—'} />
+        <RevRow label={tr('bk_email')} value={email.trim() || '—'} />
+        <RevRow label={tr('bk_telefone')} value={tel.trim() || '—'} />
 
         <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 600 }}>Preço total{hasApt2 ? ' combinado' : ''}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, marginTop: 2 }}>{money(totalComExtras)}</div>
+              <div style={{ fontSize: 14.5, color: C.inkSoft, fontWeight: 600 }}>{hasApt2 ? tr('bk_total_combinado') : tr('bk_total')}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{money(total)}</div>
             </div>
-            <button onClick={() => setShowBreakdown(s => !s)} style={linkBtnStyle}>
-              {showBreakdown ? 'Ocultar' : 'Detalhes'} <ChevronDown size={14} style={{ transform: showBreakdown ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+            <button type="button" onClick={() => setShowBreakdown(s => !s)} style={linkBtnStyle} aria-expanded={showBreakdown}>
+              {showBreakdown ? tr('bk_ocultar') : tr('bk_detalhes')} <ChevronDown size={16} style={{ transform: showBreakdown ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
             </button>
           </div>
           {showBreakdown && (
-            <div style={{ marginTop: 12, fontSize: 13.5, color: C.inkSoft, display: 'grid', gap: 5 }}>
-              {hasApt2 && <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#555' }}>{apt.nome}</div>}
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Acomodação ({bd.n} noites)</span><span>{money(bd.total)}</span></div>
-              {extrasObrig.map(e => (
-                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OBR</span>{e.nome}</span>
-                  <span>{money(e.preco)}</span>
-                </div>
-              ))}
-              {extrasOpc1.map(e => (
-                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: C.ocean, color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OPC</span>{e.nome}{e.qtd > 1 ? ` ×${e.qtd}` : ''}</span>
-                  <span>{money(e.subtotal)}</span>
-                </div>
-              ))}
-              {hasApt2 && bd2 && <>
-                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#555', marginTop: 6 }}>{apt2.nome}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Acomodação ({bd2.n} noites)</span><span>{money(bd2.total)}</span></div>
-                {extrasObrig.map(e => (
-                  <div key={e.id + '2'} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: '#1C7A5B', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OBR</span>{e.nome}</span>
-                    <span>{money(e.preco)}</span>
-                  </div>
-                ))}
-                {extrasOpc2.map(e => (
-                  <div key={e.id + 'o2'} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 9, fontWeight: 800, background: C.ocean, color: '#fff', borderRadius: 3, padding: '1px 4px' }}>OPC</span>{e.nome}{e.qtd > 1 ? ` ×${e.qtd}` : ''}</span>
-                    <span>{money(e.subtotal)}</span>
-                  </div>
-                ))}
-              </>}
+            <div style={{ marginTop: 12, fontSize: 15, color: '#444', display: 'grid', gap: 10 }}>
+              <LinhasOrcamento o={o1} titulo={hasApt2 ? apt.nome : null} />
+              {o2 && <LinhasOrcamento o={o2} titulo={apt2.nome} />}
             </div>
           )}
         </div>
 
-        <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: C.coralDeep }}>Sinal a pagar agora ({data.settings.sinalPct}%)</span>
-          <span style={{ fontSize: 15, fontWeight: 800, color: C.coralDeep }}>{money(sinal)}</span>
+        <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 15.5, fontWeight: 700, color: C.coralDeep }}>{tr('bk_sinal_agora', data.settings.sinalPct)}</span>
+          <span style={{ fontSize: 17, fontWeight: 700, color: C.coralDeep }}>{money(sinal)}</span>
         </div>
 
         {cancelPol && (
           <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
-            <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>{cancelPol.titulo}</div>
-            <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.5 }}>
-              As condições variam com a antecedência do check-in.{' '}
-              <button onClick={() => setShowPolicy(s => !s)} style={linkBtnStyle}>{showPolicy ? 'Ocultar' : 'Ver política completa'}</button>
+            <div style={{ fontWeight: 700, fontSize: 15.5, marginBottom: 4 }}>{cancelPol.titulo}</div>
+            <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.5 }}>
+              {tr('bk_cancelamento_resumo')}{' '}
+              <button type="button" onClick={() => setShowPolicy(s => !s)} style={linkBtnStyle} aria-expanded={showPolicy}>{showPolicy ? tr('bk_ocultar') : tr('bk_ver_politica')}</button>
             </div>
-            {showPolicy && <div style={{ marginTop: 10, fontSize: 12.5, color: C.inkSoft, whiteSpace: 'pre-wrap', background: C.espuma, borderRadius: 10, padding: 12, lineHeight: 1.6 }}>{cancelPol.texto}</div>}
+            {showPolicy && <div style={{ marginTop: 10, fontSize: 14.5, color: '#444', whiteSpace: 'pre-wrap', background: C.espuma, borderRadius: 10, padding: 12, lineHeight: 1.6 }}>{cancelPol.texto}</div>}
           </div>
         )}
 
-        {hasApt2 && <p style={{ fontSize: 11.5, color: C.inkSoft, marginTop: 10, marginBottom: 0, background: '#e8f4ff', borderRadius: 8, padding: '8px 10px' }}>Serão geradas 2 reservas vinculadas ao mesmo hóspede.</p>}
-        <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 10, marginBottom: 0 }}>O pagamento do sinal confirma a reserva.</p>
+        {textoErro && (
+          <div role="alert" style={{ marginTop: 14, padding: '12px 14px', borderRadius: 12, background: '#FEF3F2', border: '1px solid #FDA29B', color: '#7A271A', fontSize: 15, lineHeight: 1.5, display: 'grid', gap: 8 }}>
+            <span style={{ display: 'flex', gap: 8 }}><AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2 }} />{textoErro}</span>
+            {erroEnvio.erro === 'indisponivel'
+              ? <button type="button" onClick={onClose} style={{ ...linkBtnStyle, fontSize: 15 }}>{tr('bk_escolher_outras_datas')}</button>
+              : <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ ...linkBtnStyle, fontSize: 15, textDecoration: 'none' }}><MessageCircle size={16} /> {tr('bk_falar_whatsapp')}</a>}
+          </div>
+        )}
+
+        {hasApt2 && <p style={{ fontSize: 14, color: C.inkSoft, marginTop: 12, marginBottom: 0, background: C.espuma, borderRadius: 8, padding: '8px 10px' }}>{tr('bk_duas_reservas')}</p>}
+        <p style={{ fontSize: 14, color: C.inkSoft, marginTop: 10, marginBottom: 0 }}>{tr('bk_sinal_confirma')}</p>
       </div>
     </Modal>
   );
@@ -381,12 +334,12 @@ export function BookingModal({ sel, ci, co, hosp, data, onClose, onCreate, onCon
 
 function RevRow({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.line}` }}>
-      <span style={{ fontSize: 13, color: C.inkSoft }}>{label}</span>
-      <span style={{ fontSize: 13.5, fontWeight: 700, textAlign: 'right' }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '11px 0', borderBottom: `1px solid ${C.line}` }}>
+      <span style={{ fontSize: 15, color: C.inkSoft }}>{label}</span>
+      <span style={{ fontSize: 15.5, fontWeight: 700, textAlign: 'right', overflowWrap: 'anywhere' }}>{value}</span>
     </div>
   );
 }
 
-export const readBox = { padding: '10px 12px', borderRadius: 10, background: C.areiaSoft, border: `1px solid ${C.areia}`, fontSize: 14, fontWeight: 600 };
-const linkBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', color: C.ocean, fontWeight: 700, fontSize: 12.5, display: 'inline-flex', alignItems: 'center', gap: 3, padding: 0 };
+export const readBox = { padding: '10px 12px', borderRadius: 10, background: C.areiaSoft, border: `1px solid ${C.areia}`, fontSize: 15, fontWeight: 600 };
+const linkBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', color: C.ocean, fontWeight: 700, fontSize: 14.5, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 0', minHeight: 36 };

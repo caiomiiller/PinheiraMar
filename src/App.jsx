@@ -1,95 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import { Home, Waves } from 'lucide-react';
-import { C, F, applyTheme } from './lib/constants';
-import { loadData, saveData, STORE_KEY, seedData, migrarDados } from './lib/seed';
-import { supabase, supabaseConfigured, APP_STATE_TABLE, APP_STATE_ROW_ID } from './lib/supabaseClient';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import { Waves, RefreshCw, FlaskConical } from 'lucide-react';
+import { C, F, applyTheme, TELEFONE_CONTATO } from './lib/constants';
 import { PublicSite } from './views/public/PublicSite';
-import { Admin } from './views/admin/Admin';
-import { LoginScreen } from './views/admin/Admin';
+import { carregarPublico, reservar, limparCopiasAntigas } from './lib/dadosPublico';
+import { SEM_CONFIG, AMBIENTE_TESTE, MODO_DEMO } from './lib/config';
 
-// Lê ?imovel=<id> da URL — o site já mostra sempre os dois residenciais
-// juntos, mas isto permite um link directo que leva logo à secção de um
-// imóvel específico (ex.: pinheiramar.com.br/?imovel=novoimovel), útil
-// para divulgar cada imóvel separadamente nas redes sociais.
-export function residencialFromURL() {
-  try { return new URLSearchParams(window.location.search).get('imovel'); }
-  catch { return null; }
-}
+// O painel (e as bibliotecas que só ele usa: supabase-js, Excel) só é
+// descarregado por quem abre ?gestao — o site público fica bem mais leve.
+const PainelGestao = lazy(() => import('./views/admin/PainelGestao'));
 
-// Não há botão visível para o painel de gestão no site público — o acesso
-// é feito por um link direto (ex.: pinheiramar.com.br/?gestao), partilhado
-// apenas com quem administra o residencial.
+// Não há botão visível para o painel no site público — o acesso é por um
+// link direto (ex.: pinheiramar.com.br/?gestao), protegido por login.
 function modoFromURL() {
   try { return new URLSearchParams(window.location.search).has('gestao') ? 'admin' : 'site'; }
   catch { return 'site'; }
 }
 
-// Remove o "?gestao" da barra de endereço sem recarregar a página, para que
-// voltar ao site (ou sair do painel) não deixe o link de admin visível nem
-// reabra o painel ao atualizar a página.
+// Tira o "?gestao" da barra de endereço sem recarregar a página.
 function limparURLGestao() {
   try {
     const url = new URL(window.location.href);
     url.searchParams.delete('gestao');
     window.history.replaceState({}, '', url.pathname + url.search + url.hash);
-  } catch { /* ambiente sem window.history (SSR/teste) — ignora */ }
+  } catch { /* sem window.history — ignora */ }
+}
+
+export function Carregando({ texto = 'Carregando…' }) {
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: C.espuma, fontFamily: F.sans, color: C.inkSoft }}>
+      <div style={{ textAlign: 'center' }}><Waves size={34} color={C.brisa} /><div style={{ marginTop: 10, fontSize: 16 }}>{texto}</div></div>
+    </div>
+  );
+}
+
+export function Aviso({ titulo, texto, acao, rotuloAcao = 'Tentar de novo' }) {
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: C.espuma, fontFamily: F.sans, padding: 24 }}>
+      <div style={{ maxWidth: 440, textAlign: 'center', color: C.ink }}>
+        <Waves size={34} color={C.brisa} />
+        <h1 style={{ fontSize: 22, fontWeight: 400, margin: '12px 0 8px' }}>{titulo}</h1>
+        <p style={{ fontSize: 16, lineHeight: 1.6, color: C.inkSoft }}>{texto}</p>
+        {acao && (
+          <button onClick={acao} style={{ marginTop: 20, minHeight: 48, padding: '0 22px', border: 'none', borderRadius: 12, background: C.ocean, color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: F.sans }}>
+            <RefreshCw size={18} /> {rotuloAcao}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Faixa de aviso nos previews da Vercel (VITE_AMBIENTE=teste) e na demonstração.
+function FaixaTeste() {
+  return (
+    <div role="status" style={{ background: '#FFF4D6', color: '#5C4400', borderBottom: '1px solid #E9D18A', fontSize: 13.5, fontWeight: 600, padding: '7px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.sans }}>
+      <FlaskConical size={15} /> {MODO_DEMO ? 'Demonstração — dados fictícios, nada é gravado no sistema real.' : 'Ambiente de testes — não use para reservas reais.'}
+    </div>
+  );
+}
+
+function SitePublico() {
+  const [data, setData] = useState(null);
+  const [erro, setErro] = useState(false);
+
+  const carregar = useCallback(async () => {
+    setErro(false);
+    try { setData(await carregarPublico()); }
+    catch (e) { console.warn('[site] não foi possível carregar os dados', e); setErro(true); }
+  }, []);
+
+  useEffect(() => { limparCopiasAntigas(); applyTheme('pinheiramar'); carregar(); }, [carregar]);
+
+  // disponibilidade fresca ao voltar ao separador (ex.: depois de ir ao WhatsApp)
+  useEffect(() => {
+    const aoVoltar = () => { if (document.visibilityState === 'visible') carregarPublico().then(setData).catch(() => {}); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => document.removeEventListener('visibilitychange', aoVoltar);
+  }, []);
+
+  // a reserva é feita no servidor; depois disso (ou se as datas/preço
+  // mudaram entretanto) recarrega a disponibilidade
+  const onReservar = useCallback(async (pedido) => {
+    const r = await reservar(pedido);
+    if (r.ok || r.erro === 'indisponivel' || r.erro === 'preco_mudou') carregarPublico().then(setData).catch(() => {});
+    return r;
+  }, []);
+
+  if (SEM_CONFIG) return <Aviso titulo="Site em manutenção" texto={`Voltamos em instantes. Para reservar agora, fale conosco pelo WhatsApp ${TELEFONE_CONTATO}.`} />;
+  if (!data && erro) return <Aviso titulo="Não foi possível carregar o site" texto={`Verifique a sua conexão e tente de novo. Se preferir, fale conosco pelo WhatsApp ${TELEFONE_CONTATO}.`} acao={carregar} />;
+  if (!data) return <Carregando />;
+  return <PublicSite data={data} onReservar={onReservar} />;
 }
 
 export default function App() {
-  const [data, setData] = useState(null);
   const [mode, setMode] = useState(modoFromURL);   // 'site' | 'admin'
-  const [authed, setAuthed] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      let d = await loadData();
-      if (!d) { d = seedData(); await saveData(d); }
-      if (alive) setData(d);
-    })();
-    return () => { alive = false; };
-  }, []);
-
-  // Sincronização entre dispositivos: quando o Supabase está configurado
-  // (ver supabaseClient.js), este dispositivo escuta alterações gravadas
-  // por qualquer outro (outro computador, outro telemóvel) e atualiza-se
-  // sozinho, sem precisar de recarregar a página. Sem o Supabase
-  // configurado isto não faz nada — comportamento igual a antes.
-  useEffect(() => {
-    if (!supabaseConfigured) return;
-    const channel = supabase
-      .channel('app_state_sync')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: APP_STATE_TABLE, filter: `id=eq.${APP_STATE_ROW_ID}` },
-        (payload) => { if (payload.new?.data) setData(migrarDados(payload.new.data).data); })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
-
-  // o site público mostra sempre os dois residenciais lado a lado, por
-  // isso usa sempre a paleta "de base" — só o admin troca de tema
-  // consoante o imóvel que estiver a gerir (ver Admin.jsx).
-  useEffect(() => { if (mode === 'site') applyTheme('pinheiramar'); }, [mode]);
-
-  // update data (globalmente) e persiste
-  const update = (arg) => setData(prev => { const next = typeof arg === 'function' ? arg(prev) : { ...prev, ...arg }; saveData(next); return next; });
-  // devolve a promessa de saveData (não só faz "fire and forget" como
-  // update()) — o BookingModal.jsx precisa de esperar a reserva estar
-  // mesmo gravada (idealmente já no Supabase) antes de redirecionar o
-  // hóspede para o Mercado Pago, para não arriscar perder a reserva se o
-  // navegador sair da página a meio da gravação.
-  const createReservation = (r) => {
-    const next = { ...data, reservas: [...data.reservas, r] };
-    setData(next);
-    return saveData(next);
-  };
 
   const css = `
     /* nunca deixar a página inteira deslocar-se na horizontal — qualquer
        elemento largo (tabelas, grelhas) deve rolar dentro do seu próprio
        contentor, nunca "puxar" o corpo da página consigo */
     html, body{overflow-x:clip;}
-    .pmf:focus{border-color:${C.brisa}!important;box-shadow:0 0 0 3px rgba(46,126,140,.16)!important;}
+    .pmf:focus{border-color:${C.brisa}!important;box-shadow:0 0 0 3px rgba(45,127,157,.16)!important;}
     .pm-pop{animation:pmpop .18s ease;}
     @keyframes pmpop{from{opacity:0;transform:translateY(8px) scale(.99);}to{opacity:1;transform:none;}}
     .pm-card{transition:box-shadow .18s ease, transform .18s ease;}
@@ -100,6 +111,7 @@ export default function App() {
     *::-webkit-scrollbar-thumb{background:#C4D3D1;border-radius:8px;}
     .pm-detail-gallery>div:nth-child(n+6){display:none;}
     .pm-detail-counter-mobile{display:none;}
+    .pm-pubsite-hcats::-webkit-scrollbar{display:none;}
     @media(max-width:760px){
       .pm-sidebar{display:none!important;}
       .pm-tabbar{display:flex!important;}
@@ -137,14 +149,17 @@ export default function App() {
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}
 
       /* ── site público (booking-style) — telemóvel ── */
-      /* no telemóvel o cabeçalho (logo) e a faixa de categorias rolam com a
-         página em vez de ficarem fixos — no ecrã pequeno ocupavam espaço
-         desnecessário, a pedido do Caio. No desktop continuam fixos. */
+      /* no telemóvel o cabeçalho rola com a página em vez de ficar fixo — no
+         ecrã pequeno ocupava espaço desnecessário, a pedido do Caio. No
+         desktop continua fixo. */
       .pm-pubsite-header{position:static!important;}
-      .pm-pubsite-catbar{position:static!important;}
-      .pm-pubsite-header-row{padding:14px 16px!important;gap:12px!important;height:auto!important;justify-content:space-between!important;position:relative!important;}
-      .pm-pubsite-brand-desktop{display:none!important;}
-      .pm-pubsite-brand-mobile{display:block!important;}
+      .pm-pubsite-header-row{padding:10px 16px!important;gap:10px!important;height:auto!important;justify-content:space-between!important;position:relative!important;}
+      /* sem logo no cabeçalho do telemóvel: lá ficam os filtros (só ícones,
+         com rolagem para o lado) e a faixa de categorias de baixo some — a
+         pedido do Caio, 2026-09. A marca continua no rodapé. */
+      .pm-pubsite-brand{display:none!important;}
+      .pm-pubsite-hcats{display:flex!important;}
+      .pm-pubsite-catbar{display:none!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
       /* idioma volta a aparecer no telemóvel, fixo no canto superior direito do
@@ -153,10 +168,6 @@ export default function App() {
          2026-09-23. */
       .pm-pubsite-lang{display:flex!important;position:static!important;}
       .pm-pubsite-hero{display:none!important;}
-      .pm-pubsite-catstrip{padding:12px 16px!important;gap:8px!important;}
-      .pm-cat-btn{flex-direction:row!important;gap:7px!important;padding:10px 16px!important;font-size:14px!important;border:1px solid #E2E0DB!important;border-radius:999px!important;background:#FFF!important;color:#4A4A4A!important;}
-      .pm-cat-btn[data-active="true"]{background:rgba(27,28,70,.07)!important;border-color:rgba(27,28,70,.35)!important;color:#1B1C46!important;}
-      .pm-cat-btn[data-active="true"] span{color:#1B1C46!important;}
       .pm-pubsite-main{padding:32px 16px 56px!important;}
       .pm-pubsite-group-head{gap:12px!important;flex-direction:column!important;align-items:center!important;text-align:center!important;border-bottom:none!important;margin-bottom:0!important;}
       
@@ -203,12 +214,10 @@ export default function App() {
       .pm-detail-stickybar{display:flex!important;}
 
       /* ── cartões de apartamento — mais 'app', um por linha, carrossel a espiar o próximo ── */
-      .pm-card-photo{border-radius:14px!important;}
       /* pm-card-title-row é agora o título sozinho (a capacidade passou para a
          linha de detalhes, ver PublicSite.jsx) — só o tamanho da fonte muda no
          telemóvel. */
       .pm-card-title-row{font-size:14px!important;}
-      .pm-card-tag{top:12px!important;left:12px!important;bottom:auto!important;right:auto!important;border-radius:999px!important;}
       .pm-results-grid{grid-template-columns:1fr!important;gap:28px!important;}
       .pm-row-scroll{gap:12px!important;scroll-snap-type:x mandatory!important;-webkit-overflow-scrolling:touch;}
       .pm-row-item{flex:0 0 46%!important;min-width:0!important;scroll-snap-align:start;}
@@ -218,50 +227,22 @@ export default function App() {
       .pm-destino-2col{grid-template-columns:1fr!important;gap:28px!important;}
       .pm-destino-cards-grid{grid-template-columns:1fr!important;}
     }
+    .pm-girar{animation:pm-girar 1s linear infinite;}
+    @keyframes pm-girar{to{transform:rotate(360deg);}}
     @media(prefers-reduced-motion:reduce){.pm-pop,.pm-card{animation:none!important;transition:none!important;}}
   `;
-
-  if (!data) return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: C.espuma, fontFamily: F.sans, color: C.inkSoft }}>
-      <div style={{ textAlign: 'center' }}><Waves size={34} color={C.brisa} /><div style={{ marginTop: 10 }}>A carregar…</div></div>
-    </div>
-  );
-
-  /* ── admin mode: login gate ── */
-  if (mode === 'admin' && !authed) {
-    return (
-      <>
-        <style>{css}</style>
-        <LoginScreen onLogin={() => setAuthed(true)} />
-      </>
-    );
-  }
 
   return (
     <div style={{ fontFamily: F.sans }}>
       <style>{css}</style>
-
-      {/* admin top bar (only visible when in admin mode) */}
-      {mode === 'admin' && (
-        <div style={{ background: C.oceanDeep, color: 'rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 16px', fontSize: 13 }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Waves size={15} color={C.brisa} />
-            <span style={{ fontWeight: 600, color: '#fff' }}>Painel de Gestão</span>
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => { limparURLGestao(); setMode('site'); }} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Home size={13} /> Ver site
-            </button>
-            <button onClick={() => { limparURLGestao(); setAuthed(false); setMode('site'); }} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.85)', padding: '5px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
-              Sair
-            </button>
-          </div>
-        </div>
-      )}
-
+      {(AMBIENTE_TESTE || MODO_DEMO) && <FaixaTeste />}
       {mode === 'site'
-        ? <PublicSite data={data} onCreate={createReservation} />
-        : <Admin data={data} update={update} />}
+        ? <SitePublico />
+        : (
+          <Suspense fallback={<Carregando />}>
+            <PainelGestao onVerSite={() => { limparURLGestao(); setMode('site'); }} />
+          </Suspense>
+        )}
     </div>
   );
 }

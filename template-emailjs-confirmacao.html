@@ -1,0 +1,89 @@
+<!--
+  E-mail de confirmação da reserva — conteúdo para colar no EmailJS:
+  Email Templates → (o template usado pelo site) → aba "Content" → botão
+  "Code editor" (ícone </>) → substituir o HTML que lá estiver por este → Save.
+
+  Assunto (campo "Subject", na mesma tela):
+    {{titulo}} — {{codigo_reserva}} · {{nome_propriedade}}
+
+  Destinatário (aba "Settings" → "To Email"):  {{email}}
+
+  Quando colar: SÓ DEPOIS de publicar a versão nova do site (README.md,
+  "Publicar a revisão", passo 7) — a versão antiga não envia as variáveis
+  novas deste template ({{titulo}}, {{mensagem}}…).
+
+  Na conta EmailJS → Account → Security:
+    • "Allow EmailJS API for non-browser applications" — ligar ANTES de
+      publicar (o e-mail passa a sair do servidor do site);
+    • "Use Private Key" — ligar DEPOIS de publicar (passo 7), com a Private Key
+      já na Vercel como EMAILJS_PRIVATE_KEY.
+
+  Todas as variáveis {{...}} abaixo são enviadas pelo servidor
+  (server/email.js → parametrosEmail). O mesmo template serve às duas
+  situações: sinal já pago ("Reserva confirmada!") ou reserva recebida à
+  espera do sinal ("Reserva recebida") — os textos que mudam vêm prontos.
+-->
+<div style="font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;background:#F4F2EE;padding:24px 12px;margin:0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;margin:0 auto;background:#FFFFFF;border-radius:14px;overflow:hidden;">
+    <tr>
+      <td style="background:#1B1C46;padding:26px 32px 22px;text-align:center;">
+        <div style="color:#FFFFFF;font-size:12px;font-weight:600;letter-spacing:.32em;">GRUPO PINHEIRAMAR</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px auto 0;"><tr>
+          <td style="width:40px;height:3px;background:#FFFFFF;font-size:0;line-height:0;">&nbsp;</td>
+          <td style="width:40px;height:3px;background:#F0604D;font-size:0;line-height:0;">&nbsp;</td>
+          <td style="width:40px;height:3px;background:#4FA6C6;font-size:0;line-height:0;">&nbsp;</td>
+        </tr></table>
+        <div style="color:#FFFFFF;font-size:22px;font-weight:300;margin-top:18px;">{{titulo}}</div>
+        <div style="color:rgba(255,255,255,.78);font-size:13px;margin-top:4px;">{{nome_propriedade}}</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:28px 32px;">
+        <p style="margin:0 0 4px;color:#6F6B64;font-size:13px;text-align:center;">Seu código de reserva</p>
+        <p style="margin:0 0 24px;color:#1B1C46;font-size:26px;font-weight:600;letter-spacing:.06em;text-align:center;">{{codigo_reserva}}</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F4F0;border-radius:10px;">
+          <tr>
+            <td style="padding:10px 20px;color:#6F6B64;font-size:13px;">Apartamento</td>
+            <td style="padding:10px 20px;color:#1B1C46;font-size:13px;font-weight:600;text-align:right;">{{apartamento}}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 20px;color:#6F6B64;font-size:13px;">Estadia</td>
+            <td style="padding:10px 20px;color:#1B1C46;font-size:13px;font-weight:600;text-align:right;">{{check_in_fmt}} &rarr; {{check_out_fmt}} ({{noites}} noites)</td>
+          </tr>
+          <tr>
+            <td style="padding:0 20px 10px;color:#6F6B64;font-size:12px;" colspan="2">{{horarios}}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 20px;color:#6F6B64;font-size:13px;">Hóspede</td>
+            <td style="padding:10px 20px;color:#1B1C46;font-size:13px;font-weight:600;text-align:right;">{{to_name}}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 20px;color:#6F6B64;font-size:13px;">Pessoas</td>
+            <td style="padding:10px 20px;color:#1B1C46;font-size:13px;font-weight:600;text-align:right;">{{hospedes_txt}}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 20px 6px;color:#6F6B64;font-size:13px;border-top:1px solid #E3DED6;">Total</td>
+            <td style="padding:12px 20px 6px;color:#1B1C46;font-size:16px;font-weight:700;text-align:right;border-top:1px solid #E3DED6;">{{total_fmt}}</td>
+          </tr>
+          <tr>
+            <td style="padding:2px 20px;color:#6F6B64;font-size:13px;">{{rotulo_sinal}}</td>
+            <td style="padding:2px 20px;color:#D1301B;font-size:14px;font-weight:700;text-align:right;">{{valor_sinal_fmt}}</td>
+          </tr>
+          <tr>
+            <td style="padding:2px 20px 14px;color:#6F6B64;font-size:13px;">Saldo (no check-in)</td>
+            <td style="padding:2px 20px 14px;color:#1B1C46;font-size:13px;font-weight:600;text-align:right;">{{restante_fmt}}</td>
+          </tr>
+        </table>
+
+        <p style="margin:24px 0 0;color:#4A4843;font-size:14px;line-height:1.6;">
+          {{mensagem}}<br/>
+          Qualquer dúvida, fale conosco pelo WhatsApp <b style="color:#1B1C46;">{{whatsapp}}</b>.
+        </p>
+        <p style="margin:18px 0 0;color:#8A857C;font-size:11.5px;line-height:1.5;">
+          {{nome_propriedade}} &middot; {{endereco}} &middot; {{cidade}}
+        </p>
+      </td>
+    </tr>
+  </table>
+</div>

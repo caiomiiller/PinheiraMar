@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { F } from '../../lib/constants';
 import { Card, PageHead, Btn, Field, TextInput, Select, NumberInput } from '../../components/ui';
 
 export function SettingsView({ data, update }) {
   const [s, setS] = useState(data.settings);
+  const [mudados, setMudados] = useState({}); // só os campos alterados neste ecrã
   const [saved, setSaved] = useState(false);
-  const set = (k, v) => { setS(p => ({ ...p, [k]: v })); setSaved(false); };
-  const onSave = () => { update(prev => ({ ...prev, settings: s })); setSaved(true); };
+  const set = (k, v) => { setS(p => ({ ...p, [k]: v })); setMudados(m => ({ ...m, [k]: v })); setSaved(false); };
+  // grava só o que foi alterado aqui — o resto das configurações do
+  // residencial (idiomas, políticas, textos do site…) fica como está no banco
+  const onSave = () => {
+    const alterados = mudados;
+    update(prev => ({ ...prev, settings: { ...prev.settings, ...alterados } }))
+      .then(() => { setMudados({}); setSaved(true); })
+      .catch(() => {});
+  };
   return (
     <div>
       <PageHead title="Configurações gerais" sub="Dados do residencial usados no site e nas reservas"

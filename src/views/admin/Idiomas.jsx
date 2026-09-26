@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Check, Pencil, Trash2, AlertCircle, Plus } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { Pencil, Trash2, AlertCircle, Plus } from 'lucide-react';
+import { C } from '../../lib/constants';
 import { Card, PageHead, Btn, Modal, Field, TextInput, ConfirmDialog } from '../../components/ui';
 import { TRANSLATIONS } from '../../lib/translations';
 import { iconBtn } from './Reservations';

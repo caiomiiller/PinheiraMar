@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { CreditCard, Check, X, ExternalLink, Star, Copy, Trash2, Database } from 'lucide-react';
+import { Check, Star, Copy, Trash2, Database } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { uid } from '../../lib/helpers';
 import { Card, PageHead, Btn, DragGrip, duplicateInList, ConfirmDialog } from '../../components/ui';
-import { useReorder } from '../../hooks/useReorder';
+import { useReorder, reordenarPorIds } from '../../hooks/useReorder';
 import { iconBtn } from './Reservations';
 
 export function PaymentsView({ data, update }) {
@@ -11,7 +11,7 @@ export function PaymentsView({ data, update }) {
   const toggle = (id) => update(prev => ({ ...prev, pagamentos: prev.pagamentos.map(p => p.id === id ? { ...p, conectado: !p.conectado } : p) }));
   const remove = (id) => update(prev => ({ ...prev, pagamentos: prev.pagamentos.filter(p => p.id !== id) }));
   const duplicate = (id) => update(prev => ({ ...prev, pagamentos: duplicateInList(prev.pagamentos, id, p => ({ ...p, id: 'pay' + uid(), nome: p.nome + ' (cópia)', conectado: false })) }));
-  const dnd = useReorder(data.pagamentos, (arr) => update(prev => ({ ...prev, pagamentos: arr })));
+  const dnd = useReorder(data.pagamentos, (arr) => update(prev => ({ ...prev, pagamentos: reordenarPorIds(prev.pagamentos || [], arr) })));
 
   const RECOMENDADO = ['mercadopago', 'pix'];
 
@@ -102,9 +102,9 @@ export function PaymentsView({ data, update }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
           {[
             { step: '1', title: 'Crie uma conta Business', desc: 'Abra uma conta no Mercado Pago em mercadopago.com.br. Use CNPJ para ter acesso à API completa e melhores taxas.', cor: C.brisa },
-            { step: '2', title: 'Obtenha o Access Token', desc: 'Em "Credenciais" no painel Mercado Pago, copie o Access Token de produção. Este código liga o motor de reservas à sua conta.', cor: C.ocean },
-            { step: '3', title: 'Configure o webhook', desc: 'Registre o URL do seu servidor para receber confirmações automáticas de pagamento e atualizar o estado da reserva em tempo real.', cor: C.coral },
-            { step: '4', title: 'Fluxo no motor de reservas', desc: 'Reserva criada → Mercado Pago gera link de pagamento (50%) → Hóspede paga → Webhook confirma → Reserva muda para "Confirmada".', cor: '#7C3AED' },
+            { step: '2', title: 'Obtenha o Access Token', desc: 'Em "Credenciais" no painel do Mercado Pago, copie o Access Token de produção e cadastre-o na Vercel (Settings → Environment Variables) como MP_ACCESS_TOKEN. Nunca o escreva aqui no painel nem o envie por e-mail.', cor: C.ocean },
+            { step: '3', title: 'Webhook', desc: 'Não é preciso configurar: cada link de pagamento já informa ao Mercado Pago o endereço de aviso do site (/api/mp-webhook), que confere o pagamento e confirma a reserva.', cor: C.coral },
+            { step: '4', title: 'Fluxo no motor de reservas', desc: 'Reserva criada no site → link de pagamento do sinal → hóspede paga → o aviso do Mercado Pago confirma → a reserva passa a "Reservado" e o hóspede recebe o e-mail.', cor: '#7C3AED' },
           ].map(s => (
             <div key={s.step} style={{ padding: '14px 16px', background: C.espuma, borderRadius: 12, borderLeft: `4px solid ${s.cor}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -116,7 +116,7 @@ export function PaymentsView({ data, update }) {
           ))}
         </div>
         <div style={{ marginTop: 14, padding: '12px 14px', background: '#FFF8E1', border: '1px solid #FFD54F', borderRadius: 10, fontSize: 13, color: '#7B5600', lineHeight: 1.55 }}>
-          <b>Nota:</b> A integração automática de pagamentos requer um servidor backend (Node.js / PHP) com acesso à internet para receber os webhooks do gateway. O motor atual funciona em modo offline — para produção em <b>{data.settings.site || 'produção'}</b> será necessário configurar o servidor e as credenciais da API.
+          <b>Nota:</b> o Mercado Pago já está integrado pelas funções do próprio site na Vercel (pasta <code>api/</code>). Sem o <b>MP_ACCESS_TOKEN</b> configurado, as reservas do site seguem pelo fluxo manual: ficam pendentes e a equipa combina o sinal por WhatsApp/Pix e lança o pagamento no painel.
         </div>
       </Card>
 

@@ -1,6 +1,5 @@
 import { C } from './constants';
-import { uid, code, ymd, today, nights, stayBreakdown } from './helpers';
-import { supabase, supabaseConfigured, APP_STATE_TABLE, APP_STATE_ROW_ID } from './supabaseClient';
+import { uid, code, ymd, today, stayBreakdown } from './helpers';
 
 /* ─────────────────────────────────────────────────────────────────────────
    Multi-imóvel: existe UM único store `data`, partilhado por todos os
@@ -34,6 +33,9 @@ export function seedData() {
     { id: 'a315', residencialId: 'pinheiramar', nome: 'Apto 315', tipo: 'Apto 315 - 2°Piso Frente Mar, 8 pessoas', piso: '2º Piso', vista: 'Frente Mar', capacidade: 8, preco: 450, foto: '/fotos/a315/1.jpg', fotos: ['/fotos/a315/1.jpg', '/fotos/a315/2.jpg', '/fotos/a315/3.jpg', '/fotos/a315/4.jpg', '/fotos/a315/5.jpg', '/fotos/a315/6.jpg', '/fotos/a315/7.jpg', '/fotos/a315/8.jpg', '/fotos/a315/9.jpg', '/fotos/a315/10.jpg', '/fotos/a315/11.jpg', '/fotos/a315/12.jpg', '/fotos/a315/13.jpg'], ativo: true },
     { id: 'a316', residencialId: 'pinheiramar', nome: 'Apto 316', tipo: 'Apto 316 - 2°Piso à beira mar, 6 pessoas', piso: '2º Piso', vista: 'Beira-mar', capacidade: 6, preco: 340, foto: '/fotos/a316/2.jpg', fotos: ['/fotos/a316/2.jpg', '/fotos/a316/1.jpg', '/fotos/a316/3.jpg', '/fotos/a316/4.jpg', '/fotos/a316/5.jpg', '/fotos/a316/6.jpg', '/fotos/a316/7.jpg', '/fotos/a316/8.jpg', '/fotos/a316/9.jpg', '/fotos/a316/10.jpg'], ativo: true },
     { id: 'a317', residencialId: 'pinheiramar', nome: 'Apto 317', tipo: 'Apto 317 - 2°Piso à beira mar, 6 pessoas', piso: '2º Piso', vista: 'Beira-mar', capacidade: 6, preco: 340, foto: '/fotos/a317/2.jpg', fotos: ['/fotos/a317/2.jpg', '/fotos/a317/1.jpg', '/fotos/a317/3.jpg', '/fotos/a317/4.jpg', '/fotos/a317/5.jpg', '/fotos/a317/6.jpg'], ativo: true },
+    // Casa 108 — existe no sistema real (id gerado pelo painel); faltava aqui e a
+    // prévia mostrava 17 unidades no PinheiraMar em vez de 17 apartamentos + 1 casa.
+    { id: 'a3jlehx8', residencialId: 'pinheiramar', nome: 'Casa 108', tipo: 'Casa 108 - Térreo à 50mts mar, 6 pessoas', piso: 'Térreo', vista: 'Beira-mar', capacidade: 6, preco: 320, foto: '/fotos/a3jlehx8/1.jpg', fotos: ['/fotos/a3jlehx8/1.jpg', '/fotos/a3jlehx8/2.jpg', '/fotos/a3jlehx8/3.jpg', '/fotos/a3jlehx8/4.jpg', '/fotos/a3jlehx8/5.jpg', '/fotos/a3jlehx8/6.jpg', '/fotos/a3jlehx8/7.jpg', '/fotos/a3jlehx8/8.jpg'], ativo: true },
 
     // ── Novo Residencial (a 50m da Praia da Pinheira) ──────────────────
     // Preços de arranque estimados a partir da tabela do PinheiraMar por
@@ -222,7 +224,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       heroEyebrow: 'Praia da Pinheira · Palhoça · Santa Catarina',
       heroLine1: 'Apartamentos', heroLine2: 'à beira-mar,', heroAccent: 'do jeito certo.',
       heroSubtext: 'Apartamentos residenciais completos frente ao mar.',
-      heroImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1800&q=85&auto=format&fit=crop',
+      heroImage: '/fotos/a305/2.jpg',
     },
     {
       // Nome e morada confirmados pelo Caio: Caminho do Mar. E-mail e
@@ -247,7 +249,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       heroEyebrow: 'A 50m da Praia da Pinheira · Palhoça · Santa Catarina',
       heroLine1: 'Apartamentos', heroLine2: 'a 50m da praia,', heroAccent: 'do jeito certo.',
       heroSubtext: 'Apartamentos residenciais completos, a poucos passos da Praia da Pinheira.',
-      heroImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1800&q=85&auto=format&fit=crop',
+      heroImage: '/fotos/a305/2.jpg',
     },
   ];
 
@@ -296,228 +298,6 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
   return { residenciais, apartamentos, seasons, reservas, pagamentos, taxasAdicionais, cupons };
 }
 
-/* ───────────────────────── Persistent storage ───────────────────────── */
-// v5: introduz `residenciais` (multi-imóvel) e remove o antigo `settings`
-// único — por isso muda a chave de versão, para forçar reseed em vez de
-// carregar dados antigos com uma forma incompatível.
-// v6: adiciona as fotos reais aos 17 apartamentos do PinheiraMar — muda a
-// versão de novo para que quem já tinha a v5 guardada (sem fotos) receba
-// os dados novos em vez de ficar preso ao seed antigo.
-// v7: reordena a foto de capa de alguns apartamentos (a101, a118, a204,
-// a209, a211, a212, a316, a317) — a primeira foto do array passa a ser a
-// que melhor mostra o ambiente (quarto/sala/cozinha) em vez de corredores,
-// escadas ou close-ups de casa de banho; muda a versão para que quem já
-// tinha a v6 guardada também receba a nova ordem.
-// v8: corrige textos para português do Brasil (contato, ato, atualize,
-// diretamente, etc.), corrige "daí" e o item da Praia de Baixo na secção
-// Destino, e define nome/morada definitivos do segundo residencial —
-// Caminho do Mar, Rua Hortêncio Pedro Antunes 124, Enseada da Pinheira
-// (antes "Novo Residencial" com morada por confirmar); muda a versão para
-// que quem já tinha a v7 guardada também receba estes dados.
-//
-// Guarda em localStorage do browser (persiste entre recarregamentos e
-// fechos de separador, no MESMO browser/dispositivo) — serve de cache
-// local instantânea e de rede de segurança quando o Supabase não estiver
-// configurado ou estiver indisponível no momento. `window.storage` era
-// usado antes como camada de armazenamento, mas essa API só existe dentro
-// do preview de artefactos da Claude — num site publicado a sério
-// (Vercel, etc.) `window.storage` não existe.
-//
-// v9: adiciona fotos reais dos apartamentos do Caminho do Mar (n01-n05;
-// n06 ainda sem fotos — aguarda envio) e actualiza os logótipos no
-// cabeçalho do site (ambos os residenciais); muda a versão para que
-// quem já tinha a v8 guardada também receba as novas fotos.
-// v10: acrescenta o prefixo "Residencial" ao nome do Caminho do Mar
-// (fica "Residencial Caminho do Mar", tal como "Residencial PinheiraMar");
-// muda a versão para que quem já tinha a v9 guardada também receba o nome novo.
-//
-// v11: os dados passam a sincronizar entre dispositivos através do
-// Supabase (ver supabaseClient.js e supabase-setup.sql) — antes cada
-// browser/dispositivo tinha a sua própria cópia isolada em localStorage,
-// por isso o que o Admin alterava num computador não aparecia no
-// telemóvel, nem vice-versa. Sem as variáveis de ambiente do Supabase
-// configuradas, o site continua a funcionar exactamente como antes
-// (localStorage só neste dispositivo) — nada quebra.
-export const STORE_KEY = 'pinheiramar:data:v10';
-export let memFallback = null;
-
-function readLocalStorage() {
-  try {
-    const raw = window.localStorage?.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { /* localStorage indisponível ou chave inválida */ }
-  return null;
-}
-
-/* ───────────────────── Migração de dados já gravados ─────────────────────
-   Os dados vivem num único JSON (Supabase/localStorage) que foi sendo
-   gravado por versões anteriores da aplicação. `versaoDados` diz por que
-   passos é que esse JSON já passou, para cada um correr exactamente uma
-   vez — mesmo que outro dispositivo já tenha corrido o anterior. Dados sem
-   o campo contam como versão 0 e passam por tudo.
-
-   v1 — renomear os estados. O modelo passou de 4 para 5 valores no commit
-   "Reformular status da reserva em 5 estados" (2026-09-16) e os dados já
-   gravados nunca foram convertidos: as milhares de reservas importadas do
-   sistema anterior ficaram com `status: 'confirmada'`, valor que a
-   aplicação já não conhece. Continuavam a bloquear datas (isAvailable só
-   exclui 'cancelada') mas desapareciam das contas do Financeiro e apareciam
-   como "Pendente" nas etiquetas (Badge faz STATUS[status] || pendente).
-     'confirmada'                  → 'confirmado'
-     'pendente' + sinalPago: true  → 'reservado'
-
-   v2 — pagamento das reservas ainda por acontecer (a pedido do Caio). Pôr
-   TODAS as importadas como "Confirmado" descreve mal o futuro: ninguém
-   pagou 100% por uma estadia que ainda não aconteceu. As que já terminaram
-   ficam Confirmado (v1); as que estão a decorrer ou ainda vêm (check-out de
-   hoje em diante) passam a refletir o pagamento, lido da descrição que o
-   sistema antigo deixava no nome do hóspede: com "50%" → Reservado (sinal
-   pago), sem marca → Pendente (sem pagamento).
-
-   Só mexe em reservas com `origem: 'Importado'`: as que vieram do site ou
-   foram tratadas à mão no painel já têm um estado posto de propósito (o
-   webhook do Mercado Pago, por exemplo) e não se sobrepõe a isso.
-
-   O campo antigo `sinalPago` fica onde está, já não é lido por ninguém:
-   converter é reversível, apagar não.
-
-   v3 — `valorPago`: até aqui o único registo de pagamento era o `status`
-   (pendente/reservado/confirmado), que só dá um valor aproximado (0%, 50%
-   ou 100%) — não o valor real pago quando ele foge dessas frações (ex.:
-   negociação, pagamento parcial). Toda reserva passa a ter `valorPago` (o
-   que foi efetivamente recebido, editável no ecrã da reserva) e
-   `valorRestante` deixa de ser guardado — é sempre `total - valorPago`,
-   calculado na hora. Backfill: pendente → 0, reservado → sinal (50% do
-   total), confirmado → total, bloqueio/cancelada → 0. */
-export const DATA_VERSION = 3;
-
-// A marca do sinal vem escrita no nome, com ou sem espaço antes do "%".
-const MARCA_SINAL_50 = /50\s*%/;
-const temSinal50 = (r) => MARCA_SINAL_50.test(`${r.nome || ''} ${r.sobrenome || ''} ${r.hospede || ''}`);
-
-export function migrarDados(d) {
-  if (!d || !Array.isArray(d.reservas)) return { data: d, migrou: false, alteradas: 0 };
-  const de = Number(d.versaoDados) || 0;
-  if (de >= DATA_VERSION) return { data: d, migrou: false, alteradas: 0 };
-
-  let reservas = d.reservas;
-  let alteradas = 0;
-  const trocar = (r, novo) => { if (r.status === novo) return r; alteradas++; return { ...r, status: novo }; };
-
-  if (de < 1) {
-    reservas = reservas.map(r => {
-      if (r.status === 'confirmada') return trocar(r, 'confirmado');
-      if (r.status === 'pendente' && r.sinalPago === true) return trocar(r, 'reservado');
-      return r;
-    });
-  }
-
-  if (de < 2) {
-    const hoje = ymd(today());
-    reservas = reservas.map(r => {
-      if (r.origem !== 'Importado') return r;
-      if (r.status === 'bloqueio' || r.status === 'cancelada') return r;
-      // datas em ISO (yyyy-mm-dd) comparam-se bem como texto; check-out
-      // anterior a hoje = estadia terminada, fica como está.
-      if (!r.checkOut || r.checkOut < hoje) return r;
-      return trocar(r, temSinal50(r) ? 'reservado' : 'pendente');
-    });
-  }
-
-  if (de < 3) {
-    reservas = reservas.map(r => {
-      if (r.valorPago != null) return r;
-      alteradas++;
-      const vp = r.status === 'confirmado' ? Number(r.total) || 0
-        : r.status === 'reservado' ? Number(r.sinal) || Math.round((Number(r.total) || 0) * 0.5)
-        : 0;
-      return { ...r, valorPago: vp };
-    });
-  }
-
-  return { data: { ...d, reservas, versaoDados: DATA_VERSION }, migrou: true, alteradas };
-}
-
-/* ── Limpeza das reservas provisórias que caducaram ───────────────────────
-   Uma reserva do site que ficou à espera do pagamento e nunca foi paga
-   deixa de bloquear datas mal o prazo passa (holdExpirado, em helpers.js) —
-   isso é imediato e não depende desta limpeza. Isto aqui é só arrumação:
-   passado um tempo, o registo sai de vez, para a lista do painel não encher
-   de tentativas falhadas que nunca foram reservas.
-
-   As 24 horas de folga são de propósito: o Mercado Pago reenvia avisos
-   durante horas se o primeiro não passar, e enquanto o registo existir esse
-   aviso atrasado ainda consegue confirmar a reserva. Apagar mais cedo seria
-   arriscar perder uma reserva efectivamente paga.
-
-   Ao contrário de migrarDados, isto não é um passo de versão — corre em
-   todos os arranques, porque há sempre provisórias novas a caducar. */
-const HORAS_ATE_LIMPAR_PROVISORIA = 24;
-
-export function limparProvisoriasCaducadas(d, agora = Date.now()) {
-  if (!d || !Array.isArray(d.reservas)) return { data: d, removidas: 0 };
-  const limite = agora - HORAS_ATE_LIMPAR_PROVISORIA * 3600 * 1000;
-  // data inválida ou ausente nunca é apagada — na dúvida, guarda-se.
-  const reservas = d.reservas.filter(r => !(r.status === 'pendente' && r.expiraEm && Date.parse(r.expiraEm) <= limite));
-  const removidas = d.reservas.length - reservas.length;
-  return { data: removidas ? { ...d, reservas } : d, removidas };
-}
-
-// Carrega, converte para o modelo de dados atual e arruma as provisórias
-// caducadas. O resultado é gravado logo de seguida para que os outros
-// dispositivos já partam do mesmo ponto (e para não se repetir a cada
-// arranque).
-export async function loadData() {
-  const bruto = await loadRaw();
-  if (!bruto) return bruto;
-  const { data: migrado, migrou, alteradas } = migrarDados(bruto);
-  const { data: d, removidas } = limparProvisoriasCaducadas(migrado);
-  if (migrou) console.info(`[pinheiramar] dados migrados para a versão ${DATA_VERSION} — ${alteradas} reserva(s) alteradas.`);
-  if (removidas) console.info(`[pinheiramar] ${removidas} reserva(s) provisórias caducadas removidas.`);
-  if (migrou || removidas) await saveData(d);
-  return d;
-}
-
-async function loadRaw() {
-  // Fonte de verdade partilhada, quando configurada — ver supabaseClient.js.
-  if (supabaseConfigured) {
-    try {
-      const { data: row, error } = await supabase
-        .from(APP_STATE_TABLE).select('data').eq('id', APP_STATE_ROW_ID).maybeSingle();
-      if (error) throw error;
-      if (row?.data) return row.data;
-      // Tabela criada mas ainda sem a linha 'main' — primeira utilização
-      // depois de ligar o Supabase. Semeia a partir do que já estiver
-      // neste navegador (dados reais, se os houver) ou do seed de
-      // demonstração, e já grava para os próximos dispositivos partirem
-      // do mesmo ponto.
-      const seeded = readLocalStorage() || seedData();
-      await saveData(seeded);
-      return seeded;
-    } catch (e) {
-      // Supabase configurado mas indisponível agora (rede em baixo, tabela
-      // ainda não criada via supabase-setup.sql, etc.) — não bloqueia o
-      // site, cai para a cópia local abaixo.
-      console.warn('Supabase indisponível — a usar cópia local deste dispositivo por agora.', e);
-    }
-  }
-  const local = readLocalStorage();
-  if (local) return local;
-  // compatibilidade com o antigo `window.storage`, caso ainda exista neste contexto
-  try { if (window.storage) { const r = await window.storage.get(STORE_KEY); if (r && r.value) return JSON.parse(r.value); } }
-  catch (e) { /* ignore */ }
-  return memFallback;
-}
-
-export async function saveData(d) {
-  memFallback = d;
-  try { window.localStorage?.setItem(STORE_KEY, JSON.stringify(d)); } catch (e) { /* ex.: modo privado sem quota — mantém apenas em memória */ }
-  if (supabaseConfigured) {
-    try {
-      const { error } = await supabase
-        .from(APP_STATE_TABLE)
-        .upsert({ id: APP_STATE_ROW_ID, data: d, updated_at: new Date().toISOString() });
-      if (error) console.warn('Não foi possível sincronizar com o Supabase — gravado só neste dispositivo por agora.', error);
-    } catch (e) { console.warn('Não foi possível sincronizar com o Supabase — gravado só neste dispositivo por agora.', e); }
-  }
-}
+// Migrações e armazenamento saíram daqui: ver migracoes.js (puras) e
+// dados.js (onde os dados são lidos/gravados). Reexportado por compatibilidade.
+export { migrarDados, limparProvisoriasCaducadas, DATA_VERSION } from './migracoes.js';

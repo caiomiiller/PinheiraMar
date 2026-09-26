@@ -1,4 +1,4 @@
-import { C } from './constants';
+
 import { uid, code, nights, today, ymd, MS } from './helpers';
 
 /* ───────────────────────── Apartamentos · serviços · países ───────────────────────── */
@@ -18,11 +18,8 @@ export const EXTRA_PRESETS = [
   { nome: 'Desconto de negociação', preco: -100 },
 ];
 
-/* Gera os extras obrigatórios a incluir em cada nova reserva não-bloqueio */
-export const mkExtrasObrigatorios = (taxasAdicionais = []) =>
-  taxasAdicionais
-    .filter(tx => tx.tipo === 'obrigatoria')
-    .map(tx => ({ id: uid(), nome: tx.nome, qtd: 1, preco: tx.preco }));
+/* As taxas obrigatórias de uma reserva são geradas por extrasObrigatorios
+   (lib/precos.js), com a quantidade certa para "por noite"/"por hóspede". */
 
 export const PAISES = ['Brasil', 'Argentina', 'Uruguai', 'Paraguai', 'Chile', 'Portugal', 'Estados Unidos', 'Outro'];
 

@@ -1,286 +1,170 @@
-// Webhook do Mercado Pago: chamado pelo Mercado Pago (nunca pelo navegador
-// do hóspede) sempre que o estado de um pagamento muda. É a única fonte de
-// verdade confiável sobre pagamento — nunca confiamos no redirecionamento de
-// volta ao site (esse só melhora a experiência, pode falhar ou ser fechado
-// pelo hóspede antes de completar).
+// Webhook do Mercado Pago: chamado pelo Mercado Pago sempre que um pagamento
+// muda de estado. É a única fonte de verdade sobre o pagamento (o regresso do
+// hóspede ao site só melhora a experiência).
 //
-// O que faz: recebe o aviso, busca o pagamento de verdade na API do Mercado
-// Pago (usando o MP_ACCESS_TOKEN — nunca confiar nos dados que vêm só na
-// notificação, podem ser forjados), e se estiver aprovado, avança o status
-// da reserva correspondente de 'pendente' para 'reservado' (50% pago —
-// ver STATUS em src/components/ui.jsx), localizada por external_reference,
-// que é o id da reserva — ver BookingModal.jsx/api/mp-create-preference.js).
-//
-// Configuração: MP_ACCESS_TOKEN (ver mp-create-preference.js) + as mesmas
-// VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY já usadas pelo site (funcionam
-// aqui também: o prefixo VITE_ só controla o que o Vite expõe ao navegador
-// no build, não impede o Node de as ler em process.env no servidor).
-//
-// Nota sobre concorrência: todo o estado do site vive numa única linha JSON
-// na tabela app_state (ver supabase-setup.sql) — não há hoje uma tabela
-// "reservas" própria com linhas independentes. Este webhook faz
-// ler-atualizar-gravar (lê o estado inteiro, muda só esta reserva, grava de
-// volta o estado inteiro): em teoria, se uma gravação do painel de gestão ou
-// outra reserva acontecer exatamente no meio dessa janela, pode perder-se.
-// Para o volume desta operação (poucas reservas/edições em simultâneo) o
-// risco é baixo, mas é um ponto a resolver como trabalho futuro (mover
-// "reservas" para uma tabela própria no Supabase) se o volume crescer.
+// Mudanças da revisão de 2026-09-25:
+// • grava com verificação de versão (server/estado.js) — não apaga o que o
+//   painel ou outras reservas gravaram entretanto;
+// • responde erro (500) quando algo falha do nosso lado, para o Mercado Pago
+//   tentar de novo (antes respondia sempre 200 e o aviso perdia-se);
+// • só envia o e-mail DEPOIS de a confirmação estar gravada;
+// • confere o valor pago contra o sinal: se veio menos, não confirma e deixa
+//   a reserva sinalizada para o gestor ver no Painel;
+// • numa reserva conjunta, o pagamento fica registado uma vez só (na reserva
+//   principal) — antes entrava nas duas e contava o sinal em dobro;
+// • estornos/chargebacks ficam sinalizados na reserva.
+import { alterarEstado } from '../server/estado.js';
+import { responder } from '../server/http.js';
+import { mpConfigurado, consultarPagamento } from '../server/mercadopago.js';
+import { enviarConfirmacao, registarEnvio } from '../server/email.js';
+import { overlaps, uid } from '../src/lib/helpers.js';
+import { migrarDados } from '../src/lib/migracoes.js';
 
-import { createClient } from '@supabase/supabase-js';
-import { overlaps, uid, money, fmtLong, nights } from '../src/lib/helpers.js';
-
-// Junta "2 adultos, 1 criança" (ou só uma das partes, se a outra for 0) —
-// mesma lógica de src/lib/email.js (hospedesTxt), duplicada de propósito
-// (ver nota no topo de enviarEmailConfirmacao).
-function hospedesTxt(reserva) {
-  const adultos = Number(reserva.adultos) || 0;
-  const criancas = Number(reserva.criancas) || 0;
-  return [
-    adultos ? `${adultos} adulto${adultos > 1 ? 's' : ''}` : null,
-    criancas ? `${criancas} criança${criancas > 1 ? 's' : ''}` : null,
-  ].filter(Boolean).join(', ') || '—';
-}
-
-// Envia o e-mail de confirmação da reserva pelo EmailJS. Aqui, no servidor,
-// não se pode usar o SDK do navegador (src/lib/email.js) — usa-se a API REST,
-// que fora do navegador exige a chave privada e que o envio por API esteja
-// ligado em Account → Security na conta EmailJS (ver .env.example).
-//
-// Falhar aqui nunca põe em causa o pagamento nem a reserva: fica um aviso no
-// log e a reserva continua confirmada — o e-mail é um reforço, não o registo.
-async function enviarEmailConfirmacao(reserva, apt, residencial) {
-  const publicKey = process.env.VITE_EMAILJS_PUBLIC_KEY;
-  const serviceId = process.env.VITE_EMAILJS_SERVICE_ID;
-  const templateId = process.env.VITE_EMAILJS_TEMPLATE_ID;
-  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
-  if (!publicKey || !serviceId || !templateId || !privateKey) {
-    console.warn('[mp-webhook] EmailJS não configurado no servidor — e-mail de confirmação não enviado (ver .env.example).');
-    return false;
-  }
-  if (!reserva?.email) return false;
-  try {
-    // Mesmas variáveis (mesmos nomes) que buildParams() usa no envio pelo
-    // navegador (src/lib/email.js) — o template do EmailJS é o mesmo dos
-    // dois lados. CORRIGIDO em 2026-09-24: faltava `email` (o template usa
-    // {{email}} como destinatário, não {{to_email}} — sem isto a EmailJS
-    // respondia sempre 422 "The recipients address is empty", e nenhuma
-    // reserva paga pelo Mercado Pago chegava a enviar o e-mail de
-    // confirmação). Também enriquecido com os mesmos campos formatados
-    // (datas por extenso, noites, hóspedes, valores em R$, saldo restante).
-    const pago = Number(reserva.valorPago ?? reserva.sinal ?? 0);
-    const restante = Math.round((Number(reserva.total || 0) - pago) * 100) / 100;
-    const resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_id: serviceId,
-        template_id: templateId,
-        user_id: publicKey,
-        accessToken: privateKey,
-        template_params: {
-          email: reserva.email,
-          to_email: reserva.email,
-          to_name: reserva.hospede || reserva.nome || '',
-          codigo_reserva: reserva.codigo,
-          nome_propriedade: residencial?.nome || '',
-          cidade: residencial?.cidade || '',
-          apartamento: [apt?.nome, apt?.vista].filter(Boolean).join(' · '),
-          check_in_fmt: fmtLong(reserva.checkIn),
-          check_out_fmt: fmtLong(reserva.checkOut),
-          noites: nights(reserva.checkIn, reserva.checkOut),
-          hospedes_txt: hospedesTxt(reserva),
-          total_fmt: money(reserva.total),
-          sinal_fmt: money(reserva.sinal),
-          sinal_pct: residencial?.sinalPct,
-          restante_fmt: money(restante),
-          endereco: residencial?.endereco || '',
-          whatsapp: residencial?.telefone || '',
-        },
-      }),
-    });
-    if (!resp.ok) {
-      console.warn('[mp-webhook] EmailJS recusou o envio:', resp.status, await resp.text().catch(() => ''));
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.warn('[mp-webhook] Falha ao enviar o e-mail de confirmação:', err);
-    return false;
-  }
-}
-
-// As datas desta reserva continuam livres? Conta qualquer outra reserva que
-// as ocupe e não esteja cancelada — incluindo uma provisória de outra pessoa
-// ainda dentro do prazo. Usado só para marcar conflitos, nunca para recusar
-// um pagamento já feito.
+// As datas desta reserva continuam livres? Usado só para MARCAR conflitos
+// (o hóspede já pagou), nunca para recusar.
 export function datasEmConflito(reservas, reserva) {
   return (reservas || []).some(o =>
     o.id !== reserva.id && o.apartamentoId === reserva.apartamentoId && o.status !== 'cancelada'
+    && !(o.status === 'pendente' && o.expiraEm && Date.parse(o.expiraEm) <= Date.now())
     && overlaps(reserva.checkIn, reserva.checkOut, o.checkIn, o.checkOut));
 }
 
-// Decide o que fazer com as reservas ligadas a um pagamento. Isolada de
-// propósito — sem rede nem base de dados — para poder ser testada a sério:
-// é a parte onde um engano custa dinheiro ou uma reserva perdida.
-//
-// `alvos` são a reserva do pagamento e, numa reserva conjunta (dois
-// apartamentos), a outra metade, ligada pelo mesmo `pagamentoRef`.
-// Só mexe em reservas ainda 'pendente': um reenvio do mesmo aviso, ou um
-// gestor que já tenha avançado o estado à mão, não é desfeito aqui.
+const arred = (v) => Math.round((Number(v) || 0) * 100) / 100;
+
+// Decide o que fazer com as reservas de um pagamento. Pura (sem rede nem
+// banco) para poder ser testada — ver tests/webhook.test.js.
 export function aplicarDesfechoPagamento(reservas, reservaId, payment, agoraISO = new Date().toISOString()) {
-  const aprovado = payment.status === 'approved';
-  const alvos = [];
+  const status = payment?.status;
+  const aprovado = status === 'approved';
+  const recusado = status === 'rejected' || status === 'cancelled';
+  const estornado = status === 'refunded' || status === 'charged_back';
+  const mpId = String(payment?.id ?? '');
+  const grupo = (reservas || []).filter(r => r.id === reservaId || r.pagamentoRef === reservaId);
+  const alvos = grupo.map(r => r.id);
+  const principalAtual = grupo.find(r => r.id === reservaId);
+  // O valor esperado é o que foi de facto cobrado no link de pagamento
+  // (guardado ao criar a reserva — api/reservar.js). Assim, mexer na reserva
+  // no painel antes de o aviso chegar não faz um pagamento certo parecer
+  // "a menos". Reservas antigas, sem esse registo: a soma dos sinais.
+  const cobrado = Number(principalAtual?.mpValorCobrado);
+  const esperado = arred(cobrado > 0 ? cobrado : grupo.reduce((s, r) => s + (Number(r.sinal) || 0), 0));
+  const pago = arred(payment?.transaction_amount);
+  const registosMP = (r) => (r?.registrosPagamento || []).filter(x => x && x.mpId);
+  const jaRegistado = registosMP(principalAtual).some(x => String(x.mpId) === mpId);
+  // pagamentos do Mercado Pago já registados nesta reserva + este
+  const pagoTotal = arred(pago + (jaRegistado ? 0 : registosMP(principalAtual).reduce((s, x) => s + (Number(x.valor) || 0), 0)));
+  const divergente = aprovado && esperado > 0 && pagoTotal + 0.009 < esperado;
+  const confirmadas = [];
   let mudou = false;
+
   const saida = (reservas || []).map(r => {
-    if (r.id !== reservaId && r.pagamentoRef !== reservaId) return r;
-    alvos.push(r.id);
-    if (r.status !== 'pendente') return r;
-    mudou = true;
-    return aprovado
-      // pago: deixa de ser provisória (sem prazo) e passa a Reservado — e o
-      // valor real da transação (payment.transaction_amount, não um valor
-      // "adivinhado") entra no histórico de pagamentos da reserva, a pedido
-      // do Caio (2026-09-23): "o sinal sugerido deve ser na verdade o
-      // registo do valor do pagamento realizado na reserva pelo site".
-      // Um `valorPago` legado (só possível se alguém tiver editado esta
-      // reserva manualmente antes do pagamento cair) é preservado como 1º
-      // lançamento, exatamente como no painel (ReservationForm) — nunca
-      // perdido, só materializado no histórico.
-      ? (() => {
-          const legado = (r.registrosPagamento || []).length === 0 && Number(r.valorPago) > 0
-            ? [{ id: uid(), descricao: 'Valor pago anteriormente (registo antigo)', data: r.criadoEm || agoraISO.slice(0, 10), valor: Math.round((Number(r.valorPago) || 0) * 100) / 100 }]
-            : (r.registrosPagamento || []);
-          const registrosPagamento = [...legado, {
-            id: uid(), descricao: 'Pagamento via Mercado Pago (sinal)', data: agoraISO.slice(0, 10),
-            valor: Math.round((Number(payment.transaction_amount) || 0) * 100) / 100,
-          }];
-          const valorPago = Math.round(registrosPagamento.reduce((s, x) => s + (Number(x.valor) || 0), 0) * 100) / 100;
-          return { ...r, status: 'reservado', expiraEm: null, pagamentoMpId: String(payment.id), pagamentoConfirmadoEm: agoraISO, registrosPagamento, valorPago };
-        })()
-      // recusado: o prazo passa a agora, portanto as datas ficam livres
-      // imediatamente para novas consultas. Mantém-se 'pendente' de
-      // propósito, em vez de apagar: o hóspede pode tentar pagar outra vez
-      // no mesmo checkout, e aí este mesmo webhook ainda a encontra para
-      // confirmar. Se ninguém pagar, é limpa depois (ver seed.js).
-      : { ...r, expiraEm: agoraISO, pagamentoMpId: String(payment.id), pagamentoStatus: payment.status };
+    if (!alvos.includes(r.id)) return r;
+    const principal = r.id === reservaId;
+
+    if (estornado) {
+      if (r.pagamentoEstornado?.mpId === mpId) return r;
+      mudou = true;
+      return { ...r, pagamentoEstornado: { status, mpId, em: agoraISO } };
+    }
+    if (r.status !== 'pendente') return r; // reenvio do mesmo aviso, ou já tratada à mão
+
+    if (aprovado) {
+      // o Mercado Pago avisa o mesmo pagamento mais de uma vez (e qualquer
+      // pessoa pode repetir o aviso): se já foi registado, não repete
+      if (jaRegistado || (!principal && r.pagamentoMpId === mpId)) return r;
+      mudou = true;
+      const legado = (r.registrosPagamento || []).length === 0 && Number(r.valorPago) > 0
+        ? [{ id: uid(), descricao: 'Valor pago anteriormente (registo antigo)', data: r.criadoEm || agoraISO.slice(0, 10), valor: arred(r.valorPago) }]
+        : (r.registrosPagamento || []);
+      const registrosPagamento = principal
+        ? [...legado, { id: uid(), descricao: 'Pagamento via Mercado Pago (sinal)', data: agoraISO.slice(0, 10), valor: pago, mpId }]
+        : legado;
+      const valorPago = arred(registrosPagamento.reduce((s, x) => s + (Number(x.valor) || 0), 0));
+      const base = { ...r, pagamentoMpId: mpId, pagamentoStatus: status, registrosPagamento, valorPago };
+      if (divergente) {
+        // pagou menos do que o sinal: NÃO confirma, mas houve dinheiro — as
+        // datas ficam seguras (sem prazo) até o gestor decidir (Painel → avisos)
+        return { ...base, expiraEm: null, pagamentoDivergente: { esperado, pago: pagoTotal, mpId, em: agoraISO } };
+      }
+      const conf = { ...base, status: 'reservado', expiraEm: null, pagamentoConfirmadoEm: agoraISO };
+      confirmadas.push(conf.id);
+      return conf;
+    }
+    if (recusado) {
+      if (r.pagamentoMpId === mpId && r.pagamentoStatus === status) return r; // aviso repetido
+      mudou = true;
+      // tentativa recusada: uma reserva provisória larga as datas já (o
+      // hóspede pode tentar de novo no mesmo checkout, e este webhook ainda a
+      // encontra). Uma que o gestor já assumiu (sem prazo) não é mexida.
+      return { ...r, ...(r.expiraEm ? { expiraEm: agoraISO } : {}), pagamentoMpId: mpId, pagamentoStatus: status };
+    }
+    return r;
   });
-  return { reservas: saida, alvos, mudou };
+  return { reservas: saida, alvos, mudou, divergente, confirmadas, esperado, pago };
 }
 
+const idDoAviso = (req) => {
+  const q = req.query || {};
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  return {
+    paymentId: q['data.id'] || q.id || body?.data?.id || null,
+    tipo: q.type || q.topic || body.type || body.topic || null,
+  };
+};
+
 export default async function handler(req, res) {
-  // O Mercado Pago não espera um corpo de resposta específico, só um 200
-  // rápido — respondemos sempre 200 (mesmo quando ignoramos o aviso ou algo
-  // falha do nosso lado) para não entrar num ciclo de reenvios automáticos
-  // dele; os detalhes ficam só nos logs da função, para diagnóstico.
   try {
-    // Log mínimo de cada chamada recebida (método, query e o tipo indicado no
-    // corpo) — antes de qualquer "return" — para que, se o Mercado Pago um
-    // dia não avançar uma reserva, dê para confirmar nos logs da função da
-    // Vercel se o aviso chegou sequer (e com que forma), em vez de ter de
-    // adivinhar entre "nunca chegou" e "chegou mas foi ignorado/falhou".
-    console.log('[mp-webhook] recebido:', req.method, JSON.stringify(req.query || {}), 'body.type=', req.body && req.body.type);
+    const { paymentId, tipo } = idDoAviso(req);
+    console.log('[mp-webhook] recebido:', req.method, 'tipo=', tipo, 'id=', paymentId);
+    if (!mpConfigurado()) return responder(res, 200, { ok: false, motivo: 'nao_configurado' });
+    if (!paymentId || (tipo && tipo !== 'payment')) return responder(res, 200, { ok: true, ignorado: true });
 
-    const token = process.env.MP_ACCESS_TOKEN;
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-    if (!token || !supabaseUrl || !supabaseKey) {
-      console.warn('[mp-webhook] Recebido mas não configurado (falta MP_ACCESS_TOKEN ou Supabase) — ignorado.');
-      res.status(200).json({ ok: false, reason: 'not_configured' });
-      return;
+    const c = await consultarPagamento(paymentId);
+    if (!c.ok && c.naoExiste) return responder(res, 200, { ok: true, ignorado: 'pagamento_inexistente' });
+    if (!c.ok) {
+      console.warn('[mp-webhook] consulta do pagamento falhou — o Mercado Pago vai tentar de novo', c.status || c.erro || '');
+      return responder(res, 500, { ok: false, motivo: 'consulta_falhou' });
     }
-
-    const q = req.query || {};
-    const bodyId = req.body && typeof req.body === 'object' ? req.body?.data?.id : null;
-    const paymentId = q['data.id'] || q.id || bodyId;
-    const type = q.type || q.topic || (req.body && req.body.type);
-    if (!paymentId || (type && type !== 'payment')) {
-      console.log('[mp-webhook] ignorado — sem paymentId ou tipo != payment (type=', type, ', paymentId=', paymentId, ')');
-      res.status(200).json({ ok: true, ignored: true });
-      return;
-    }
-
-    // Busca o pagamento de verdade na API do MP — nunca confiar só na notificação.
-    const payResp = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!payResp.ok) {
-      console.warn('[mp-webhook] Não foi possível consultar o pagamento', paymentId, payResp.status);
-      res.status(200).json({ ok: false, reason: 'payment_lookup_failed' });
-      return;
-    }
-    const payment = await payResp.json();
+    const payment = c.pagamento;
     const reservaId = payment.external_reference;
-    if (!reservaId) {
-      res.status(200).json({ ok: true, ignored: true });
-      return;
-    }
+    const relevante = ['approved', 'rejected', 'cancelled', 'refunded', 'charged_back'].includes(payment.status);
+    if (!reservaId || !relevante) return responder(res, 200, { ok: true, status: payment.status });
 
-    // 'approved' confirma; 'rejected'/'cancelled' são desfechos negativos e
-    // definitivos daquela tentativa — aí a reserva provisória tem de largar
-    // as datas já, sem esperar pelo prazo. Os estados intermédios
-    // ('pending', 'in_process', 'authorized') não são desfecho nenhum: a
-    // reserva continua provisória até ao prazo dela.
-    const aprovado = payment.status === 'approved';
-    const recusado = payment.status === 'rejected' || payment.status === 'cancelled';
-    if (!aprovado && !recusado) {
-      res.status(200).json({ ok: true, status: payment.status });
-      return;
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const { data: row, error: readErr } = await supabase
-      .from('app_state').select('data').eq('id', 'main').maybeSingle();
-    if (readErr || !row?.data) {
-      console.error('[mp-webhook] Não foi possível ler o app_state:', readErr);
-      res.status(200).json({ ok: false, reason: 'state_read_failed' });
-      return;
-    }
-
-    const state = row.data;
-    const { reservas, alvos, mudou } = aplicarDesfechoPagamento(state.reservas, reservaId, payment);
-    if (!alvos.length) {
-      console.warn('[mp-webhook] Reserva não encontrada para external_reference', reservaId);
-      res.status(200).json({ ok: false, reason: 'reserva_not_found' });
-      return;
-    }
-    state.reservas = reservas;
-
-    // Confirmar um pagamento pode chegar depois de o prazo da provisória ter
-    // expirado e outra pessoa ter ficado com as mesmas noites. O hóspede
-    // pagou, por isso a reserva mantém-se — mas fica marcada, para o gestor
-    // ver no painel e resolver, em vez de ficarem duas reservas sobrepostas
-    // sem ninguém dar por isso.
-    if (aprovado && mudou) {
-      state.reservas = state.reservas.map(r => {
-        if (!alvos.includes(r.id) || r.status !== 'reservado') return r;
-        return datasEmConflito(state.reservas, r) ? { ...r, conflitoDatas: true } : r;
-      });
-    }
-
-    if (mudou) {
-      const { error: writeErr } = await supabase
-        .from('app_state')
-        .update({ data: state, updated_at: new Date().toISOString() })
-        .eq('id', 'main');
-      if (writeErr) console.error('[mp-webhook] Falha ao gravar o desfecho do pagamento:', writeErr);
-    }
-
-    // Só agora, com o pagamento aprovado e a reserva gravada, é que o hóspede
-    // recebe o e-mail de confirmação — antes saía assim que ele preenchia o
-    // formulário, mesmo que o pagamento viesse a ser recusado.
-    if (aprovado && mudou) {
-      for (const id of alvos) {
-        const r = state.reservas.find(x => x.id === id);
-        if (!r || r.status !== 'reservado') continue;
-        const apt = (state.apartamentos || []).find(a => a.id === r.apartamentoId);
-        const residencial = (state.residenciais || []).find(x => x.id === apt?.residencialId);
-        await enviarEmailConfirmacao(r, apt, residencial);
+    const agoraISO = new Date().toISOString();
+    let desfecho;
+    const r = await alterarEstado((estado) => {
+      const e = migrarDados(estado).data;
+      const d = aplicarDesfechoPagamento(e.reservas, reservaId, payment, agoraISO);
+      desfecho = d;
+      if (!d.alvos.length || !d.mudou) return { estado: null, resultado: d };
+      let reservas = d.reservas;
+      if (d.confirmadas.length) {
+        reservas = reservas.map(x => (d.confirmadas.includes(x.id) && datasEmConflito(reservas, x) ? { ...x, conflitoDatas: true } : x));
       }
-    }
+      return { estado: { ...e, reservas }, resultado: d };
+    });
 
-    res.status(200).json({ ok: true, status: payment.status, reservas: alvos.length });
+    if (!desfecho?.alvos.length) {
+      console.error('[mp-webhook] pagamento', payment.id, 'sem reserva correspondente (external_reference=', reservaId, ')');
+      return responder(res, 200, { ok: false, motivo: 'reserva_nao_encontrada' });
+    }
+    if (desfecho.divergente) {
+      console.warn('[mp-webhook] valor pago', desfecho.pago, 'menor que o sinal', desfecho.esperado, '— reserva não confirmada', reservaId);
+    }
+    // e-mail só depois de gravado, e só para o que acabou de ser confirmado
+    if (r.gravado && desfecho.confirmadas.length) {
+      const e = r.estado;
+      const grupo = e.reservas
+        .filter(x => desfecho.confirmadas.includes(x.id))
+        .sort((a, b) => (a.id === reservaId ? -1 : b.id === reservaId ? 1 : 0))
+        .map(x => ({ reserva: x, apt: (e.apartamentos || []).find(a => a.id === x.apartamentoId) }));
+      const residencial = (e.residenciais || []).find(x => x.id === grupo[0]?.apt?.residencialId) || (e.residenciais || [])[0];
+      const env = await enviarConfirmacao(grupo, residencial);
+      if (env.ok) await registarEnvio(grupo.map(g => g.reserva.id));
+    }
+    return responder(res, 200, { ok: true, status: payment.status, reservas: desfecho.alvos.length, gravado: !!r.gravado });
   } catch (err) {
-    console.error('[mp-webhook] erro inesperado:', err);
-    res.status(200).json({ ok: false });
+    console.error('[mp-webhook] erro — o Mercado Pago vai tentar de novo:', err.codigo || err, err.detalhes || '');
+    return responder(res, 500, { ok: false });
   }
 }

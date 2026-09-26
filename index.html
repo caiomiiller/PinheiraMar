@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Grupo PinheiraMar — apartamentos mobiliados e completos para férias em família na Praia da Pinheira, SC." />
     <title>Grupo PinheiraMar · A sua casa de verão</title>
+
+    <!-- Pré-visualização ao partilhar o link (WhatsApp, Facebook, etc.) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Grupo PinheiraMar" />
+    <meta property="og:title" content="Grupo PinheiraMar · Apartamentos na Praia da Pinheira, SC" />
+    <meta property="og:description" content="Apartamentos mobiliados e completos, à beira-mar, para férias em família. Veja a disponibilidade e reserve online." />
+    <meta property="og:url" content="https://www.pinheiramar.com.br/" />
+    <meta property="og:image" content="https://www.pinheiramar.com.br/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Vista do mar e da praia a partir do residencial, na Praia da Pinheira" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&display=swap" />
@@ -27,7 +40,7 @@
 
       /* Global form field style */
       .pmf { transition: border-color .18s; }
-      .pmf:focus { border-color: #2E7E8C !important; box-shadow: 0 0 0 3px rgba(46,126,140,.13); }
+      .pmf:focus { border-color: #2D7F9D !important; box-shadow: 0 0 0 3px rgba(45,127,157,.16); }
 
       /* Animations */
       @keyframes pm-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -38,9 +51,8 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- EmailJS: envia o e-mail de confirmação de reserva direto do navegador,
-         sem precisar de servidor próprio. Ver .env.example / src/lib/email.js. -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- O e-mail de confirmação sai só do servidor (server/email.js) — o
+         script do EmailJS no navegador foi retirado. -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

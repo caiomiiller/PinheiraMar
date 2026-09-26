@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { LayoutDashboard, CalendarDays, Wallet, Building2, Tag, CreditCard,
-  Users, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { C, F, applyTheme } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
-import { Btn } from '../../components/ui';
+
 import { Dashboard } from './Dashboard';
 import { Financeiro } from './Financeiro';
 import { Reservations } from './Reservations';
@@ -48,11 +47,11 @@ export function Admin({ data, update, initialResidencialId }) {
   // (settings/apartamentos/reservas já filtrados); `scopedUpdate` traduz
   // as alterações de volta para o store completo — ver src/lib/multiProperty.js
   const scoped = useMemo(() => buildScoped(data, residencialId), [data, residencialId]);
-  const scopedUpdate = (arg) => update(prev => {
+  const scopedUpdate = (arg, opts) => update(prev => {
     const prevScoped = buildScoped(prev, residencialId);
     const nextScoped = typeof arg === 'function' ? arg(prevScoped) : { ...prevScoped, ...arg };
     return mergeScopedBack(prev, residencialId, nextScoped);
-  });
+  }, opts);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: F.sans, color: C.ink, background: C.espuma }}>
@@ -141,90 +140,29 @@ export function Admin({ data, update, initialResidencialId }) {
         {/* Reservas ganha a largura toda disponível (sem o limite de 1180px das
             outras abas) para aproveitar o espaço liberado ao minimizar o menu */}
         <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: tab === 'reservas' ? 'none' : 1180, margin: '0 auto' }}>
-          {tab === 'painel' && <Dashboard data={scoped} go={setTab} openReservation={openReservation} />}
+          {/* key={residencialId}: ao trocar de residencial, as telas com
+              formulário começam de novo com os dados do residencial escolhido
+              (antes, "Guardar" em Configurações/Políticas podia gravar os dados
+              do residencial anterior por cima do novo). */}
+          {tab === 'painel' && <Dashboard key={residencialId} data={scoped} go={setTab} openReservation={openReservation} />}
           {/* Reservas é partilhado pelos dois residenciais (não usa o "recorte" do
               imóvel seleccionado) — o gestor regista/confirma reservas de qualquer
               imóvel neste mesmo ambiente, com uma etiqueta de cor a identificar a
               qual residencial cada apartamento pertence. Ver Reservations.jsx. */}
           {tab === 'reservas' && <Reservations data={data} update={update} openReservationId={pendingReservationId} onOpenedReservation={() => setPendingReservationId(null)} />}
-          {tab === 'financeiro' && <Financeiro data={scoped} go={setTab} />}
-          {tab === 'apartamentos' && <Apartments data={scoped} update={scopedUpdate} />}
-          {tab === 'temporadas' && <Seasons data={scoped} update={scopedUpdate} />}
-          {tab === 'taxas' && <TaxasView data={scoped} update={scopedUpdate} />}
-          {tab === 'politicas' && <PoliticasView data={scoped} update={scopedUpdate} />}
-          {tab === 'idiomas' && <IdiomasView data={scoped} update={scopedUpdate} />}
-          {tab === 'configuracoes' && <SettingsView data={scoped} update={scopedUpdate} />}
-          {tab === 'pagamentos' && <PaymentsView data={scoped} update={scopedUpdate} />}
+          {tab === 'financeiro' && <Financeiro key={residencialId} data={scoped} go={setTab} />}
+          {tab === 'apartamentos' && <Apartments key={residencialId} data={scoped} update={scopedUpdate} />}
+          {tab === 'temporadas' && <Seasons key={residencialId} data={scoped} update={scopedUpdate} />}
+          {tab === 'taxas' && <TaxasView key={residencialId} data={scoped} update={scopedUpdate} />}
+          {tab === 'politicas' && <PoliticasView key={residencialId} data={scoped} update={scopedUpdate} />}
+          {tab === 'idiomas' && <IdiomasView key={residencialId} data={scoped} update={scopedUpdate} />}
+          {tab === 'configuracoes' && <SettingsView key={residencialId} data={scoped} update={scopedUpdate} />}
+          {tab === 'pagamentos' && <PaymentsView key={residencialId} data={scoped} update={scopedUpdate} />}
         </main>
       </div>
     </div>
   );
 }
 
-export const ADMIN_PIN = '150263'; // altere aqui o PIN de acesso ao painel
-
-export function LoginScreen({ onLogin }) {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState(false);
-  const [show, setShow] = useState(false);
-  const inputRef = useRef(null);
-
-  const attempt = () => {
-    if (pin === ADMIN_PIN) { setError(false); onLogin(); }
-    else { setError(true); setPin(''); setTimeout(() => setError(false), 1800); inputRef.current?.focus(); }
-  };
-
-  return (
-    <div style={{ minHeight: '100vh', background: C.oceanDeep, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F.sans, padding: 24 }}>
-      <div className="pm-pop" style={{ background: '#fff', borderRadius: 24, padding: '40px 36px', width: '100%', maxWidth: 380, boxShadow: '0 32px 80px rgba(0,0,0,.36)' }}>
-        {/* logo */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
-          <img src="/icons/icon-192.png" alt="Pinheira" style={{ width: 56, height: 56, borderRadius: '50%', marginBottom: 14, boxShadow: '0 2px 10px rgba(0,0,0,.12)' }} />
-          <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 600, color: C.ink }}>Gestão de Residenciais</div>
-          <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Acesso ao painel</div>
-        </div>
-
-        {/* PIN field */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: C.inkSoft, display: 'block', marginBottom: 6 }}>PIN de acesso</label>
-          <div style={{ position: 'relative' }}>
-            <input
-              ref={inputRef}
-              type={show ? 'text' : 'password'}
-              inputMode="numeric"
-              value={pin}
-              autoFocus
-              onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              onKeyDown={e => e.key === 'Enter' && attempt()}
-              placeholder="••••"
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                padding: '13px 44px 13px 16px',
-                fontSize: 22, letterSpacing: '0.3em', fontFamily: 'monospace',
-                border: `2px solid ${error ? '#E53935' : C.line}`,
-                borderRadius: 12, outline: 'none', background: error ? '#FFF5F5' : '#fff',
-                transition: 'border-color .2s, background .2s',
-              }} />
-            <button onClick={() => setShow(s => !s)}
-              style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.inkSoft, fontSize: 18, lineHeight: 1, padding: 4 }}>
-              {show ? '🙈' : '👁'}
-            </button>
-          </div>
-          {error && <div style={{ color: '#E53935', fontSize: 12.5, marginTop: 6, fontWeight: 600 }}>PIN incorreto. Tente novamente.</div>}
-        </div>
-
-        <button onClick={attempt}
-          style={{ width: '100%', padding: '14px 0', background: C.ocean, color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15.5, cursor: 'pointer', fontFamily: F.sans, letterSpacing: '.01em', transition: 'background .15s' }}
-          onMouseEnter={e => e.currentTarget.style.background = C.oceanDeep}
-          onMouseLeave={e => e.currentTarget.style.background = C.ocean}>
-          Entrar no painel
-        </button>
-
-        <div style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: C.inkSoft }}>
-          Esqueceu o PIN? Altere em <code style={{ background: C.espuma, padding: '2px 6px', borderRadius: 5 }}>ADMIN_PIN</code> no código
-        </div>
-      </div>
-    </div>
-  );
-}
-
+// O login do painel passou para PainelGestao.jsx (e-mail e senha do Supabase
+// Auth, conferidos no servidor). O PIN fixo no código deixou de existir.

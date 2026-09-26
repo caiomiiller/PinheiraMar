@@ -99,14 +99,14 @@ export const overlaps = (aCi, aCo, bCi, bCo) => parseYMD(aCi) < parseYMD(bCo) &&
 
    `expiraEm` só existe em reservas nascidas do site com pagamento a
    caminho: as criadas no painel (telefone/WhatsApp) nunca o têm, e editar
-   uma reserva no painel também o descarta — o formulário reconstrói o
-   objeto — o que a promove a reserva normal, sem prazo. */
+   uma reserva no painel também o descarta (ver aplicarEdicaoReserva em
+   lib/reservas.js) — o que a promove a reserva normal, sem prazo. */
 /* Dois prazos, e é a relação entre eles que evita conflitos — não o valor de
    nenhum deles isoladamente:
 
    JANELA: quanto tempo o link de pagamento do Mercado Pago aceita pagamento.
    É imposto no próprio Mercado Pago (`expires`/`expiration_date_to` em
-   api/mp-create-preference.js), não só do nosso lado — passado esse tempo,
+   server/mercadopago.js), não só do nosso lado — passado esse tempo,
    ele deixa de aceitar, e um pagamento feito à mesma é devolvido ao pagador.
 
    HOLD: quanto tempo a reserva provisória segura as datas.
@@ -135,11 +135,14 @@ export const novoPrazoPagamento = (min = MIN_HOLD_PAGAMENTO) => new Date(Date.no
 export const holdExpirado = (r, agora = Date.now()) =>
   r.status === 'pendente' && !!r.expiraEm && Date.parse(r.expiraEm) <= agora;
 
+// `ignoreId` (opcional): a própria reserva que está a ser editada. As
+// reservas que o site público recebe não têm id (ver lib/publico.js) — por
+// isso só se compara o id quando há mesmo um para ignorar.
 export function isAvailable(reservations, aptId, ci, co, ignoreId) {
   const agora = Date.now();
-  return !reservations.some(r =>
+  return !(reservations || []).some(r =>
     r.apartamentoId === aptId && r.status !== 'cancelada' && !holdExpirado(r, agora)
-    && r.id !== ignoreId && overlaps(ci, co, r.checkIn, r.checkOut));
+    && (ignoreId == null || r.id !== ignoreId) && overlaps(ci, co, r.checkIn, r.checkOut));
 }
 
 /* ───────────────────────── Feriados (nacionais + SC + RS) ───────────────────────── */
