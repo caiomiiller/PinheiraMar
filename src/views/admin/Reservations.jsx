@@ -3,7 +3,7 @@ import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy, Chevron
   X, Check, AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Minus, Tag,
   Clock, Info, Users, Wallet, LogIn, LogOut, Car, Sparkles, PawPrint, Umbrella,
   BedDouble, Baby, Percent, Wind, Waves, Utensils, Wifi, Flame, Shield, Gift,
-  Sun, Shirt, Sofa } from 'lucide-react';
+  Sun, Shirt, Sofa, Power } from 'lucide-react';
 import { C, F, THEMES } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtShort, uid, code, isAvailable, stayBreakdown,
   nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS, WD, HOLIDAY_COLORS, MS,
@@ -12,7 +12,7 @@ import { buildCSV, downloadBlob, rowToReserva, PAISES, reservaToRow, CSV_COLS } 
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput, Select, Textarea, duplicateInList,
   Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus } from '../../components/ui';
 import { moverPorId } from '../../hooks/useReorder';
-import { enviarConfirmacaoReserva, carregarAdmin } from '../../lib/dadosAdmin';
+import { enviarConfirmacaoReserva, encerrarTodasSessoes, carregarAdmin } from '../../lib/dadosAdmin';
 import { migrarDados } from '../../lib/migracoes';
 import { extrasObrigatorios, quantidadeTaxa } from '../../lib/precos';
 import { aplicarEdicaoReserva } from '../../lib/reservas';
@@ -134,7 +134,9 @@ function ResPill({ residencial }) {
 
 export function Reservations({ data, update, openReservationId, onOpenedReservation }) {
   const [view, setView] = useState('calendario');
-  const [start, setStart] = useState(() => { const t = today(); return new Date(t.getFullYear(), t.getMonth(), 1); });
+  // O calendário abre sempre a partir do dia de hoje (não do dia 1 do mês) —
+  // a pedido do Caio (2026-09-26).
+  const [start, setStart] = useState(() => today());
   const [showPrices, setShowPrices] = useState(false);
   const [editing, setEditing] = useState(null);
   const [prefill, setPrefill] = useState(null);
@@ -253,7 +255,22 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     const p = update(prev => {
       const atual = prev.reservas.find(x => x.id === r.id);
       if (!atual) return { ...prev, reservas: [...prev.reservas, r] };
-      return { ...prev, reservas: prev.reservas.map(x => (x.id === r.id ? aplicarEdicaoReserva(x, original, r) : x)) };
+      const atualizada = aplicarEdicaoReserva(atual, original, r);
+      // Reserva conjunta: salvar uma metade \"adota-a\" (tira o prazo de
+      // expiração — ver aplicarEdicaoReserva) para que ela não desapareça
+      // sozinha na arrumação automática. Antes isso só valia para a metade
+      // editada: a outra, nunca tocada, continuava com prazo e podia sumir
+      // sozinha depois, mesmo fazendo parte da MESMA reserva — a pedido do
+      // Caio (2026-09-26), agora as duas são adotadas juntas.
+      const foiAdotada = atual.expiraEm && !atualizada.expiraEm;
+      const reservas = prev.reservas.map(x => {
+        if (x.id === r.id) return atualizada;
+        if (foiAdotada && atualizada.pagamentoRef && x.pagamentoRef === atualizada.pagamentoRef && x.expiraEm) {
+          return { ...x, expiraEm: null };
+        }
+        return x;
+      });
+      return { ...prev, reservas };
     });
     setEditing(null); setPrefill(null);
     if (enviarEmailAoGravar) {
@@ -276,6 +293,22 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
   const [restaurar, setRestaurar] = useState(null); // { obj, nome } — backup JSON à espera de confirmação
   const carimbo = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+
+  // Encerrar todas as sessões do painel (kill switch) — para quando se quer
+  // ter a certeza de que nenhuma aba antiga fica aberta gravando por cima,
+  // ex.: antes de aplicar uma migração de banco. Desconecta TODOS os
+  // administradores agora, inclusive quem aciona.
+  const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState(false);
+  const [encerrandoSessoes, setEncerrandoSessoes] = useState(false);
+  const acionarEncerrarSessoes = async () => {
+    setConfirmEncerrarSessoes(false);
+    setEncerrandoSessoes(true);
+    const r = await encerrarTodasSessoes();
+    setEncerrandoSessoes(false);
+    setImportMsg(r.ok
+      ? { ok: true, text: `Sessões encerradas (${r.contas ?? '?'} conta(s) de administrador). Recarregue a página para entrar de novo.` }
+      : { ok: false, text: `Não foi possível encerrar as sessões (${r.motivo || 'erro'}).` });
+  };
   const exportCSV = () => downloadBlob(buildCSV(data.reservas, data.apartamentos), 'reservas-pinheiramar.csv', 'text/csv;charset=utf-8');
   const exportJSON = () => downloadBlob(JSON.stringify(data, null, 2), `pinheiramar-backup-${carimbo()}.json`, 'application/json');
   const exportXLSX = async () => {
@@ -342,6 +375,8 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     ['Exportar Excel (.xlsx)', () => { exportXLSX(); setDbOpen(false); }, Download],
     ['Exportar CSV', () => { exportCSV(); setDbOpen(false); }, Download],
     ['Backup completo (JSON)', () => { exportJSON(); setDbOpen(false); }, Database],
+    [encerrandoSessoes ? 'Encerrando sessões…' : 'Encerrar todas as sessões do painel',
+      () => { if (encerrandoSessoes) return; setDbOpen(false); setConfirmEncerrarSessoes(true); }, Power],
   ];
 
   const [manualOrder, setManualOrder] = useState(false);
@@ -541,7 +576,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                         })}
                       </div>
                       <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 12, paddingTop: 10, display: 'flex', gap: 6 }}>
-                        <button onClick={() => { const t = today(); setStart(new Date(t.getFullYear(), t.getMonth(), 1)); setMonthPickerOpen(false); }}
+                        <button onClick={() => { setStart(today()); setMonthPickerOpen(false); }}
                           style={{ flex: 1, padding: '8px 0', borderRadius: 9, border: `1px solid ${C.line}`, background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                           Hoje
                         </button>
@@ -571,7 +606,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                 <ChevronLeft size={14} />
               </button>
               {/* hoje */}
-              <button onClick={() => { const t = today(); setStart(new Date(t.getFullYear(), t.getMonth(), 1)); }} title="Ir para o mês atual"
+              <button onClick={() => setStart(today())} title="Ir para o dia atual"
                 style={{ height: 32, padding: '0 12px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                 Hoje
               </button>
@@ -947,6 +982,16 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               .then(() => setImportMsg({ ok: true, text: `Backup restaurado — ${novo.reservas.length} reservas e ${novo.apartamentos.length} apartamentos. A cópia dos dados anteriores foi baixada.` }))
               .catch(e => setImportMsg({ ok: false, text: e?.codigo === 'descartada' ? 'A restauração foi cancelada.' : `Não foi possível restaurar (${e?.codigo || e?.message || 'erro'}). Nada foi alterado.` }));
           }}
+        />
+      )}
+
+      {confirmEncerrarSessoes && (
+        <ConfirmDialog
+          title="Encerrar todas as sessões do painel?"
+          confirmLabel="Encerrar todas as sessões"
+          message={<>Isso vai desconectar <b>todos os administradores</b>, em qualquer dispositivo — <b>inclusive você</b>. Todos precisarão entrar de novo com e-mail e senha.<br /><br />Aviso: uma aba que já esteja aberta continua a funcionar até o acesso dela vencer sozinho (normalmente até 1 hora) — isto impede que alguém entre de novo, mas não fecha instantaneamente uma aba já aberta.</>}
+          onCancel={() => setConfirmEncerrarSessoes(false)}
+          onConfirm={acionarEncerrarSessoes}
         />
       )}
     </div>
