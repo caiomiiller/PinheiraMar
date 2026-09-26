@@ -144,7 +144,7 @@ export function Admin({ data, update, initialResidencialId }) {
               formulário começam de novo com os dados do residencial escolhido
               (antes, "Guardar" em Configurações/Políticas podia gravar os dados
               do residencial anterior por cima do novo). */}
-          {tab === 'painel' && <Dashboard key={residencialId} data={scoped} go={setTab} openReservation={openReservation} />}
+          {tab === 'painel' && <Dashboard key={residencialId} data={scoped} go={setTab} openReservation={openReservation} update={scopedUpdate} />}
           {/* Reservas é partilhado pelos dois residenciais (não usa o "recorte" do
               imóvel seleccionado) — o gestor regista/confirma reservas de qualquer
               imóvel neste mesmo ambiente, com uma etiqueta de cor a identificar a

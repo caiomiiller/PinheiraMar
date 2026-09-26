@@ -4,7 +4,7 @@ import { C, F } from '../../lib/constants';
 import { nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong, holdExpirado, money } from '../../lib/helpers';
 import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge, displayStatus } from '../../components/ui';
 
-export function Dashboard({ data, go, openReservation }) {
+export function Dashboard({ data, go, openReservation, update }) {
   const t = today();
   const hojeY = ymd(t);
   const agoraMs = Date.now();
@@ -138,9 +138,24 @@ export function Dashboard({ data, go, openReservation }) {
           <div style={{ fontWeight: 700, fontSize: 14, color: '#9A6A14', marginBottom: 4 }}>
             {conflitos.length} reserva(s) paga(s) para datas que já estavam ocupadas
           </div>
-          <div style={{ fontSize: 13, color: C.inkSoft }}>
+          <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 10 }}>
             O pagamento foi aprovado depois de o prazo da reserva provisória expirar e outra pessoa ter ficado com as mesmas noites.
-            O hóspede pagou, por isso a reserva foi mantida — {conflitos.map(r => r.codigo).join(', ')} — mas precisa de ser resolvida à mão.
+            O hóspede pagou, por isso a reserva foi mantida, mas precisa de ser resolvida à mão. Depois de tratar, marque como
+            resolvido para a notificação não aparecer mais.
+          </div>
+          <div style={{ display: 'grid', gap: 6 }}>
+            {conflitos.map(r => (
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'rgba(255,255,255,.7)', borderRadius: 8, padding: '8px 10px' }}>
+                <button onClick={() => openReservation?.(r.id)}
+                  style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: C.ink, fontFamily: F.sans, flex: 1, minWidth: 0 }}>
+                  <b>{r.codigo}</b> · {r.hospede || '—'} · {aptName(r.apartamentoId)}
+                </button>
+                <button onClick={() => update?.(prev => ({ ...prev, reservas: prev.reservas.map(x => x.id === r.id ? { ...x, conflitoDatas: false } : x) }))}
+                  style={{ flexShrink: 0, background: '#fff', border: '1px solid #EBD9C0', borderRadius: 999, padding: '6px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: '#9A6A14', fontFamily: F.sans }}>
+                  Marcar como resolvido
+                </button>
+              </div>
+            ))}
           </div>
         </Card>
       )}
