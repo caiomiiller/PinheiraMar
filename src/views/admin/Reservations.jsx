@@ -394,7 +394,15 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   // analisar a partir da coluna que precisar em cada momento. 'checkIn' é o
   // padrão (o antigo comportamento fixo), sempre descendente ao trocar de
   // coluna por padrão, exceto texto (nome/código/etc.), que começa ascendente.
-  const [sortKey, setSortKey] = useState('checkIn');
+  // Ordenação "por data" passou a ser pela data em que a reserva foi feita
+  // (criadoEm), não mais pela data da estadia (checkIn) — a pedido do Caio
+  // (2026-09-27), para acompanhar as reservas mais recentes e monitorizar o
+  // recebimento em conta. Reservas sem um criadoEm limpo (histórico
+  // importado antigo, às vezes sem essa data ou num formato diferente)
+  // ficam por último num "por data" descendente, em vez de aparecer como
+  // "hoje" (ver o comentário de safeYmd, mais abaixo, sobre o mesmo problema).
+  const criadoLimpo = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) ? v.slice(0, 10) : '';
+  const [sortKey, setSortKey] = useState('criadoEm');
   const [sortDir, setSortDir] = useState('desc');
   const SORT_ACCESSORS = {
     codigo: r => r.codigo || '',
@@ -402,6 +410,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     apartamento: r => aptName(r.apartamentoId) || '',
     hospede: r => r.hospede || '',
     checkIn: r => parseYMD(r.checkIn).getTime(),
+    criadoEm: r => criadoLimpo(r.criadoEm),
     origem: r => r.origem || '',
     total: r => Number(r.total) || 0,
     valorPago: r => Number(r.valorPago) || 0,
@@ -411,7 +420,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     setManualOrder(false);
     if (sortKey === key) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); return; }
     setSortKey(key);
-    setSortDir(key === 'total' || key === 'valorPago' || key === 'checkIn' ? 'desc' : 'asc');
+    setSortDir(key === 'total' || key === 'valorPago' || key === 'checkIn' || key === 'criadoEm' ? 'desc' : 'asc');
   };
   // normaliza texto (minúsculas, sem acentos) para a pesquisa funcionar com
   // ou sem acentuação
@@ -864,7 +873,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Ordenação:</span>
-              <button onClick={() => { setManualOrder(false); setSortKey('checkIn'); setSortDir('desc'); }} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
+              <button onClick={() => { setManualOrder(false); setSortKey('criadoEm'); setSortDir('desc'); }} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
               <button onClick={() => setManualOrder(true)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: manualOrder ? C.ocean : C.espuma, color: manualOrder ? '#fff' : C.inkSoft }}>Manual ⠿</button>
             </div>
           </div>
@@ -872,7 +881,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 720 }}>
               <thead><tr style={{ background: C.espuma, textAlign: 'left', color: C.inkSoft }}>
                 <th style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5 }}>{manualOrder ? '⠿' : ''}</th>
-                {[['Código', 'codigo'], ['Residencial', 'residencial'], ['Apartamento', 'apartamento'], ['Hóspede', 'hospede'], ['Estadia', 'checkIn'], ['Origem', 'origem'], ['Total', 'total'], ['Valor pago', 'valorPago'], ['Estado', 'estado']].map(([h, key]) => (
+                {[['Código', 'codigo'], ['Residencial', 'residencial'], ['Apartamento', 'apartamento'], ['Hóspede', 'hospede'], ['Estadia', 'checkIn'], ['Criada em', 'criadoEm'], ['Origem', 'origem'], ['Total', 'total'], ['Valor pago', 'valorPago'], ['Estado', 'estado']].map(([h, key]) => (
                   <th key={key} onClick={() => sortByColumn(key)} title="Ordenar por esta coluna"
                     style={{ padding: '12px 14px', fontWeight: 700, fontSize: 12.5, cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}>
                     {h}{!manualOrder && sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
@@ -902,6 +911,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       )}
                     </td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</td>
+                    <td style={{ padding: '11px 14px', color: C.inkSoft }}>{criadoLimpo(r.criadoEm) ? fmtShort(criadoLimpo(r.criadoEm)) : '—'}</td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{r.origem}</td>
                     <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
                     <td style={{ padding: '11px 14px', color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{r.status === 'bloqueio' ? <span style={{ color: C.inkSoft }}>—</span> : money(r.valorPago || 0)}</td>
@@ -1117,6 +1127,11 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   }, [ci, co, adultos, criancas]);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Apagar um lançamento de pagamento é irreversível e pode remover um
+  // registo criado automaticamente pelo site (Mercado Pago) — por isso pede
+  // confirmação, tal como já acontece para eliminar a reserva inteira (a
+  // pedido do Caio, 2026-09-27).
+  const [confirmRemoverRegistro, setConfirmRemoverRegistro] = useState(null);
 
   const apt = data.apartamentos.find(a => a.id === aptId) || firstApt;
   // este ambiente é partilhado pelos dois residenciais — os horários/sinal
@@ -1548,8 +1563,18 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                         <span style={{ flex: 1, color: '#fff', opacity: reg.legado ? .75 : 1, fontStyle: reg.legado ? 'italic' : 'normal' }}>{reg.descricao}</span>
                         <span style={{ color: 'rgba(255,255,255,.7)' }}>{fmtShort(reg.data)}</span>
                         <span style={{ fontWeight: 700, minWidth: 64, textAlign: 'right' }}>{money(reg.valor)}</span>
-                        {!reg.legado && (
-                          <button type="button" onClick={() => removeRegistro(reg.id)} title="Apagar lançamento"
+                        {/* Lançamentos com mpId vieram confirmados pelo Mercado
+                            Pago (api/mp-webhook.js só grava isto quando o
+                            pagamento está "approved") — não há como existir
+                            esse registo sem o dinheiro ter entrado de facto.
+                            Por isso não oferecemos apagar (a pedido do Caio,
+                            2026-09-27): se o pagamento foi depois estornado,
+                            isso já aparece à parte no aviso do Painel, e o
+                            histórico do que foi recebido deve continuar
+                            existindo. Só lançamentos manuais podem ser
+                            apagados. */}
+                        {!reg.legado && !reg.mpId && (
+                          <button type="button" onClick={() => setConfirmRemoverRegistro(reg)} title="Apagar lançamento"
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.7)', display: 'grid', placeItems: 'center' }}>
                             <Trash2 size={13} />
                           </button>
@@ -1583,6 +1608,13 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
         message={<>Eliminar definitivamente a reserva <b>{i.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
         onConfirm={() => { onRemove(i.id); setConfirmDelete(false); }}
         onCancel={() => setConfirmDelete(false)}
+      />
+    )}
+    {confirmRemoverRegistro && (
+      <ConfirmDialog
+        message={<>Apagar o lançamento <b>{confirmRemoverRegistro.descricao}</b> de <b>{money(confirmRemoverRegistro.valor)}</b> ({fmtShort(confirmRemoverRegistro.data)})? Esta ação não pode ser desfeita.</>}
+        onConfirm={() => { removeRegistro(confirmRemoverRegistro.id); setConfirmRemoverRegistro(null); }}
+        onCancel={() => setConfirmRemoverRegistro(null)}
       />
     )}
     </>

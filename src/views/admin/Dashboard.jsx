@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Users, Wallet, ArrowRight, ChevronLeft, Home, Tag, Building2 } from 'lucide-react';
+import { CalendarDays, Users, Wallet, ArrowRight, ChevronLeft, Home, Tag, Building2, Receipt } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong, holdExpirado, money } from '../../lib/helpers';
 import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge, displayStatus } from '../../components/ui';
@@ -75,6 +75,19 @@ export function Dashboard({ data, go, openReservation, update }) {
   const avisosPagamento = data.reservas.filter(r => r.status !== 'cancelada'
     && ((r.pagamentoDivergente && r.status === 'pendente') || r.pagamentoEstornado));
 
+  // Painel "Últimas reservas realizadas": as 5 reservas mais recentemente
+  // criadas (qualquer estado, exceto bloqueio), para acompanhar a atividade
+  // recente e conferir o que já entrou em pagamento — a pedido do Caio
+  // (2026-09-27). Fica de fora o histórico importado sem um criadoEm limpo
+  // (mesmo problema descrito em Reservations.jsx/safeYmd): sem essa data
+  // real, não há como saber se é "recente", e não queremos mostrar reservas
+  // de anos atrás como se fossem novas.
+  const criadoLimpo = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) ? v.slice(0, 10) : '';
+  const ultimasReservas = data.reservas
+    .filter(r => r.status !== 'bloqueio' && criadoLimpo(r.criadoEm))
+    .sort((a, b) => criadoLimpo(b.criadoEm).localeCompare(criadoLimpo(a.criadoEm)))
+    .slice(0, 5);
+
   const stats = [
     { label: 'Reservas ativas',   value: ativasFuturas.length,   icon: CalendarDays, sub: `${ativasFuturas.filter(r => r.status === 'pendente').length} pendentes · ${ativasFuturas.filter(r => r.status === 'reservado').length} reservadas`, click: () => go('reservas') },
     { label: `Novas reservas (${horizon} dias)`, value: novas.length, icon: Users,  sub: novas.length ? `entraram desde ${fmtShort(desdeY)}` : 'nenhuma no período',                                  click: () => go('reservas') },
@@ -104,6 +117,32 @@ export function Dashboard({ data, go, openReservation, update }) {
             {r.checkoutRealizado && <CheckoutBadge compact />}
           </div>
           <div style={{ fontSize: 12, color: C.inkSoft }}>{aptName(r.apartamentoId)} · {nights(r.checkIn, r.checkOut)} noite(s)</div>
+        </div>
+        <Badge status={displayStatus(r)} />
+      </div>
+    );
+  };
+
+  const LatestReservationRow = ({ r }) => {
+    const d = parseYMD(criadoLimpo(r.criadoEm));
+    return (
+      <div onClick={() => openReservation?.(r.id)} title="Abrir reserva"
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: C.espuma, borderRadius: 10, border: '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
+        onMouseEnter={openReservation ? e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(10,40,46,.10)' : undefined}
+        onMouseLeave={openReservation ? e => e.currentTarget.style.boxShadow = '' : undefined}>
+        <div style={{ textAlign: 'center', minWidth: 40, flexShrink: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: F.disp, lineHeight: 1, color: C.ink }}>{d.getDate()}</div>
+          <div style={{ fontSize: 10, color: C.inkSoft, textTransform: 'uppercase' }}>{d.toLocaleDateString('pt-BR', { month: 'short' })}</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.hospede || '—'}</span>
+          </div>
+          <div style={{ fontSize: 12, color: C.inkSoft }}>{r.codigo} · {aptName(r.apartamentoId)} · {r.origem}</div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{money(r.valorPago || 0)}</div>
+          <div style={{ fontSize: 11, color: C.inkSoft }}>de {money(r.total)}</div>
         </div>
         <Badge status={displayStatus(r)} />
       </div>
@@ -200,6 +239,18 @@ export function Dashboard({ data, go, openReservation, update }) {
             : <div style={{ display: 'grid', gap: 7 }}>{proxCheckouts.map(r => <EventRow key={r.id} r={r} dateField="checkOut" />)}</div>}
         </Card>
       </div>
+
+      <Card style={{ padding: 20, marginBottom: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
+          <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Receipt size={15} color={C.brisa} /> Últimas reservas realizadas
+          </h3>
+          <Btn size="sm" variant="ghost" onClick={() => go('reservas')}>Ver todas</Btn>
+        </div>
+        {ultimasReservas.length === 0
+          ? <p style={{ color: C.inkSoft, fontSize: 14, margin: 0 }}>Ainda sem reservas registadas.</p>
+          : <div style={{ display: 'grid', gap: 7 }}>{ultimasReservas.map(r => <LatestReservationRow key={r.id} r={r} />)}</div>}
+      </Card>
 
       <Card style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
