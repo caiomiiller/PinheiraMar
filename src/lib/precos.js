@@ -52,8 +52,8 @@ export function agruparNoites(perNight = []) {
   const grupos = [];
   for (const n of perNight || []) {
     const g = grupos.find(x => x.rate === n.rate);
-    if (g) { g.n += 1; g.fimSemana = g.fimSemana || !!n.weekend; }
-    else grupos.push({ rate: n.rate, n: 1, fimSemana: !!n.weekend });
+    if (g) g.n += 1;
+    else grupos.push({ rate: n.rate, n: 1 });
   }
   return grupos.map(g => ({ ...g, subtotal: arred(g.rate * g.n) }));
 }

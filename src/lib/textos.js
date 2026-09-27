@@ -10,7 +10,6 @@ const dataEm = (locale) => (d) => (d ? parseYMD(d).toLocaleDateString(locale, { 
 const pt = {
   noites: (n) => `${n} ${s(n, 'noite', 'noites')}`,
   pessoas: (n) => `${n} ${s(n, 'pessoa', 'pessoas')}`,
-  fim_de_semana: 'fim de semana',
   taxa_obrigatoria: 'Obrigatória', taxa_opcional: 'Opcional',
   m_menos_pessoa: 'Menos uma pessoa', m_mais_pessoa: 'Mais uma pessoa',
 
@@ -199,7 +198,6 @@ const pt = {
 const es = {
   noites: (n) => `${n} ${s(n, 'noche', 'noches')}`,
   pessoas: (n) => `${n} ${s(n, 'persona', 'personas')}`,
-  fim_de_semana: 'fin de semana',
   taxa_obrigatoria: 'Obligatoria', taxa_opcional: 'Opcional',
   m_menos_pessoa: 'Una persona menos', m_mais_pessoa: 'Una persona más',
 
@@ -389,7 +387,6 @@ const es = {
 const en = {
   noites: (n) => `${n} ${s(n, 'night', 'nights')}`,
   pessoas: (n) => `${n} ${s(n, 'guest', 'guests')}`,
-  fim_de_semana: 'weekend',
   taxa_obrigatoria: 'Required', taxa_opcional: 'Optional',
   m_menos_pessoa: 'One guest fewer', m_mais_pessoa: 'One more guest',
 

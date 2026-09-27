@@ -16,7 +16,7 @@ export function LinhasOrcamento({ o, titulo }) {
       {titulo && <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: '#555', marginTop: 4 }}>{titulo}</div>}
       {o.grupos.map((g, i) => (
         <div key={'g' + i} style={linha}>
-          <span>{money(g.rate)} × {tr('noites', g.n)}{o.grupos.length > 1 && g.fimSemana ? ` (${tr('fim_de_semana')})` : ''}</span>
+          <span>{money(g.rate)} × {tr('noites', g.n)}</span>
           <span>{money(g.subtotal)}</span>
         </div>
       ))}
