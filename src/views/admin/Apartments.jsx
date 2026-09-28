@@ -66,6 +66,17 @@ export const AMENIDADES_LIST = [
   'Varanda', 'Vista para o Mar', 'Acessível', 'Berço disponível', 'Animais permitidos',
 ];
 export const CAMA_TIPOS = ['Casal', 'Solteiro', 'Queen', 'King', 'Beliche', 'Sofá Cama', 'Colchão Extra'];
+// Apartamentos antigos podem ter Piso/Vista em texto livre, de antes destes
+// campos virarem uma lista fixa (ex.: "Cobertura", "A 50m da praia") — o
+// <select> nativo, ao não achar a opção correspondente, cai numa das opções
+// fixas SÓ na tela, mas guarda o valor antigo por baixo. Resultado: parece que
+// a edição "não pegou", porque o Salvar grava de novo o valor antigo, sem o
+// utilizador perceber que ele nunca tinha mudado. `comOpcaoAtual` mantém o
+// valor guardado como uma opção visível (mesmo fora da lista fixa) para que a
+// tela sempre mostre o que está realmente gravado.
+export const PISO_OPCOES = ['Térreo', '1º Piso', '2º Piso', '3º Piso'];
+export const VISTA_OPCOES = ['Frente Mar', 'Beira-mar', 'Lateral', 'Interior'];
+const comOpcaoAtual = (lista, valor) => (valor && !lista.includes(valor)) ? [valor, ...lista] : lista;
 
 export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) {
   const i = initial || {};
@@ -119,6 +130,8 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
 
   const nome = titulo.trim().split(' ').slice(0, 2).join(' ') || 'Apto';
   const ok = titulo.trim();
+  const pisoOpcoes = comOpcaoAtual(PISO_OPCOES, piso);
+  const vistaOpcoes = comOpcaoAtual(VISTA_OPCOES, vista);
 
 
   const SpinField = ({ label, value, onChange, min = 0, hint }) => (
@@ -206,12 +219,12 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
             <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Piso">
                 <Select value={piso} onChange={e => setPiso(e.target.value)}>
-                  {['Térreo', '1º Piso', '2º Piso', '3º Piso'].map(o => <option key={o}>{o}</option>)}
+                  {pisoOpcoes.map(o => <option key={o}>{o}</option>)}
                 </Select>
               </Field>
               <Field label="Vista">
                 <Select value={vista} onChange={e => setVista(e.target.value)}>
-                  {['Frente Mar', 'Beira-mar', 'Lateral', 'Interior'].map(o => <option key={o}>{o}</option>)}
+                  {vistaOpcoes.map(o => <option key={o}>{o}</option>)}
                 </Select>
               </Field>
             </div>
