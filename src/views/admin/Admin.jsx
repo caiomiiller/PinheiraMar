@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
 import { C, F, applyTheme } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 
@@ -7,6 +7,7 @@ import { Dashboard } from './Dashboard';
 import { Financeiro } from './Financeiro';
 import { Reservations } from './Reservations';
 import { Apartments } from './Apartments';
+import { CreditosView } from './Creditos';
 import { Seasons } from './Seasons';
 import { TaxasView } from './Taxas';
 import { IdiomasView } from './Idiomas';
@@ -21,6 +22,7 @@ export const TABS = [
   { id: 'apartamentos', label: 'Apartamentos', icon: Home },
   { id: 'temporadas', label: 'Opções de preços', icon: Tag },
   { id: 'taxas', label: 'Taxas Adicionais', icon: Plus },
+  { id: 'creditos', label: 'Créditos de Hóspedes', icon: Gift },
   { id: 'politicas', label: 'Políticas', icon: AlertCircle },
   { id: 'idiomas', label: 'Idiomas', icon: Sun },
   { id: 'configuracoes', label: 'Configurações', icon: Settings },
@@ -154,6 +156,7 @@ export function Admin({ data, update, initialResidencialId }) {
           {tab === 'apartamentos' && <Apartments key={residencialId} data={scoped} update={scopedUpdate} />}
           {tab === 'temporadas' && <Seasons key={residencialId} data={scoped} update={scopedUpdate} />}
           {tab === 'taxas' && <TaxasView key={residencialId} data={scoped} update={scopedUpdate} />}
+          {tab === 'creditos' && <CreditosView key={residencialId} data={scoped} update={scopedUpdate} />}
           {tab === 'politicas' && <PoliticasView key={residencialId} data={scoped} update={scopedUpdate} />}
           {tab === 'idiomas' && <IdiomasView key={residencialId} data={scoped} update={scopedUpdate} />}
           {tab === 'configuracoes' && <SettingsView key={residencialId} data={scoped} update={scopedUpdate} />}

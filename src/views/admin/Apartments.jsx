@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Copy, Star, GripVertical } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Plus, Pencil, Trash2, Copy, Star, GripVertical, UploadCloud, AlertCircle } from 'lucide-react';
 import { C, F } from '../../lib/constants';
 import { uid, money } from '../../lib/helpers';
+import { enviarFotosApartamento } from '../../lib/storage';
 import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, Textarea,
   PhotoTile, DragGrip, MoneyInput, duplicateInList, ConfirmDialog } from '../../components/ui';
 import { useReorder, reordenarPorIds } from '../../hooks/useReorder';
@@ -111,6 +112,35 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
   const delFoto = (idx) => setFotos(f => f.filter((_, j) => j !== idx));
   const setCapa = (idx) => setFotos(f => { if (idx === 0) return f; const a = [...f]; const [m] = a.splice(idx, 1); a.unshift(m); return a; });
   const dndFotos = useReorder(fotos, setFotos);
+  // Envio direto do dispositivo (telemóvel/computador) — ver src/lib/storage.js.
+  const fileInputRef = useRef(null);
+  const [enviando, setEnviando] = useState(false);
+  const [progressoEnvio, setProgressoEnvio] = useState(null); // { atual, total }
+  const [erroEnvio, setErroEnvio] = useState('');
+  const onFilesSelected = async (e) => {
+    const arquivos = Array.from(e.target.files || []);
+    e.target.value = ''; // permite selecionar o mesmo ficheiro de novo depois
+    if (!arquivos.length) return;
+    if (fotos.length + arquivos.length > 10) {
+      setErroEnvio('Máximo de 10 fotos por apartamento — remova alguma antes de enviar mais.');
+      return;
+    }
+    setErroEnvio('');
+    setEnviando(true);
+    setProgressoEnvio({ atual: 0, total: arquivos.length });
+    try {
+      const { urls, erros } = await enviarFotosApartamento(
+        arquivos,
+        { residencialId: i.residencialId || residencial?.id, apartamentoId: i.id },
+        (atual, total) => setProgressoEnvio({ atual: atual + 1, total })
+      );
+      if (urls.length) setFotos(f => [...f, ...urls]);
+      if (erros.length) setErroEnvio(erros.join(' '));
+    } finally {
+      setEnviando(false);
+      setProgressoEnvio(null);
+    }
+  };
 
   /* ── Descrição ── */
   const [descricao, setDescricao] = useState(i.descricao || '');
@@ -323,12 +353,29 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
                 })}
               </div>
             )}
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <input ref={fileInputRef} type="file" accept="image/*" multiple
+                onChange={onFilesSelected} style={{ display: 'none' }} />
+              <Btn type="button" variant="soft" icon={UploadCloud} disabled={enviando}
+                style={{ opacity: enviando ? .6 : 1 }}
+                onClick={() => fileInputRef.current?.click()}>
+                {enviando
+                  ? `Enviando ${progressoEnvio ? `${progressoEnvio.atual}/${progressoEnvio.total}` : '...'}`
+                  : 'Enviar do dispositivo'}
+              </Btn>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <TextInput value={fotoInput} onChange={e => setFotoInput(e.target.value)}
-                placeholder="Cole o URL de uma foto (https://...)" style={{ flex: 1 }}
+                placeholder="...ou cole o URL de uma foto (https://...)" style={{ flex: 1 }}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFoto())} />
               <Btn variant="soft" onClick={addFoto} icon={Plus}>Adicionar</Btn>
             </div>
+            {erroEnvio && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 8, padding: '8px 10px', background: '#FDEEEE', border: '1px solid #F0C6C6', borderRadius: 8, fontSize: 12.5, color: '#B23B3B' }}>
+                <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>{erroEnvio}</span>
+              </div>
+            )}
             <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 6 }}>
               {fotos.length}/10 fotos · arraste para reordenar · clique na estrela para definir a foto de capa.
             </div>

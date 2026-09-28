@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Waves, RefreshCw, FlaskConical } from 'lucide-react';
 import { C, F, applyTheme, TELEFONE_CONTATO } from './lib/constants';
 import { PublicSite } from './views/public/PublicSite';
+import { PoliticasPublicas } from './views/public/PoliticasPublicas';
 import { carregarPublico, reservar, limparCopiasAntigas } from './lib/dadosPublico';
 import { SEM_CONFIG, AMBIENTE_TESTE, MODO_DEMO } from './lib/config';
 
@@ -12,8 +13,14 @@ const PainelGestao = lazy(() => import('./views/admin/PainelGestao'));
 // Não há botão visível para o painel no site público — o acesso é por um
 // link direto (ex.: pinheiramar.com.br/?gestao), protegido por login.
 function modoFromURL() {
-  try { return new URLSearchParams(window.location.search).has('gestao') ? 'admin' : 'site'; }
-  catch { return 'site'; }
+  try {
+    const p = new URLSearchParams(window.location.search);
+    if (p.has('gestao')) return 'admin';
+    // ?politicas — link público (sem login) com as políticas de hospedagem e
+    // cancelamento, para o Caio partilhar direto com um cliente.
+    if (p.has('politicas')) return 'politicas';
+    return 'site';
+  } catch { return 'site'; }
 }
 
 // Tira o "?gestao" da barra de endereço sem recarregar a página.
@@ -244,13 +251,13 @@ export default function App() {
     <div style={{ fontFamily: F.sans }}>
       <style>{css}</style>
       {(AMBIENTE_TESTE || MODO_DEMO) && <FaixaTeste />}
-      {mode === 'site'
-        ? <SitePublico />
-        : (
-          <Suspense fallback={<Carregando />}>
-            <PainelGestao onVerSite={() => { limparURLGestao(); setMode('site'); }} />
-          </Suspense>
-        )}
+      {mode === 'site' && <SitePublico />}
+      {mode === 'politicas' && <PoliticasPublicas filtro={(() => { try { return new URLSearchParams(window.location.search).get('politicas') || ''; } catch { return ''; } })()} />}
+      {mode === 'admin' && (
+        <Suspense fallback={<Carregando />}>
+          <PainelGestao onVerSite={() => { limparURLGestao(); setMode('site'); }} />
+        </Suspense>
+      )}
     </div>
   );
 }
