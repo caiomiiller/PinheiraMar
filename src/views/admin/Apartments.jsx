@@ -74,7 +74,7 @@ export const CAMA_TIPOS = ['Casal', 'Solteiro', 'Queen', 'King', 'Beliche', 'Sof
 // utilizador perceber que ele nunca tinha mudado. `comOpcaoAtual` mantém o
 // valor guardado como uma opção visível (mesmo fora da lista fixa) para que a
 // tela sempre mostre o que está realmente gravado.
-export const PISO_OPCOES = ['Térreo', '1º Piso', '2º Piso', '3º Piso'];
+export const PISO_OPCOES = ['Térreo', '1º Piso', '2º Piso', '3º Piso', 'Cobertura'];
 export const VISTA_OPCOES = ['Frente Mar', 'Beira-mar', 'Lateral', 'Interior'];
 const comOpcaoAtual = (lista, valor) => (valor && !lista.includes(valor)) ? [valor, ...lista] : lista;
 
