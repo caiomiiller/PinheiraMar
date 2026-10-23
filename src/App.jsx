@@ -150,7 +150,21 @@ export default function App() {
       .pm-pay-actions{flex-basis:100%!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;margin-top:8px!important;}
       .pm-search-grid{grid-template-columns:1fr 1fr!important;}
       .pm-book-grid{grid-template-columns:1fr!important;}
-      .pm-dash-grid{grid-template-columns:1fr!important;}
+      .pm-dash-grid{grid-template-columns:minmax(0,1fr)!important;}
+      /* pilhas em grelha sem colunas definidas (display:grid + gap) têm uma
+         coluna "auto" que cresce até ao conteúdo mais largo e empurra os
+         cartões para fora do ecrã (ex.: Taxas Adicionais). No telemóvel a
+         coluna passa a ser limitada à largura do contentor. */
+      [style*="display: grid"]:not([style*="grid-template-columns"]):not([style*="place-items"]){grid-template-columns:minmax(0,1fr);}
+      /* painel: as linhas (data · nome · valor · estado) nunca podem alargar o
+         cartão além do ecrã — o nome corta com "…" e o valor/estado empilham
+         à direita em vez de ficarem cortados fora do cartão */
+      .pm-dash-list{grid-template-columns:minmax(0,1fr)!important;}
+      .pm-dash-row-end{display:flex!important;flex-direction:column!important;align-items:flex-end!important;gap:5px!important;flex-shrink:0!important;}
+      .pm-dash-head{flex-wrap:wrap!important;gap:8px!important;}
+      /* calendário que abre por baixo dos campos de datas: ocupa a largura do
+         seu contentor em vez de sair pela esquerda do ecrã */
+      .pm-cal-pop{left:0!important;right:0!important;width:auto!important;max-width:none!important;}
       .pm-searchbar{flex-direction:column!important;border-radius:18px!important;}
       .pm-seg{border-right:none!important;border-bottom:1px solid #ddd!important;}
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}

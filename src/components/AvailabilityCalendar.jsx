@@ -98,10 +98,10 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
         {monthsToShow.map(({ y, m }) => (
           <div key={`${y}-${m}`} style={{ flex: '1 1 230px', minWidth: 230 }}>
             <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, textTransform: 'capitalize' }}>{nomeMes(y, m)}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 2, marginBottom: 2 }}>
               {semana.map((w, i) => <div key={i} style={{ textAlign: 'center', fontSize: 12.5, color: C.inkSoft, fontWeight: 700, textTransform: 'capitalize' }}>{w}</div>)}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 2 }}>
               {buildMonthCells(y, m).map((d, i) => {
                 if (!d) return <div key={i} />;
                 const past = isPast(d);
@@ -128,7 +128,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
                     aria-label={rotulo} aria-pressed={!!(isStart || isEnd)}
                     title={blocked ? tr('cal_ocupado') : fechado ? tr('cal_fechado') : soSaidaVisivel ? tr('cal_so_saida') : undefined}
                     style={{
-                      aspectRatio: '1', minHeight: 44, border: 'none', borderRadius: '50%', padding: 0,
+                      aspectRatio: '1', minHeight: 40, border: 'none', borderRadius: '50%', padding: 0,
                       fontSize: 14, cursor: (disabled || soSaidaVisivel) ? 'default' : 'pointer', fontFamily: F.sans,
                       background: (isStart || isEnd) ? C.ocean : (within ? C.espuma : baseBg),
                       color: (isStart || isEnd) ? '#fff' : (disabled ? '#8E9895' : C.ink),

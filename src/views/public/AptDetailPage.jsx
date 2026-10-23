@@ -473,7 +473,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                 {calOpen && (
                   <>
                     <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
-                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '92vw' }} onClick={e => e.stopPropagation()}>
+                    <div className="pm-cal-pop" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '92vw' }} onClick={e => e.stopPropagation()}>
                       <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo} ate={ultimaNoite}
                         onChange={(newCi, newCo) => {
                           setLocalCi(newCi); setLocalCo(newCo);

@@ -140,11 +140,15 @@ export function Dashboard({ data, go, openReservation, update }) {
           </div>
           <div style={{ fontSize: 12, color: C.inkSoft }}>{r.codigo} · {aptName(r.apartamentoId)} · {r.origem}</div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{money(r.valorPago || 0)}</div>
-          <div style={{ fontSize: 11, color: C.inkSoft }}>de {money(r.total)}</div>
+        {/* no desktop os dois ficam lado a lado (display: contents); no
+            telemóvel empilham numa coluna à direita (.pm-dash-row-end) */}
+        <div className="pm-dash-row-end" style={{ display: 'contents' }}>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{money(r.valorPago || 0)}</div>
+            <div style={{ fontSize: 11, color: C.inkSoft }}>de {money(r.total)}</div>
+          </div>
+          <Badge status={displayStatus(r)} />
         </div>
-        <Badge status={displayStatus(r)} />
       </div>
     );
   };
@@ -216,7 +220,7 @@ export function Dashboard({ data, go, openReservation, update }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 18 }} className="pm-dash-grid">
         <Card style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 13 }}>
             <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
               <ArrowRight size={15} color={C.brisa} /> Próximos check-ins
             </h3>
@@ -224,11 +228,11 @@ export function Dashboard({ data, go, openReservation, update }) {
           </div>
           {proxCheckins.length === 0
             ? <p style={{ color: C.inkSoft, fontSize: 14, margin: 0 }}>Sem chegadas agendadas.</p>
-            : <div style={{ display: 'grid', gap: 7 }}>{proxCheckins.map(r => <EventRow key={r.id} r={r} dateField="checkIn" />)}</div>}
+            : <div className="pm-dash-list" style={{ display: 'grid', gap: 7 }}>{proxCheckins.map(r => <EventRow key={r.id} r={r} dateField="checkIn" />)}</div>}
         </Card>
 
         <Card style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 13 }}>
             <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
               <ChevronLeft size={15} color={C.coral} /> Próximos check-outs
             </h3>
@@ -236,12 +240,12 @@ export function Dashboard({ data, go, openReservation, update }) {
           </div>
           {proxCheckouts.length === 0
             ? <p style={{ color: C.inkSoft, fontSize: 14, margin: 0 }}>Sem saídas agendadas.</p>
-            : <div style={{ display: 'grid', gap: 7 }}>{proxCheckouts.map(r => <EventRow key={r.id} r={r} dateField="checkOut" />)}</div>}
+            : <div className="pm-dash-list" style={{ display: 'grid', gap: 7 }}>{proxCheckouts.map(r => <EventRow key={r.id} r={r} dateField="checkOut" />)}</div>}
         </Card>
       </div>
 
       <Card style={{ padding: 20, marginBottom: 18 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 13 }}>
           <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Receipt size={15} color={C.brisa} /> Últimas reservas realizadas
           </h3>
@@ -249,11 +253,11 @@ export function Dashboard({ data, go, openReservation, update }) {
         </div>
         {ultimasReservas.length === 0
           ? <p style={{ color: C.inkSoft, fontSize: 14, margin: 0 }}>Ainda sem reservas registadas.</p>
-          : <div style={{ display: 'grid', gap: 7 }}>{ultimasReservas.map(r => <LatestReservationRow key={r.id} r={r} />)}</div>}
+          : <div className="pm-dash-list" style={{ display: 'grid', gap: 7 }}>{ultimasReservas.map(r => <LatestReservationRow key={r.id} r={r} />)}</div>}
       </Card>
 
       <Card style={{ padding: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div className="pm-dash-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0 }}>
             Ocupação por apartamento <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· próx. {horizon} dias · por lotação</span>
           </h3>

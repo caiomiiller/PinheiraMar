@@ -583,7 +583,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               {calOpen && (
                 <>
                   <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
-                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+                  <div className="pm-cal-pop" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
                     <AvailabilityCalendar ci={ci} co={co} ate={ultimaNoite}
                       onChange={(newCi, newCo) => {
                         setCi(newCi);
