@@ -108,22 +108,28 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
                 const fechado = !past && foraDoLimite(d);
                 const isStart = selCi && ymd(d) === ymd(selCi);
                 const isEnd = rangeEnd && ymd(d) === ymd(rangeEnd);
+                // Dia "só de saída": a noite dele está ocupada (outra reserva entra às
+                // 13h), mas a noite anterior está livre — dá para sair nele às 10h.
+                // Antes de escolher a entrada aparece verde, para não confundir.
+                const ontem = addDays(d, -1);
+                const soSaida = !past && !fechado && isBlockedNight(d) && ymd(ontem) >= hoje && !isBlockedNight(ontem);
                 // noite ocupada, exceto se o dia serve de saída da estadia em curso
-                const blocked = !past && !fechado && isBlockedNight(d) && !saidaValida(d) && !isEnd;
+                const blocked = !past && !fechado && isBlockedNight(d) && !saidaValida(d) && !isEnd && !(soSaida && !escolhendoSaida);
+                const soSaidaVisivel = soSaida && !blocked && !isStart && !isEnd && !escolhendoSaida;
                 const disabled = past || blocked || fechado;
                 const within = inRange(d);
                 const baseBg = (past || fechado) ? 'transparent' : (blocked ? DIA_INDISPONIVEL : DIA_DISPONIVEL);
-                const rotulo = `${fmtCurta(ymd(d))}${blocked ? ` — ${tr('cal_ocupado')}` : fechado ? ` — ${tr('cal_fechado')}` : ''}`;
+                const rotulo = `${fmtCurta(ymd(d))}${blocked ? ` — ${tr('cal_ocupado')}` : fechado ? ` — ${tr('cal_fechado')}` : soSaidaVisivel ? ` — ${tr('cal_so_saida')}` : ''}`;
                 return (
                   <button type="button" key={i}
                     disabled={disabled && !isStart && !isEnd}
                     onMouseEnter={() => setHoverDay(d)}
                     onClick={() => handleClick(d)}
                     aria-label={rotulo} aria-pressed={!!(isStart || isEnd)}
-                    title={blocked ? tr('cal_ocupado') : fechado ? tr('cal_fechado') : undefined}
+                    title={blocked ? tr('cal_ocupado') : fechado ? tr('cal_fechado') : soSaidaVisivel ? tr('cal_so_saida') : undefined}
                     style={{
                       aspectRatio: '1', minHeight: 44, border: 'none', borderRadius: '50%', padding: 0,
-                      fontSize: 14, cursor: disabled ? 'default' : 'pointer', fontFamily: F.sans,
+                      fontSize: 14, cursor: (disabled || soSaidaVisivel) ? 'default' : 'pointer', fontFamily: F.sans,
                       background: (isStart || isEnd) ? C.ocean : (within ? C.espuma : baseBg),
                       color: (isStart || isEnd) ? '#fff' : (disabled ? '#8E9895' : C.ink),
                       textDecoration: blocked ? 'line-through' : 'none',

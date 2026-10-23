@@ -148,7 +148,7 @@ const pt = {
   /* calendário */
   cal_mes_anterior: 'Mês anterior', cal_proximo_mes: 'Próximo mês',
   cal_escolha_saida: 'Escolha a data de saída', cal_escolha_entrada: 'Escolha a data de entrada',
-  cal_ocupado: 'ocupado', cal_fechado: 'reservas ainda não abertas', cal_abertas_ate: (d) => `Reservas abertas até ${d}.`,
+  cal_ocupado: 'ocupado', cal_so_saida: 'disponível para saída (check-out)', cal_fechado: 'reservas ainda não abertas', cal_abertas_ate: (d) => `Reservas abertas até ${d}.`,
   cal_desmarcar: 'Desmarcar datas', cal_legenda_livre: 'livre', cal_legenda_ocupado: 'ocupado',
 
   /* Conheça a Pinheira */
@@ -330,7 +330,7 @@ const es = {
 
   cal_mes_anterior: 'Mes anterior', cal_proximo_mes: 'Mes siguiente',
   cal_escolha_saida: 'Elija la fecha de salida', cal_escolha_entrada: 'Elija la fecha de entrada',
-  cal_ocupado: 'ocupado', cal_fechado: 'reservas aún no abiertas', cal_abertas_ate: (d) => `Reservas abiertas hasta el ${d}.`,
+  cal_ocupado: 'ocupado', cal_so_saida: 'disponible para salida (check-out)', cal_fechado: 'reservas aún no abiertas', cal_abertas_ate: (d) => `Reservas abiertas hasta el ${d}.`,
   cal_desmarcar: 'Borrar fechas', cal_legenda_livre: 'libre', cal_legenda_ocupado: 'ocupado',
 
   ds_tab_pinheira: 'La Pinheira', ds_tab_atrativos: 'Atractivos', ds_tab_chegar: 'Cómo llegar',
@@ -519,7 +519,7 @@ const en = {
 
   cal_mes_anterior: 'Previous month', cal_proximo_mes: 'Next month',
   cal_escolha_saida: 'Choose check-out date', cal_escolha_entrada: 'Choose check-in date',
-  cal_ocupado: 'booked', cal_fechado: 'not open for booking yet', cal_abertas_ate: (d) => `Bookings open until ${d}.`,
+  cal_ocupado: 'booked', cal_so_saida: 'available for check-out', cal_fechado: 'not open for booking yet', cal_abertas_ate: (d) => `Bookings open until ${d}.`,
   cal_desmarcar: 'Clear dates', cal_legenda_livre: 'free', cal_legenda_ocupado: 'booked',
 
   ds_tab_pinheira: 'Pinheira', ds_tab_atrativos: 'Things to do', ds_tab_chegar: 'Getting here',
