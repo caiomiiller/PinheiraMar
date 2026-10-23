@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { C, F } from '../lib/constants';
-import { ymd, parseYMD, addDays, isAvailable } from '../lib/helpers';
+import { ymd, parseYMD, addDays, isAvailable, ultimaSaidaPossivel } from '../lib/helpers';
 import { hojeISO } from '../lib/reservas';
 import { useIdioma } from '../lib/i18n';
 
@@ -50,7 +50,12 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
   // saída, basta a noite anterior estar
   const foraDoLimite = (d) => !!ate && (escolhendoSaida ? ymd(addDays(d, -1)) > ate : ymd(d) > ate);
 
-  const pendingEnd = (escolhendoSaida && hoverDay && hoverDay > selCi) ? hoverDay : null;
+  // Ao escolher a saída, o dia em que começa a próxima reserva também serve
+  // (sai às 10h, a outra entra às 13h) — só não dá para passar por cima dela.
+  const limiteSaida = (apt && escolhendoSaida) ? ultimaSaidaPossivel(reservas || [], apt.id, ymd(selCi)) : null;
+  const saidaValida = (d) => escolhendoSaida && ymd(d) > ymd(selCi) && (!limiteSaida || ymd(d) <= limiteSaida);
+
+  const pendingEnd = (escolhendoSaida && hoverDay && saidaValida(hoverDay)) ? hoverDay : null;
   const rangeEnd = selCo || pendingEnd;
   const inRange = (d) => selCi && rangeEnd && d > selCi && d < rangeEnd;
 
@@ -61,9 +66,9 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
 
   const handleClick = (d) => {
     if (isPast(d) || foraDoLimite(d)) return;
-    if (!selCi || selCo) { onChange(ymd(d), ''); return; }
-    if (ymd(d) <= ymd(selCi)) { onChange(ymd(d), ''); return; }
-    if (hasBlockedBetween(selCi, d)) { onChange(ymd(d), ''); return; }
+    if (!selCi || selCo) { if (!isBlockedNight(d)) onChange(ymd(d), ''); return; }
+    if (ymd(d) <= ymd(selCi)) { if (!isBlockedNight(d)) onChange(ymd(d), ''); return; }
+    if (hasBlockedBetween(selCi, d)) { if (!isBlockedNight(d)) onChange(ymd(d), ''); return; }
     onChange(ymd(selCi), ymd(d));
   };
 
@@ -101,10 +106,11 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
                 if (!d) return <div key={i} />;
                 const past = isPast(d);
                 const fechado = !past && foraDoLimite(d);
-                const blocked = !past && !fechado && isBlockedNight(d);
-                const disabled = past || blocked || fechado;
                 const isStart = selCi && ymd(d) === ymd(selCi);
                 const isEnd = rangeEnd && ymd(d) === ymd(rangeEnd);
+                // noite ocupada, exceto se o dia serve de saída da estadia em curso
+                const blocked = !past && !fechado && isBlockedNight(d) && !saidaValida(d) && !isEnd;
+                const disabled = past || blocked || fechado;
                 const within = inRange(d);
                 const baseBg = (past || fechado) ? 'transparent' : (blocked ? DIA_INDISPONIVEL : DIA_DISPONIVEL);
                 const rotulo = `${fmtCurta(ymd(d))}${blocked ? ` — ${tr('cal_ocupado')}` : fechado ? ` — ${tr('cal_fechado')}` : ''}`;

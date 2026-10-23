@@ -145,6 +145,20 @@ export function isAvailable(reservations, aptId, ci, co, ignoreId) {
     && (ignoreId == null || r.id !== ignoreId) && overlaps(ci, co, r.checkIn, r.checkOut));
 }
 
+// Dado um check-in, devolve a ÚLTIMA data que ainda serve de check-out para
+// este apartamento: o dia em que começa a primeira noite já ocupada. Esse dia
+// é uma saída válida (sai às 10h, a próxima reserva entra às 13h); as datas
+// depois dele não, porque atravessam uma noite ocupada. `null` = sem
+// reserva à frente dentro de `maxNoites` noites.
+export function ultimaSaidaPossivel(reservations, aptId, checkIn, maxNoites = 400) {
+  let d = parseYMD(checkIn);
+  for (let i = 0; i < maxNoites; i++) {
+    if (!isAvailable(reservations, aptId, ymd(d), ymd(addDays(d, 1)))) return ymd(d);
+    d = addDays(d, 1);
+  }
+  return null;
+}
+
 /* ───────────────────────── Feriados (nacionais + SC + RS) ───────────────────────── */
 // Páscoa pelo algoritmo de Computus (Meeus/Jones/Butcher) — base dos feriados móveis.
 export function easterSunday(year) {
