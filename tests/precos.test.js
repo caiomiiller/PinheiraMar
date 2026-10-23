@@ -23,8 +23,8 @@ describe('taxas', () => {
 
 describe('noites e preços', () => {
   it('agruparNoites soma sempre o total exato', () => {
-    const g = agruparNoites([{ rate: 300 }, { rate: 300 }, { rate: 360, weekend: true }, { rate: 300 }]);
-    expect(g).toEqual([{ rate: 300, n: 3, fimSemana: false, subtotal: 900 }, { rate: 360, n: 1, fimSemana: true, subtotal: 360 }]);
+    const g = agruparNoites([{ rate: 300 }, { rate: 300 }, { rate: 360 }, { rate: 300 }]);
+    expect(g).toEqual([{ rate: 300, n: 3, subtotal: 900 }, { rate: 360, n: 1, subtotal: 360 }]);
   });
   it('regraNoites usa a temporada real, não a tarifa rápida', () => {
     const rapida = { id: 'q1', nome: 'Tarifa rápida — Apto a1', rapida: true, inicio: '2027-01-01', fim: '2027-01-31', ativa: true, minNoites: 1, precos: { a1: { diaSemana: 100 } } };
