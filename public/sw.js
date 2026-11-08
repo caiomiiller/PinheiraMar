@@ -3,7 +3,7 @@
 // mostra uma versão antiga da página) — só cacheia os ficheiros de
 // build em /assets/, cujo nome muda a cada deploy (hash do Vite), por
 // isso é sempre seguro.
-const CACHE_VERSION = 'pinheira-v1';
+const CACHE_VERSION = 'pinheira-v2';
 const ASSET_CACHE = `${CACHE_VERSION}-assets`;
 
 self.addEventListener('install', () => {
