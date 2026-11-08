@@ -70,8 +70,30 @@ export { HORAS_ATE_LIMPAR_PROVISORIA };
    pelo prefixo `mig4-` no id, que só ela usa — e tira o mesmo valor do
    total; não mexe em mais nada (nem nas 5 reservas que já tinham a taxa
    lançada de outra forma, nem em qualquer extra lançado à mão desde então,
-   porque nenhum desses tem esse prefixo). */
-export const DATA_VERSION = 6;
+   porque nenhum desses tem esse prefixo).
+
+   v7 — fotos novas do Residencial Caminho do Mar (a pedido do Caio,
+   2026-11-08). As antigas tinham 330×219 px e ficavam borradas; entram as
+   10 melhores de cada apartamento, em /fotos/cdm01 … /fotos/cdm06. Só troca
+   a lista de um apartamento do Caminho do Mar se ela ainda for a antiga
+   (todas as fotos em /fotos/n0…) ou estiver vazia — se alguém já tiver
+   mudado as fotos à mão no painel, fica como está. Não mexe em mais nada. */
+export const DATA_VERSION = 7;
+
+const fotosCdm = (n) => Array.from({ length: 10 }, (_, i) => `/fotos/cdm0${n}/${i + 1}.jpg`);
+// apartamento do Caminho do Mar → número da pasta. O Apto 06 foi criado no
+// painel com outro id, por isso também é reconhecido pelo nome.
+function numeroCdm(a) {
+  if (!a || a.residencialId !== 'novoimovel') return null;
+  const porId = { n01: 1, n02: 2, n03: 3, n04: 4, n05: 5, n06: 6 }[a.id];
+  if (porId) return porId;
+  const m = /^Apto\s*0?([1-6])$/i.exec(String(a.nome || '').trim());
+  return m ? Number(m[1]) : null;
+}
+const fotosAntigasCdm = (a) => {
+  const fs = Array.isArray(a.fotos) ? a.fotos : [];
+  return fs.every(f => typeof f === 'string' && f.startsWith('/fotos/n0'));
+};
 
 // A marca do sinal vem escrita no nome, com ou sem espaço antes do "%".
 const MARCA_SINAL_50 = /50\s*%/;
@@ -148,7 +170,18 @@ export function migrarDados(d) {
     });
   }
 
-  return { data: { ...d, reservas, versaoDados: DATA_VERSION }, migrou: true, alteradas };
+  let apartamentos = d.apartamentos;
+  if (de < 7 && Array.isArray(apartamentos)) {
+    apartamentos = apartamentos.map(a => {
+      const n = numeroCdm(a);
+      if (!n || !fotosAntigasCdm(a)) return a;
+      alteradas++;
+      const fotos = fotosCdm(n);
+      return { ...a, fotos, foto: fotos[0] };
+    });
+  }
+
+  return { data: { ...d, reservas, ...(apartamentos ? { apartamentos } : {}), versaoDados: DATA_VERSION }, migrou: true, alteradas };
 }
 
 /* ── Limpeza das reservas provisórias que caducaram ───────────────────────
