@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /*?gestao
+
+Sitemap: https://www.pinheiramar.com.br/sitemap.xml
