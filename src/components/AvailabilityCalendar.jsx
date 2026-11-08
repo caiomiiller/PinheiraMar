@@ -98,10 +98,10 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
         {monthsToShow.map(({ y, m }) => (
           <div key={`${y}-${m}`} style={{ flex: '1 1 230px', minWidth: 230 }}>
             <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, textTransform: 'capitalize' }}>{nomeMes(y, m)}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 2, marginBottom: 2 }}>
+            <div className="pm-cal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: '2px 6px', marginBottom: 2 }}>
               {semana.map((w, i) => <div key={i} style={{ textAlign: 'center', fontSize: 12.5, color: C.inkSoft, fontWeight: 700, textTransform: 'capitalize' }}>{w}</div>)}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 2 }}>
+            <div className="pm-cal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: '2px 6px' }}>
               {buildMonthCells(y, m).map((d, i) => {
                 if (!d) return <div key={i} />;
                 const past = isPast(d);

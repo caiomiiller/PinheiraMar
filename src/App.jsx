@@ -169,6 +169,8 @@ export default function App() {
          folha de reserva (que rola), sem janela por cima nem fundo escuro */
       .pm-cal-dialog{position:static!important;transform:none!important;width:auto!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin-top:8px!important;box-shadow:none!important;}
       .pm-cal-backdrop{display:none!important;}
+      /* no telemóvel os dias ficam mais juntos, para os círculos caberem */
+      .pm-cal-grid{column-gap:2px!important;}
       .pm-searchbar{flex-direction:column!important;border-radius:18px!important;}
       .pm-seg{border-right:none!important;border-bottom:1px solid #ddd!important;}
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}

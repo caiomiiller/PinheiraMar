@@ -487,7 +487,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                   <>
                     <div className="pm-cal-backdrop" onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99, background: 'rgba(10,20,30,.28)' }} />
                     <div className="pm-cal-dialog" role="dialog" aria-modal="true" aria-label={tr('ap_checkin') + ' / ' + tr('ap_checkout')}
-                      style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100, width: 520, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto', borderRadius: 16, boxShadow: '0 24px 60px rgba(10,20,30,.28)' }}
+                      style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100, width: 680, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto', borderRadius: 16, boxShadow: '0 24px 60px rgba(10,20,30,.28)' }}
                       onClick={e => e.stopPropagation()}>
                       <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo} ate={ultimaNoite}
                         onChange={(newCi, newCo) => {
