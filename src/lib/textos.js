@@ -74,6 +74,7 @@ const pt = {
   /* site: lista, busca, topo e rodapé */
   ps_favoritar: (n) => `Salvar ${n}`, ps_desfavoritar: (n) => `Tirar ${n} dos salvos`,
   ps_indisponivel: 'Indisponível', ps_ver_datas_livres: 'Ver datas livres',
+  ps_rolar_anteriores: 'Ver apartamentos anteriores', ps_rolar_seguintes: 'Ver mais apartamentos',
   ps_ate_pessoas: (n) => `até ${n} pessoas`,
   ps_combinar_obrigatorio: (h) => `Combine com outro apartamento — necessário para ${h} pessoas`,
   ps_combinar: 'Pode combinar com outro apartamento',
@@ -257,7 +258,7 @@ const es = {
   cf_texto_manual: (e) => `Recibimos su reserva. Para garantizarla, falta el pago de la seña: nos comunicaremos por WhatsApp o por e-mail (${e}) con las instrucciones.`,
 
   ps_favoritar: (n) => `Guardar ${n}`, ps_desfavoritar: (n) => `Quitar ${n} de guardados`,
-  ps_indisponivel: 'No disponible', ps_ver_datas_livres: 'Ver fechas libres',
+  ps_indisponivel: 'No disponible', ps_ver_datas_livres: 'Ver fechas libres', ps_rolar_anteriores: 'Ver apartamentos anteriores', ps_rolar_seguintes: 'Ver más apartamentos',
   ps_ate_pessoas: (n) => `hasta ${n} personas`,
   ps_combinar_obrigatorio: (h) => `Combine con otro departamento: necesario para ${h} personas`,
   ps_combinar: 'Se puede combinar con otro departamento',
@@ -447,6 +448,7 @@ const en = {
 
   ps_favoritar: (n) => `Save ${n}`, ps_desfavoritar: (n) => `Remove ${n} from saved`,
   ps_indisponivel: 'Unavailable', ps_ver_datas_livres: 'See free dates',
+  ps_rolar_anteriores: 'See previous apartments', ps_rolar_seguintes: 'See more apartments',
   ps_ate_pessoas: (n) => `up to ${n} guests`,
   ps_combinar_obrigatorio: (h) => `Combine with another apartment — needed for ${h} guests`,
   ps_combinar: 'Can be combined with another apartment',

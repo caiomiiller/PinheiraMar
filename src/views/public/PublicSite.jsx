@@ -396,8 +396,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         </div>
         {items.length > 4 && (
           <div className="pm-row-arrows" style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button onClick={() => shift(-1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
-            <button onClick={() => shift(1)}  style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
+            <button onClick={() => shift(-1)} aria-label={tr('ps_rolar_anteriores')} title={tr('ps_rolar_anteriores')} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
+            <button onClick={() => shift(1)}  aria-label={tr('ps_rolar_seguintes')} title={tr('ps_rolar_seguintes')} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
           </div>
         )}
       </div>
@@ -855,7 +855,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
                 <div>{r.endereco}</div>
                 <div>{r.cidade}</div>
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: '#1E8E4E', fontWeight: 600, textDecoration: 'none' }}>
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: '#17703D', fontWeight: 600, textDecoration: 'none' }}>
                   <MessageCircle size={15} strokeWidth={1.5} /> WhatsApp
                 </a>
               </div>
