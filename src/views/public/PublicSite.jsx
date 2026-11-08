@@ -7,7 +7,7 @@ import { orcamentoApartamento } from '../../lib/precos';
 import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
 import { lerUltimaReserva } from '../../lib/dadosPublico';
 import { IdiomaProvider, useIdioma } from '../../lib/i18n';
-import { PhotoTile, Modal, FotoInteira } from '../../components/ui';
+import { PhotoTile, Modal } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
 import { DestinoSection } from './DestinoSection';
@@ -717,15 +717,17 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       {/* ══ HERO — escondido no telemóvel (ver App.jsx), onde ocupava a tela
              toda antes do hóspede ver a busca/resultados; fica só no desktop ══ */}
       <section className="pm-pubsite-hero" style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
-        {/* foto do topo inteira, sem cortar nem deformar (ver FotoInteira em ui.jsx) */}
-        <div style={{ position: 'absolute', inset: 0 }}>
-          <FotoInteira src={fotoTopo(r0.heroImage)} fetchPriority="high" />
-        </div>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 40%, rgba(0,0,0,.72) 100%)' }} />
+        {/* foto do topo ocupa toda a faixa (a pedido do Caio, 2026-11-08): aqui
+            o corte em cima/em baixo é aceite, para a primeira impressão ser a
+            foto de ponta a ponta; o enquadramento fica um pouco abaixo do
+            centro, para mostrar mar e praia. Nas outras fotos do site
+            continua a regra de nunca cortar (FotoInteira em ui.jsx). */}
+        <img src={fotoTopo(r0.heroImage)} alt="" fetchpriority="high" decoding="async"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 58%' }}
+          onError={e => { e.currentTarget.style.display = 'none'; }} />
+        {/* escurece de baixo para cima e um pouco à esquerda, onde fica o texto */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.05) 0%, rgba(0,0,0,.15) 45%, rgba(0,0,0,.65) 100%), linear-gradient(to right, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) 55%)' }} />
         <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>
-            {tr('ps_hero_local')}
-          </div>
           <h1 style={{ fontSize: 'clamp(34px,4.6vw,62px)', fontWeight: 200, lineHeight: 1.08, margin: '0 0 16px', letterSpacing: '-.005em', color: '#fff', maxWidth: 760 }}>
             {tr('ps_hero_titulo_1')}<br />{tr('ps_hero_titulo_2')}
           </h1>
