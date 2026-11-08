@@ -165,6 +165,10 @@ export default function App() {
       /* calendário que abre por baixo dos campos de datas: ocupa a largura do
          seu contentor em vez de sair pela esquerda do ecrã */
       .pm-cal-pop{left:0!important;right:0!important;width:auto!important;max-width:none!important;}
+      /* calendário da página do apartamento: no telemóvel fica no fluxo da
+         folha de reserva (que rola), sem janela por cima nem fundo escuro */
+      .pm-cal-dialog{position:static!important;transform:none!important;width:auto!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin-top:8px!important;box-shadow:none!important;}
+      .pm-cal-backdrop{display:none!important;}
       .pm-searchbar{flex-direction:column!important;border-radius:18px!important;}
       .pm-seg{border-right:none!important;border-bottom:1px solid #ddd!important;}
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}

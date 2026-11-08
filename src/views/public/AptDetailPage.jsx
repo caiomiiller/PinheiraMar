@@ -74,6 +74,13 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
   const [shareCopied, setShareCopied] = useState(false);
   // telemóvel: o quadro de reserva abre como folha de ecrã inteiro a partir
   // da barra fixa do rodapé, em vez de ficar no fim de uma página longa
+  // Esc fecha o calendário de datas
+  useEffect(() => {
+    if (!calOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setCalOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [calOpen]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const openSheet = (withCal) => { if (withCal) setCalOpen(true); setSheetOpen(true); };
   useEffect(() => {
@@ -470,10 +477,18 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                   </div>
                 </div>
 
+                {/* Calendário: no computador abre como uma janela centrada no ecrã,
+                    com rolagem própria — antes era um popover preso ao quadro
+                    lateral (sticky) e a parte de baixo ficava fora do ecrã sem
+                    como rolar até lá (pedido do Caio, 2026-11-08). No telemóvel
+                    (ver .pm-cal-dialog em App.jsx) fica no fluxo da folha de
+                    reserva, que rola normalmente. */}
                 {calOpen && (
                   <>
-                    <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
-                    <div className="pm-cal-pop" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '92vw' }} onClick={e => e.stopPropagation()}>
+                    <div className="pm-cal-backdrop" onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99, background: 'rgba(10,20,30,.28)' }} />
+                    <div className="pm-cal-dialog" role="dialog" aria-modal="true" aria-label={tr('ap_checkin') + ' / ' + tr('ap_checkout')}
+                      style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100, width: 520, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto', borderRadius: 16, boxShadow: '0 24px 60px rgba(10,20,30,.28)' }}
+                      onClick={e => e.stopPropagation()}>
                       <AvailabilityCalendar apt={apt} reservas={data.reservas} ci={localCi} co={localCo} ate={ultimaNoite}
                         onChange={(newCi, newCo) => {
                           setLocalCi(newCi); setLocalCo(newCo);
