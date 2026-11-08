@@ -7,7 +7,7 @@ import { orcamentoApartamento } from '../../lib/precos';
 import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
 import { lerUltimaReserva } from '../../lib/dadosPublico';
 import { IdiomaProvider, useIdioma } from '../../lib/i18n';
-import { PhotoTile, Modal } from '../../components/ui';
+import { PhotoTile, Modal, FotoInteira } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
 import { DestinoSection } from './DestinoSection';
@@ -717,15 +717,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       {/* ══ HERO — escondido no telemóvel (ver App.jsx), onde ocupava a tela
              toda antes do hóspede ver a busca/resultados; fica só no desktop ══ */}
       <section className="pm-pubsite-hero" style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
-        {/* foto do topo sem object-fit: cover — a pedido do Caio (10/09 e de novo 26/09): a foto aparece inteira na moldura, sem o "zoom" que a cortava */}
-        <img
-          src={fotoTopo(r0.heroImage)}
-          alt=""
-          fetchpriority="high"
-          decoding="async"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-          onError={e => { e.target.style.display = 'none'; }}
-        />
+        {/* foto do topo inteira, sem cortar nem deformar (ver FotoInteira em ui.jsx) */}
+        <div style={{ position: 'absolute', inset: 0 }}>
+          <FotoInteira src={fotoTopo(r0.heroImage)} fetchPriority="high" />
+        </div>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 40%, rgba(0,0,0,.72) 100%)' }} />
         <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', marginBottom: 16 }}>

@@ -151,6 +151,24 @@ export const CheckoutBadge = ({ compact }) => (
   </span>
 );
 
+// Foto inteira dentro de uma moldura de tamanho fixo: sem cortar (sem o
+// "zoom" do object-fit: cover, a pedido do Caio) e sem deformar. O espaço
+// que sobra — dos lados de uma foto vertical, por exemplo — é preenchido
+// com a própria foto desfocada, como fazem o Booking e o Airbnb. Antes a
+// <img> esticava para encher a moldura e as fotos verticais apareciam
+// alargadas até 3 vezes (auditoria de 2026-11-08).
+export function FotoInteira({ src, alt = '', loading, fetchPriority, onError }) {
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: '#E7E4DE' }}>
+      <img src={src} alt="" aria-hidden="true" loading={loading} decoding="async"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(18px) brightness(.88)', transform: 'scale(1.15)' }} />
+      <img src={src} alt={alt} loading={loading} decoding="async" fetchpriority={fetchPriority}
+        style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+        onError={e => { const box = e.currentTarget.parentElement; if (box) box.style.display = 'none'; onError?.(e); }} />
+    </div>
+  );
+}
+
 // `rotulo`: texto da etiqueta de vista no canto (o site passa-o já
 // traduzido); sem rótulo usa a vista tal como está gravada, e com '' não
 // mostra etiqueta nenhuma.
@@ -162,10 +180,9 @@ export function PhotoTile({ apt, h = 184, radius = 14, rotulo }) {
     // para miniaturas pequenas — com background-image ficavam com um ar
     // "esborratado"/pixelado nos cartões pequenos, apesar de as mesmas
     // fotos abrirem nítidas em tamanho grande (galeria/lightbox).
-    // sem object-fit: cover — a pedido do Caio (10/09 e de novo 26/09): a foto aparece inteira na moldura, sem o "zoom" que a cortava.
+    // foto inteira, sem cortar nem deformar (ver FotoInteira)
     return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', position: 'relative' }}>
-      <img src={apt.foto} alt={apt.nome || ''} loading="lazy" decoding="async"
-        style={{ width: '100%', height: '100%', display: 'block' }} />
+      <FotoInteira src={apt.foto} alt={apt.nome || ''} loading="lazy" />
       {etiqueta && <span style={tilePill}>{etiqueta}</span>}
     </div>;
   }
