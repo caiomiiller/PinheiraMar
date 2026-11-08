@@ -10,14 +10,6 @@ export const vistaLabel = (v) => {
 // Nome completo do tipo no formato usado na base de dados (ex.: "Apto 102 - Térreo Frente Mar, 4 pessoas")
 export const roomFullName = (apt) => apt.tipo || `${apt.nome} - ${apt.piso} ${vistaLabel(apt.vista)}, ${apt.capacidade} pessoas`;
 
-export const EXTRA_PRESETS = [
-  { nome: 'Vaga de Estacionamento p/ 1 Automóvel', preco: 50 },
-  { nome: 'Higienização e Serviços de Hospedagem', preco: 175 },
-  { nome: 'Taxa de limpeza', preco: 120 },
-  { nome: 'Roupa de cama / banho extra', preco: 60 },
-  { nome: 'Desconto de negociação', preco: -100 },
-];
-
 /* As taxas obrigatórias de uma reserva são geradas por extrasObrigatorios
    (lib/precos.js), com a quantidade certa para "por noite"/"por hóspede". */
 

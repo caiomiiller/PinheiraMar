@@ -135,15 +135,3 @@ export const TRANSLATIONS = {
   },
 };
 
-/* Hook — resolves a translation key; falls back to PT if missing */
-export function useT(lang) {
-  const dict = TRANSLATIONS[lang] || TRANSLATIONS['pt'];
-  return (key, ...args) => {
-    const val = dict[key] ?? TRANSLATIONS['pt'][key];
-    if (typeof val === 'function') return val(...args);
-    return val ?? key;
-  };
-}
-
-/* ── IdiomasView ── */
-/* ── TaxasView ── */

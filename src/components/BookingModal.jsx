@@ -341,5 +341,4 @@ function RevRow({ label, value }) {
   );
 }
 
-export const readBox = { padding: '10px 12px', borderRadius: 10, background: C.areiaSoft, border: `1px solid ${C.areia}`, fontSize: 15, fontWeight: 600 };
 const linkBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', color: C.ocean, fontWeight: 700, fontSize: 14.5, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 0', minHeight: 36 };

@@ -127,7 +127,6 @@ export const overlaps = (aCi, aCo, bCi, bCo) => parseYMD(aCi) < parseYMD(bCo) &&
    não haver conflito vale mais do que libertar as datas depressa. */
 export const MIN_JANELA_PAGAMENTO = 20;
 export const MIN_HOLD_PAGAMENTO = 30;
-export const novoPrazoPagamento = (min = MIN_HOLD_PAGAMENTO) => new Date(Date.now() + min * 60000).toISOString();
 
 // Uma reserva provisória cujo prazo passou nunca chegou a ser uma reserva:
 // não bloqueia datas nem entra nas contas do Financeiro. Data inválida ou
