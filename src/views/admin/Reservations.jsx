@@ -4,7 +4,7 @@ import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy, Chevron
   Clock, Info, Users, Wallet, LogIn, LogOut, Car, Sparkles, PawPrint, Umbrella,
   BedDouble, Baby, Percent, Wind, Waves, Utensils, Wifi, Flame, Shield, Gift,
   Sun, Shirt, Sofa, Power } from 'lucide-react';
-import { C, F, THEMES, R } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtShort, uid, code, isAvailable, stayBreakdown,
   nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS, WD, HOLIDAY_COLORS, MS,
   seasonForDate, aptRates, roomFullName, overlaps, capacidadeBaseOf } from '../../lib/helpers';
@@ -43,7 +43,8 @@ export function textoFalhaEmail(motivo) {
 // (este ambiente é partilhado pelos dois residenciais; a etiqueta é só
 // para identificação visual, ver pedido do gestor).
 const residencialOf = (data, apt) => (data.residenciais || []).find(r => r.id === apt?.residencialId) || (data.residenciais || [])[0];
-const residencialCor = (residencialId) => (THEMES[residencialId] || THEMES.pinheiramar).ocean;
+// os dois residenciais usam a mesma cor de ação (marinho)
+const residencialCor = () => C.ocean;
 
 // Ícone intuitivo por palavra-chave no nome da taxa/extra — substitui o texto
 // truncado nos botões de atalho por Ícone + valor (pedido do Caio, 2026-09-23:
@@ -858,7 +859,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Pagamento:</span>
               <button onClick={() => setPaymentFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'todas' ? C.ocean : C.espuma, color: paymentFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
-              <button onClick={() => setPaymentFilter('sem')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'sem' ? C.coralDeep : C.espuma, color: paymentFilter === 'sem' ? C.white : C.inkSoft }}>Sem confirmação (0 pago)</button>
+              <button onClick={() => setPaymentFilter('sem')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'sem' ? C.acaoEscura : C.espuma, color: paymentFilter === 'sem' ? C.white : C.inkSoft }}>Sem confirmação (0 pago)</button>
               <button onClick={() => setPaymentFilter('com')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'com' ? C.sucesso : C.espuma, color: paymentFilter === 'com' ? C.white : C.inkSoft }}>Com pagamento</button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -891,7 +892,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               </tr></thead>
               <tbody>
                 {listFiltered.slice(0, listCap).map((r, idx) => (
-                  <tr key={r.id} style={{ borderTop: `1px solid ${C.line}`, opacity: arrastoRes.de === r.id ? 0.4 : 1, outline: arrastoRes.sobre === r.id && arrastoRes.de !== r.id ? `2px dashed ${C.coral}` : 'none' }}
+                  <tr key={r.id} style={{ borderTop: `1px solid ${C.line}`, opacity: arrastoRes.de === r.id ? 0.4 : 1, outline: arrastoRes.sobre === r.id && arrastoRes.de !== r.id ? `2px dashed ${C.acao}` : 'none' }}
                     draggable={manualOrder}
                     onDragStart={manualOrder ? (e) => { setArrastoRes({ de: r.id, sobre: null }); try { e.dataTransfer.setData('text/plain', r.id); } catch { /* ignora */ } } : undefined}
                     onDragOver={manualOrder ? e => { e.preventDefault(); if (arrastoRes.sobre !== r.id) setArrastoRes(a => ({ ...a, sobre: r.id })); } : undefined}
@@ -1449,7 +1450,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                         {Number(seasonRates.semanal) > 0 && <span>· semanal {money(seasonRates.semanal)}</span>}
                         {Number(seasonRates.mensal) > 0 && <span>· mensal {money(seasonRates.mensal)}</span>}
                         {hospedesExtra > 0 && <span>· inclui {hospedesExtra} hóspede{hospedesExtra > 1 ? 's' : ''} extra a {money(adultoExtra)}/noite</span>}
-                        {precoEdited && <button type="button" onClick={() => { setPrecoEdited(false); setPrecoNoite(suggested); }} style={{ background: 'none', border: 'none', color: C.coralDeep, cursor: 'pointer', fontWeight: 600, fontSize: 11.5, padding: 0 }}>repor</button>}
+                        {precoEdited && <button type="button" onClick={() => { setPrecoEdited(false); setPrecoNoite(suggested); }} style={{ background: 'none', border: 'none', color: C.acaoEscura, cursor: 'pointer', fontWeight: 600, fontSize: 11.5, padding: 0 }}>repor</button>}
                       </div>
                     </td>
                     <td style={{ padding: '10px 8px', color: C.inkSoft }}>{n} {n === 1 ? 'noite' : 'noites'}</td>
@@ -1470,7 +1471,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                         <td style={{ padding: '8px 8px' }}><input className="pmf" type="number" min="0" value={e.qtd} onChange={ev => updExtra(e.id, { qtd: ev.target.value })} style={cellInput} /></td>
                         <td style={{ padding: '8px 8px' }}><MoneyInput value={e.preco} onChange={ev => updExtra(e.id, { preco: ev.target.value })} /></td>
                         <td style={{ padding: '8px 8px', color: C.inkSoft }}>0%</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: v < 0 ? C.coralDeep : C.ink }}>{money(v)}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: v < 0 ? C.acaoEscura : C.ink }}>{money(v)}</td>
                         <td style={{ padding: '8px 4px', textAlign: 'center' }}><button type="button" onClick={() => delExtra(e.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.inkSoft, display: 'grid', placeItems: 'center' }}><Trash2 size={15} /></button></td>
                       </tr>
                     );
@@ -1487,7 +1488,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                 <div style={{ fontSize: 11.5, color: C.inkSoft, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
                   <Info size={12} /> {n} {n === 1 ? 'noite' : 'noites'} · tabela {money(bd.total)} ({money(suggested)}/noite)
                   {hospedesExtra > 0 && <span>· inclui {hospedesExtra} extra a {money(adultoExtra)}/noite</span>}
-                  {precoEdited && <button type="button" onClick={() => { setPrecoEdited(false); setPrecoNoite(suggested); }} style={{ background: 'none', border: 'none', color: C.coralDeep, cursor: 'pointer', fontWeight: 600, fontSize: 11.5, padding: 0 }}>repor</button>}
+                  {precoEdited && <button type="button" onClick={() => { setPrecoEdited(false); setPrecoNoite(suggested); }} style={{ background: 'none', border: 'none', color: C.acaoEscura, cursor: 'pointer', fontWeight: 600, fontSize: 11.5, padding: 0 }}>repor</button>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <MoneyInput value={precoNoite} onChange={e => { setPrecoNoite(e.target.value === '' ? '' : Number(e.target.value)); setPrecoEdited(true); }} style={{ flex: 1 }} />
@@ -1505,7 +1506,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <input className="pmf" type="number" min="0" value={e.qtd} onChange={ev => updExtra(e.id, { qtd: ev.target.value })} style={{ ...cellInput, width: 56, flexShrink: 0 }} />
                       <MoneyInput value={e.preco} onChange={ev => updExtra(e.id, { preco: ev.target.value })} style={{ flex: 1 }} />
-                      <span style={{ fontWeight: 600, minWidth: 72, textAlign: 'right', color: v < 0 ? C.coralDeep : C.ink }}>{money(v)}</span>
+                      <span style={{ fontWeight: 600, minWidth: 72, textAlign: 'right', color: v < 0 ? C.acaoEscura : C.ink }}>{money(v)}</span>
                     </div>
                   </div>
                 );

@@ -47,7 +47,7 @@ export function Seasons({ data, update }) {
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontFamily: F.disp, fontSize: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
                   {s.nome}
-                  {ativa && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.coralDeep, background: C.avisoBg, padding: '2px 9px', borderRadius: R.pilula, fontFamily: F.sans }}>● Em vigor</span>}
+                  {ativa && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.acaoEscura, background: C.avisoBg, padding: '2px 9px', borderRadius: R.pilula, fontFamily: F.sans }}>● Em vigor</span>}
                   {s.ativa === false && <span style={{ fontSize: 11.5, color: C.inkSoft, fontFamily: F.sans }}>(desativada)</span>}
                 </div>
                 <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2 }}>{fmtLong(s.inicio)} – {fmtLong(s.fim)} · mín. {s.minNoites || 1} noite(s){s.maxNoites ? ` · máx. ${s.maxNoites}` : ''}</div>

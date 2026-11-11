@@ -183,7 +183,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
           </div>
 
           <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: R.cartao, background: C.espuma, display: 'grid', gap: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 16.5, fontWeight: 700, color: C.coralDeep }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 16.5, fontWeight: 700, color: C.acaoEscura }}>
               <span>{tr('bk_sinal_para_reservar', data.settings.sinalPct)}</span><span>{money(sinal)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 15, color: C.ink }}>
@@ -301,8 +301,8 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
         </div>
 
         <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 15.5, fontWeight: 700, color: C.coralDeep }}>{tr('bk_sinal_agora', data.settings.sinalPct)}</span>
-          <span style={{ fontSize: 17, fontWeight: 700, color: C.coralDeep }}>{money(sinal)}</span>
+          <span style={{ fontSize: 15.5, fontWeight: 700, color: C.acaoEscura }}>{tr('bk_sinal_agora', data.settings.sinalPct)}</span>
+          <span style={{ fontSize: 17, fontWeight: 700, color: C.acaoEscura }}>{money(sinal)}</span>
         </div>
 
         {cancelPol && (

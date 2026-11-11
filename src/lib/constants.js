@@ -1,14 +1,12 @@
-// C é um objecto mutável partilhado — os componentes fazem `import { C } from './constants'`
-// e lêem propriedades em cada render, por isso para trocar de tema por imóvel basta
-// mutar as chaves de C (ver applyTheme) em vez de reatribuir a exportação.
-// Paleta do Grupo PinheiraMar (ver src/components/Brand.jsx): marinho para
-// títulos e ações, noite para fundos escuros, pedra para texto de apoio.
-// As chaves antigas (ocean, coral…) mantêm-se para não partir componentes;
-// "coral" deixou de ser laranja — as ações do grupo são em marinho.
-const PALETA = {
+// C é a paleta única do site: os componentes fazem `import { C } from './constants'`
+// e usam C.<nome> — não escrever #hex nos componentes. Marinho para títulos e
+// ações, noite para fundos escuros, pedra para texto de apoio (ver Brand.jsx).
+// Os dois residenciais usam a mesma paleta; a cor própria de cada um
+// (vermelho / azul) entra só nas peças da marca.
+const PALETA = Object.freeze({
     // marca
     ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
-    coral: '#1B1C46', coralDeep: '#14152F',            // chaves antigas (= marinho)
+    acao: '#1B1C46', acaoEscura: '#14152F',            // botões e ações (hoje = marinho)
     // texto, linhas e fundos
     ink: '#1B1C46', inkSoft: '#6F6B64', white: '#FFFFFF',
     line: '#E2E0DB', bordaForte: '#8A8A8A', inativo: '#BBBBBB',
@@ -18,9 +16,9 @@ const PALETA = {
     aviso: '#7B5600', avisoBg: '#FFF4D6', avisoBorda: '#EBD9C0',
     erro: '#B42318', erroBg: '#FEF3F2', erroBorda: '#F0C6C6',
     info: '#1A4A7A', infoBg: '#EEF6FF', infoBorda: '#BDD9F8',
-};
+});
 // Todas as cores de interface vêm daqui (C.<nome>) — não escrever #hex nos componentes.
-export const C = { ...PALETA };
+export const C = PALETA;
 // Cantos: só quatro valores — campo (8), botão/cartão (12), modal (16) e pílula (999).
 // Círculos continuam '50%'. Não escrever números soltos em borderRadius.
 export const R = { campo: 8, cartao: 12, modal: 16, pilula: 999 };
@@ -60,22 +58,3 @@ export const GOOGLE_RATING = {
   count: 168,
   url: 'https://www.google.com/maps/search/?api=1&query=PinheiraMar+Residencial+R.+Dom+Patr%C3%ADcio+82+Palho%C3%A7a+SC',
 };
-
-/* ───────────────────────── Temas por imóvel ─────────────────────────
-   Cada residencial tem a sua paleta. "pinheiramar" reproduz a paleta
-   original (tons de mar/areia). "novo imóvel" usa tons de bairro/verde,
-   para não competir visualmente com a marca da praia. */
-export const THEMES = {
-  // os dois residenciais partilham a paleta do grupo (a cor própria de cada
-  // um — vermelho / azul — entra só nas suas peças e no seu segmento da faixa)
-  pinheiramar: { ...PALETA },
-  novoimovel: { ...PALETA },
-};
-
-// Muta C in-place para o tema do imóvel indicado, mantendo a mesma referência
-// de objecto que todos os módulos já importaram — evita ter de passar "theme"
-// como prop por toda a árvore de componentes.
-export function applyTheme(residencialId) {
-  const t = THEMES[residencialId] || THEMES.pinheiramar;
-  Object.assign(C, t);
-}

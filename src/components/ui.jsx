@@ -18,7 +18,7 @@ export function Btn({ variant = 'primary', size = 'md', children, style, icon: I
   const sizes = { sm: { padding: '7px 12px', fontSize: 13 }, md: { padding: '10px 16px', fontSize: 14 }, lg: { padding: '13px 22px', fontSize: 15 } };
   const variants = {
     primary: { background: C.ocean, color: C.white },
-    accent: { background: C.coral, color: C.white },
+    accent: { background: C.acao, color: C.white },
     ghost: { background: 'transparent', color: C.ocean, border: `1px solid ${C.line}` },
     soft: { background: C.areiaSoft, color: C.ink, border: `1px solid ${C.areia}` },
     danger: { background: 'transparent', color: C.erro, border: `1px solid ${C.erroBorda}` },
@@ -70,7 +70,7 @@ export function Modal({ title, subtitle, onClose, onBack, headerActions, childre
 export const Field = ({ label, children, hint, required }) => (
   <label style={{ display: 'block' }}>
     <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: C.inkSoft, marginBottom: 6, letterSpacing: '.01em' }}>
-      {label}{required && <span style={{ color: C.coral }}> *</span>}
+      {label}{required && <span style={{ color: C.acao }}> *</span>}
     </span>
     {children}
     {hint && <span style={{ display: 'block', fontSize: 13, color: C.inkSoft, marginTop: 5 }}>{hint}</span>}
@@ -235,7 +235,7 @@ export function ConfirmDialog({ title = 'Confirmar exclusão', message, confirmL
 export const Row = ({ k, v, strong, accent }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
     <span style={{ color: C.inkSoft }}>{k}</span>
-    <span style={{ fontWeight: strong || accent ? 700 : 500, color: accent ? C.coralDeep : C.ink, textAlign: 'right' }}>{v}</span>
+    <span style={{ fontWeight: strong || accent ? 700 : 500, color: accent ? C.acaoEscura : C.ink, textAlign: 'right' }}>{v}</span>
   </div>
 );
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
-import { C, F, applyTheme, R } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 
 import { Dashboard } from './Dashboard';
@@ -43,7 +43,6 @@ export function Admin({ data, update, initialResidencialId }) {
   const [pendingReservationId, setPendingReservationId] = useState(null);
   const openReservation = (id) => { setPendingReservationId(id); setTab('reservas'); };
 
-  useEffect(() => { applyTheme(residencialId); }, [residencialId]);
 
   // `scoped` tem a mesma forma que o antigo `data` de um único imóvel
   // (settings/apartamentos/reservas já filtrados); `scopedUpdate` traduz

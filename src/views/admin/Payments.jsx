@@ -103,7 +103,7 @@ export function PaymentsView({ data, update }) {
           {[
             { step: '1', title: 'Crie uma conta Business', desc: 'Abra uma conta no Mercado Pago em mercadopago.com.br. Use CNPJ para ter acesso à API completa e melhores taxas.', cor: C.brisa },
             { step: '2', title: 'Obtenha o Access Token', desc: 'Em "Credenciais" no painel do Mercado Pago, copie o Access Token de produção e cadastre-o na Vercel (Settings → Environment Variables) como MP_ACCESS_TOKEN. Nunca o escreva aqui no painel nem o envie por e-mail.', cor: C.ocean },
-            { step: '3', title: 'Webhook', desc: 'Não é preciso configurar: cada link de pagamento já informa ao Mercado Pago o endereço de aviso do site (/api/mp-webhook), que confere o pagamento e confirma a reserva.', cor: C.coral },
+            { step: '3', title: 'Webhook', desc: 'Não é preciso configurar: cada link de pagamento já informa ao Mercado Pago o endereço de aviso do site (/api/mp-webhook), que confere o pagamento e confirma a reserva.', cor: C.acao },
             { step: '4', title: 'Fluxo no motor de reservas', desc: 'Reserva criada no site → link de pagamento do sinal → hóspede paga → o aviso do Mercado Pago confirma → a reserva passa a "Reservado" e o hóspede recebe o e-mail.', cor: '#7C3AED' },
           ].map(s => (
             <div key={s.step} style={{ padding: '14px 16px', background: C.espuma, borderRadius: R.cartao, borderLeft: `4px solid ${s.cor}` }}>
@@ -125,7 +125,7 @@ export function PaymentsView({ data, update }) {
         <h3 style={{ fontFamily: F.disp, fontSize: 17, margin: '0 0 12px' }}>Configuração de sinal</h3>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', fontSize: 14 }}>
           <div><div style={{ color: C.inkSoft, fontSize: 12.5 }}>Moeda</div><div style={{ fontWeight: 700, fontSize: 16 }}>{data.settings.moeda}</div></div>
-          <div><div style={{ color: C.inkSoft, fontSize: 12.5 }}>Sinal antecipado</div><div style={{ fontWeight: 700, fontSize: 16, color: C.coralDeep }}>{data.settings.sinalPct}% do total</div></div>
+          <div><div style={{ color: C.inkSoft, fontSize: 12.5 }}>Sinal antecipado</div><div style={{ fontWeight: 700, fontSize: 16, color: C.acaoEscura }}>{data.settings.sinalPct}% do total</div></div>
           <div><div style={{ color: C.inkSoft, fontSize: 12.5 }}>Saldo restante</div><div style={{ fontWeight: 700, fontSize: 16 }}>{100 - data.settings.sinalPct}% no check-in</div></div>
           <div><div style={{ color: C.inkSoft, fontSize: 12.5 }}>Gateways activos</div><div style={{ fontWeight: 700, fontSize: 16 }}>{data.pagamentos.filter(p => p.conectado).length} de {data.pagamentos.length}</div></div>
         </div>

@@ -171,7 +171,7 @@ export function Financeiro({ data, go }) {
   const KPI = ({ label, value, sub, accent }) => (
     <Card style={{ padding: 18 }}>
       <div style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 600, marginBottom: 6 }}>{label}</div>
-      <div className="pm-fin-kpi-value" style={{ fontSize: 'clamp(14px, 1.3vw, 19px)', fontWeight: 700, fontFamily: F.sans, color: accent ? C.coralDeep : C.ink, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
+      <div className="pm-fin-kpi-value" style={{ fontSize: 'clamp(14px, 1.3vw, 19px)', fontWeight: 700, fontFamily: F.sans, color: accent ? C.acaoEscura : C.ink, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
       {sub && <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 4 }}>{sub}</div>}
     </Card>
   );
@@ -269,7 +269,7 @@ export function Financeiro({ data, go }) {
                     <td style={{ padding: '9px 10px', fontWeight: 700 }}>Total</td>
                     <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{comReceita.length}</td>
                     <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{comReceita.reduce((s, r) => s + nights(r.checkIn, r.checkOut), 0)}</td>
-                    <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700, color: C.coralDeep }}>{money(recTotal)}</td>
+                    <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700, color: C.acaoEscura }}>{money(recTotal)}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -291,7 +291,7 @@ export function Financeiro({ data, go }) {
                     <span style={{ color: C.inkSoft }}>{v} ({totalOrig > 0 ? Math.round((v / totalOrig) * 100) : 0}%)</span>
                   </div>
                   <div style={{ height: 8, background: C.espuma, borderRadius: R.campo, overflow: 'hidden' }}>
-                    <div style={{ width: `${totalOrig > 0 ? Math.round((v / totalOrig) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.coral},${C.coralDeep})`, borderRadius: R.campo }} />
+                    <div style={{ width: `${totalOrig > 0 ? Math.round((v / totalOrig) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.acao},${C.acaoEscura})`, borderRadius: R.campo }} />
                   </div>
                 </div>
               ))}

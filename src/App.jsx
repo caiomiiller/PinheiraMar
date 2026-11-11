@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Waves, RefreshCw, FlaskConical } from 'lucide-react';
-import { C, F, applyTheme, TELEFONE_CONTATO, R } from './lib/constants';
+import { C, F, TELEFONE_CONTATO, R } from './lib/constants';
 import { PublicSite } from './views/public/PublicSite';
 import { PoliticasPublicas } from './views/public/PoliticasPublicas';
 import { carregarPublico, reservar, limparCopiasAntigas } from './lib/dadosPublico';
@@ -76,7 +76,7 @@ function SitePublico() {
     catch (e) { console.warn('[site] não foi possível carregar os dados', e); setErro(true); }
   }, []);
 
-  useEffect(() => { limparCopiasAntigas(); applyTheme('pinheiramar'); carregar(); }, [carregar]);
+  useEffect(() => { limparCopiasAntigas(); carregar(); }, [carregar]);
 
   // disponibilidade fresca ao voltar ao separador (ex.: depois de ir ao WhatsApp)
   useEffect(() => {

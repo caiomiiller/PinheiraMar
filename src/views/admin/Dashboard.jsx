@@ -106,9 +106,9 @@ export function Dashboard({ data, go, openReservation, update }) {
         onMouseEnter={openReservation ? e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(10,40,46,.10)' : undefined}
         onMouseLeave={openReservation ? e => e.currentTarget.style.boxShadow = '' : undefined}>
         <div style={{ textAlign: 'center', minWidth: 40, flexShrink: 0 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: F.disp, lineHeight: 1, color: isToday ? C.coralDeep : C.ink }}>{d.getDate()}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: F.disp, lineHeight: 1, color: isToday ? C.acaoEscura : C.ink }}>{d.getDate()}</div>
           <div style={{ fontSize: 10, color: C.inkSoft, textTransform: 'uppercase' }}>{d.toLocaleDateString('pt-BR', { month: 'short' })}</div>
-          {isToday && <div style={{ fontSize: 9, fontWeight: 700, color: C.coralDeep }}>HOJE</div>}
+          {isToday && <div style={{ fontSize: 9, fontWeight: 700, color: C.acaoEscura }}>HOJE</div>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -234,7 +234,7 @@ export function Dashboard({ data, go, openReservation, update }) {
         <Card style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 13 }}>
             <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ChevronLeft size={15} color={C.coral} /> Próximos check-outs
+              <ChevronLeft size={15} color={C.acao} /> Próximos check-outs
             </h3>
             <Btn size="sm" variant="ghost" onClick={() => go('reservas')}>Ver todas</Btn>
           </div>
@@ -270,7 +270,7 @@ export function Dashboard({ data, go, openReservation, update }) {
                 {p.nome}{p.capacidade ? <span style={{ opacity: .65 }}> · {p.capacidade}p</span> : null}
               </div>
               <div style={{ flex: 1, height: 10, background: C.espuma, borderRadius: R.campo, overflow: 'hidden' }}>
-                <div style={{ width: `${p.pct}%`, height: '100%', borderRadius: R.campo, background: p.pct >= 70 ? `linear-gradient(90deg,${C.coral},${C.coralDeep})` : `linear-gradient(90deg,${C.brisa},${C.ocean})` }} />
+                <div style={{ width: `${p.pct}%`, height: '100%', borderRadius: R.campo, background: p.pct >= 70 ? `linear-gradient(90deg,${C.acao},${C.acaoEscura})` : `linear-gradient(90deg,${C.brisa},${C.ocean})` }} />
               </div>
               <div style={{ width: 36, fontSize: 12.5, textAlign: 'right', color: C.inkSoft, flexShrink: 0 }}>{p.pct}%</div>
             </div>

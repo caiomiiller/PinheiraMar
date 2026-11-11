@@ -561,7 +561,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: `1px solid ${C.line}`, paddingTop: 10, fontSize: 16.5 }}>
                         <span>{useApt2 && apt2 ? tr('bk_total_combinado') : tr('bk_total')}</span><span>{money(totalComExtras)}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.coralDeep, fontWeight: 600, fontSize: 15 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: C.acaoEscura, fontWeight: 600, fontSize: 15 }}>
                         <span>{tr('ap_sinal', data.settings.sinalPct)}</span><span>{money(sinal)}</span>
                       </div>
                     </div>
@@ -582,9 +582,9 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                   : tr('ap_btn_reservar');
                 return (
                   <button onClick={handleBook} disabled={!canBook}
-                    style={{ width: '100%', minHeight: 54, padding: '0 12px', background: canBook ? C.coral : C.inativo, color: canBook ? C.white : C.inkSoft, border: 'none', borderRadius: R.cartao, fontWeight: 700, fontSize: 17, cursor: canBook ? 'pointer' : 'not-allowed', fontFamily: F.sans, transition: 'background .15s' }}
-                    onMouseEnter={e => { if (canBook) e.currentTarget.style.background = C.coralDeep; }}
-                    onMouseLeave={e => { if (canBook) e.currentTarget.style.background = C.coral; }}>
+                    style={{ width: '100%', minHeight: 54, padding: '0 12px', background: canBook ? C.acao : C.inativo, color: canBook ? C.white : C.inkSoft, border: 'none', borderRadius: R.cartao, fontWeight: 700, fontSize: 17, cursor: canBook ? 'pointer' : 'not-allowed', fontFamily: F.sans, transition: 'background .15s' }}
+                    onMouseEnter={e => { if (canBook) e.currentTarget.style.background = C.acaoEscura; }}
+                    onMouseLeave={e => { if (canBook) e.currentTarget.style.background = C.acao; }}>
                     {label}
                   </button>
                 );
@@ -611,7 +611,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
         {(() => {
           const btn = (label, onClick) => (
             <button onClick={onClick}
-              style={{ minHeight: 52, padding: '0 22px', background: C.coral, color: C.white, border: 'none', borderRadius: R.cartao, fontWeight: 700, fontSize: 17, cursor: 'pointer', fontFamily: F.sans, flexShrink: 0 }}>
+              style={{ minHeight: 52, padding: '0 22px', background: C.acao, color: C.white, border: 'none', borderRadius: R.cartao, fontWeight: 700, fontSize: 17, cursor: 'pointer', fontFamily: F.sans, flexShrink: 0 }}>
               {label}
             </button>
           );

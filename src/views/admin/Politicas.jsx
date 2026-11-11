@@ -147,7 +147,7 @@ export function PoliticasView({ data, update }) {
         </div>
         {[
           { pol: reservas, accent: C.ocean },
-          { pol: cancelamento, accent: C.coralDeep },
+          { pol: cancelamento, accent: C.acaoEscura },
         ].map(({ pol, accent }) => (
           <div key={pol.titulo} style={{ marginBottom: 22, padding: '18px 20px', background: C.espuma, borderRadius: R.cartao, border: `1px solid ${C.line}` }}>
             <div style={{ fontFamily: F.disp, fontSize: 17, color: accent, marginBottom: 12 }}>{pol.titulo}</div>
