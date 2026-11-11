@@ -96,6 +96,15 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
   const [g1, setG1] = useState(Math.min(hosp || 1, apt.capacidade));
   const [g2, setG2] = useState(1);
 
+  // título da aba (e do histórico/favoritos) = apartamento + residencial;
+  // volta ao título anterior ao sair. A prévia do WhatsApp vem do servidor
+  // (api/previa.js) — o navegador só cuida da aba.
+  useEffect(() => {
+    const anterior = document.title;
+    document.title = [apt.nome, data.settings?.nome].filter(Boolean).join(' · ') || anterior;
+    return () => { document.title = anterior; };
+  }, [apt.nome, data.settings?.nome]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const amenidades = Array.isArray(apt.amenidades) ? apt.amenidades : [];
   const camas = Array.isArray(apt.camas) ? apt.camas : [{ tipo: 'Casal', qtd: 1 }];
   const fotos = Array.isArray(apt.fotos) && apt.fotos.length > 0 ? apt.fotos : [];
