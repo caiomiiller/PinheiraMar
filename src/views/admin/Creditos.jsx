@@ -74,7 +74,7 @@ export function CreditosView({ data, update }) {
                     ? <button onClick={() => marcarUtilizado(c.id, false)} style={iconBtn} title="Reabrir (marcar como não utilizado)"><RotateCcw size={14} /></button>
                     : <button onClick={() => marcarUtilizado(c.id, true)} style={{ ...iconBtn, color: C.sucesso }} title="Marcar como utilizado"><Check size={14} /></button>}
                   <button onClick={() => setEditing(c)} style={iconBtn} title="Editar"><Pencil size={14} /></button>
-                  <button onClick={() => setConfirmId(c.id)} style={{ ...iconBtn, color: C.erro }} title="Eliminar"><Trash2 size={14} /></button>
+                  <button onClick={() => setConfirmId(c.id)} style={{ ...iconBtn, color: C.erro }} title="Excluir"><Trash2 size={14} /></button>
                 </div>
               </div>
             ))}
@@ -92,7 +92,7 @@ export function CreditosView({ data, update }) {
         const c = creditos.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer eliminar o crédito de <b>{c?.hospede || 'hóspede'}</b> ({money(c?.valor || 0)})? Esta ação não pode ser desfeita.</>}
+            message={<>Tem a certeza que quer excluir o crédito de <b>{c?.hospede || 'hóspede'}</b> ({money(c?.valor || 0)})? Esta ação não pode ser desfeita.</>}
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />

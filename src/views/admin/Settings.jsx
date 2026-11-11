@@ -19,7 +19,7 @@ export function SettingsView({ data, update }) {
   return (
     <div>
       <PageHead title="Configurações gerais" sub="Dados do residencial usados no site e nas reservas"
-        action={<Btn variant="primary" icon={saved ? Check : undefined} onClick={onSave}>{saved ? 'Guardado' : 'Guardar'}</Btn>} />
+        action={<Btn variant="primary" icon={saved ? Check : undefined} onClick={onSave}>{saved ? 'Salvo' : 'Salvar'}</Btn>} />
       <Card style={{ padding: 22, marginBottom: 16 }}>
         <h3 style={{ fontFamily: F.disp, fontSize: 19, margin: '0 0 16px' }}>Informações de negócio</h3>
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>

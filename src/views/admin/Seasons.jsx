@@ -58,7 +58,7 @@ export function Seasons({ data, update }) {
               </div>
               <button onClick={() => duplicate(s.id)} title="Duplicar" style={iconBtn}><Copy size={16} /></button>
               <button onClick={() => setEditing(s)} title="Editar" style={iconBtn}><Pencil size={16} /></button>
-              <button onClick={() => setConfirmId(s.id)} title="Eliminar" style={{ ...iconBtn, color: C.erro }}><Trash2 size={16} /></button>
+              <button onClick={() => setConfirmId(s.id)} title="Excluir" style={{ ...iconBtn, color: C.erro }}><Trash2 size={16} /></button>
             </Card>
           );
         })}
@@ -68,7 +68,7 @@ export function Seasons({ data, update }) {
         const s = data.seasons.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer eliminar a temporada <b>{s?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
+            message={<>Tem a certeza que quer excluir a temporada <b>{s?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />
@@ -105,7 +105,7 @@ export function SeasonForm({ initial, isNew, apartamentos, onSave, onClose }) {
             minNoites: Number(minN) || 1, maxNoites: maxN === '' ? null : Number(maxN),
             // Preserva os preços de apartamentos de OUTROS imóveis (não listados aqui,
             // porque este formulário só mostra o imóvel selecionado no admin) — sem isto,
-            // guardar uma temporada a partir de um imóvel apagaria os preços do outro.
+            // salvar uma temporada a partir de um imóvel apagaria os preços do outro.
             precos: {
               ...(i.precos || {}),
               ...Object.fromEntries(apartamentos.map(a => [a.id, {
@@ -113,7 +113,7 @@ export function SeasonForm({ initial, isNew, apartamentos, onSave, onClose }) {
                 semanal: Number(precos[a.id]?.semanal) || 0, mensal: Number(precos[a.id]?.mensal) || 0, adultoExtra: Number(precos[a.id]?.adultoExtra) || 0,
               }])),
             },
-          })}>{isNew ? 'Salvar' : 'Guardar alterações'}</Btn></>}>
+          })}>{isNew ? 'Salvar' : 'Salvar alterações'}</Btn></>}>
       <div style={{ display: 'grid', gap: 16 }}>
         <Field label="Nomeie sua temporada" required><TextInput value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Alta 2027-2028" /></Field>
         <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

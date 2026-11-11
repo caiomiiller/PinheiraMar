@@ -41,7 +41,7 @@ export function Apartments({ data, update }) {
             </div>
             <button onClick={() => duplicate(a.id)} title="Duplicar" style={iconBtn}><Copy size={16} /></button>
             <button onClick={() => setEditing(a)} title="Editar" style={iconBtn}><Pencil size={16} /></button>
-            <button onClick={() => setConfirmId(a.id)} title="Eliminar" style={{ ...iconBtn, color: C.erro }}><Trash2 size={16} /></button>
+            <button onClick={() => setConfirmId(a.id)} title="Excluir" style={{ ...iconBtn, color: C.erro }}><Trash2 size={16} /></button>
           </Card>
         ))}
       </div>
@@ -50,7 +50,7 @@ export function Apartments({ data, update }) {
         const a = data.apartamentos.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer eliminar <b>{a?.nome || 'este apartamento'}</b>? Esta ação não pode ser desfeita.</>}
+            message={<>Tem a certeza que quer excluir <b>{a?.nome || 'este apartamento'}</b>? Esta ação não pode ser desfeita.</>}
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />
@@ -73,7 +73,7 @@ export const CAMA_TIPOS = ['Casal', 'Solteiro', 'Queen', 'King', 'Beliche', 'Sof
 // fixas SÓ na tela, mas guarda o valor antigo por baixo. Resultado: parece que
 // a edição "não pegou", porque o Salvar grava de novo o valor antigo, sem o
 // utilizador perceber que ele nunca tinha mudado. `comOpcaoAtual` mantém o
-// valor guardado como uma opção visível (mesmo fora da lista fixa) para que a
+// valor salvo como uma opção visível (mesmo fora da lista fixa) para que a
 // tela sempre mostre o que está realmente gravado.
 export const PISO_OPCOES = ['Térreo', '1º Piso', '2º Piso', '3º Piso', 'Cobertura'];
 export const VISTA_OPCOES = ['Frente Mar', 'Beira-mar', 'Lateral', 'Interior'];

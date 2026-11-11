@@ -52,7 +52,7 @@ export function Financeiro({ data, go }) {
   // passou é tratada aqui como concluída — Confirmado + Check-out realizado —
   // mesmo que ninguém tenha atualizado manualmente o status. Isto é só um
   // cálculo de exibição nesta página (mesmo princípio do displayStatus em
-  // ui.jsx): não altera o status nem o checkoutRealizado guardados na
+  // ui.jsx): não altera o status nem o checkoutRealizado salvos na
   // reserva, então o resto do sistema (calendário, lista de reservas, etc.)
   // continua mostrando o status real até alguém atualizá-lo lá.
   const comoRealizada = (r) => {

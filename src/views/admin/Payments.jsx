@@ -75,7 +75,7 @@ export function PaymentsView({ data, update }) {
                 )}
                 <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
                   <button onClick={() => duplicate(p.id)} title="Duplicar" style={iconBtn}><Copy size={14} /></button>
-                  <button onClick={() => setConfirmId(p.id)} title="Eliminar" style={{ ...iconBtn, color: C.erro }}><Trash2 size={14} /></button>
+                  <button onClick={() => setConfirmId(p.id)} title="Excluir" style={{ ...iconBtn, color: C.erro }}><Trash2 size={14} /></button>
                 </div>
               </div>
             </div>
@@ -87,7 +87,7 @@ export function PaymentsView({ data, update }) {
         const p = data.pagamentos.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer eliminar <b>{p?.nome || 'este meio de pagamento'}</b>? Esta ação não pode ser desfeita.</>}
+            message={<>Tem a certeza que quer excluir <b>{p?.nome || 'este meio de pagamento'}</b>? Esta ação não pode ser desfeita.</>}
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />

@@ -141,7 +141,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   const [showPrices, setShowPrices] = useState(false);
   const [editing, setEditing] = useState(null);
   const [prefill, setPrefill] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // reserva pendente de eliminação rápida a partir da lista
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // reserva pendente de exclusão rápida a partir da lista
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef(null);
   // campo de pesquisa global (código, hóspede, apartamento, etc.) — a pedido
@@ -918,7 +918,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{r.status === 'bloqueio' ? <span style={{ color: C.inkSoft }}>—</span> : money(r.valorPago || 0)}</td>
                     <td style={{ padding: '11px 14px' }}><Badge status={displayStatus(r)} /></td>
                     <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => setDeleteConfirm(r)} title="Eliminar" style={iconBtn}><Trash2 size={15} /></button>
+                      <button onClick={() => setDeleteConfirm(r)} title="Excluir" style={iconBtn}><Trash2 size={15} /></button>
                       <button onClick={() => setEditing(r)} title="Editar" style={{ ...iconBtn, marginLeft: 6 }}><Pencil size={15} /></button>
                     </td>
                   </tr>
@@ -967,7 +967,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       {deleteConfirm && (
         <ConfirmDialog
-          message={<>Eliminar definitivamente a reserva <b>{deleteConfirm.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
+          message={<>Excluir definitivamente a reserva <b>{deleteConfirm.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
           onConfirm={() => { remove(deleteConfirm.id); setDeleteConfirm(null); }}
           onCancel={() => setDeleteConfirm(null)}
         />
@@ -1052,7 +1052,7 @@ function QuickRateModal({ apt, startD, endD, nNoites, afetadas, parciais, onClos
       onClose={onClose}
       footer={<>
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn variant="primary" onClick={() => onSave(Number(preco) || 0)}>Guardar tarifa</Btn>
+        <Btn variant="primary" onClick={() => onSave(Number(preco) || 0)}>Salvar tarifa</Btn>
       </>}>
       <Field label="Preço por noite neste período"
         hint={temReservas
@@ -1087,7 +1087,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const [pais, setPais] = useState(i.pais || 'Brasil');
   const [email, setEmail] = useState(i.email || '');
   const [enviarEmail, setEnviarEmail] = useState(i.enviarEmail || false);
-  // quando saiu o último e-mail de confirmação (guardado na reserva) e o
+  // quando saiu o último e-mail de confirmação (salvo na reserva) e o
   // estado do envio manual em curso: null | 'a-enviar' | 'enviado' | 'falhou'
   const [emailEnviadoEm, setEmailEnviadoEm] = useState(i.emailEnviadoEm || null);
   const [envio, setEnvio] = useState(null);
@@ -1128,9 +1128,9 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   }, [ci, co, adultos, criancas]);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
-  // Apagar um lançamento de pagamento é irreversível e pode remover um
+  // Excluir um lançamento de pagamento é irreversível e pode excluir um
   // registo criado automaticamente pelo site (Mercado Pago) — por isso pede
-  // confirmação, tal como já acontece para eliminar a reserva inteira (a
+  // confirmação, tal como já acontece para excluir a reserva inteira (a
   // pedido do Caio, 2026-09-27).
   const [confirmRemoverRegistro, setConfirmRemoverRegistro] = useState(null);
 
@@ -1209,7 +1209,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   // Telefone/Email deixaram de ser obrigatórios para gravar (a pedido do
   // Caio, 2026-09-23): as 3261 reservas do histórico importado não têm
   // telefone (e muitas não têm email), o que impedia GRAVAR QUALQUER
-  // EDIÇÃO nelas — o botão "Guardar alterações" ficava sempre desativado.
+  // EDIÇÃO nelas — o botão "Salvar alterações" ficava sempre desativado.
   // O nome do hóspede continua obrigatório.
   const canSave = validDates && (free || status === 'cancelada') && !overCap && (status === 'bloqueio' || (nome.trim() && sobrenome.trim()));
   const valorLegado = registrosPagamento.length === 0 ? Math.round((Number(i.valorPago) || 0) * 100) / 100 : 0;
@@ -1245,7 +1245,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
 
   // A reserva tal como está no ecrã. Serve tanto para gravar como para o envio
   // manual do e-mail — assim o e-mail vai sempre com os mesmos dados que o
-  // botão "Guardar" gravaria, sem haver duas montagens a poderem divergir.
+  // botão "Salvar" gravaria, sem haver duas montagens a poderem divergir.
   const montarReserva = () => ({
     id: i.id || uid(), codigo: i.codigo || code(), apartamentoId: aptId, checkIn: ci, checkOut: co,
     status, origem,
@@ -1286,7 +1286,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
         </button>
       )}
       footer={<>
-        {!isNew && onRemove && <Btn variant="danger" icon={Trash2} onClick={() => setConfirmDelete(true)} style={{ marginRight: 'auto' }}>Eliminar</Btn>}
+        {!isNew && onRemove && <Btn variant="danger" icon={Trash2} onClick={() => setConfirmDelete(true)} style={{ marginRight: 'auto' }}>Excluir</Btn>}
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
         <Btn variant="primary" disabled={!canSave} style={{ opacity: canSave ? 1 : .5 }}
           onClick={() => {
@@ -1302,7 +1302,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
         <div>
           <div style={secTitle}><Tag size={16} color={C.brisa} /> Status da reserva</div>
           <div className="pm-dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Estado" hint={!isNew ? 'Marque como Cancelada para manter no histórico sem bloquear as datas, ou use "Eliminar" abaixo para remover definitivamente.' : undefined}>
+            <Field label="Estado" hint={!isNew ? 'Marque como Cancelada para manter no histórico sem bloquear as datas, ou use "Excluir" abaixo para excluir definitivamente.' : undefined}>
               {/* Pintado com a cor do estado escolhido (a mesma do calendário
                   e das etiquetas): confirma de relance o que está seleccionado,
                   sem ser preciso ler. */}
@@ -1568,14 +1568,14 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                             Pago (api/mp-webhook.js só grava isto quando o
                             pagamento está "approved") — não há como existir
                             esse registo sem o dinheiro ter entrado de facto.
-                            Por isso não oferecemos apagar (a pedido do Caio,
+                            Por isso não oferecemos excluir (a pedido do Caio,
                             2026-09-27): se o pagamento foi depois estornado,
                             isso já aparece à parte no aviso do Painel, e o
                             histórico do que foi recebido deve continuar
                             existindo. Só lançamentos manuais podem ser
-                            apagados. */}
+                            excluídos. */}
                         {!reg.legado && !reg.mpId && (
-                          <button type="button" onClick={() => setConfirmRemoverRegistro(reg)} title="Apagar lançamento"
+                          <button type="button" onClick={() => setConfirmRemoverRegistro(reg)} title="Excluir lançamento"
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.7)', display: 'grid', placeItems: 'center' }}>
                             <Trash2 size={13} />
                           </button>
@@ -1606,14 +1606,14 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     </Modal>
     {confirmDelete && (
       <ConfirmDialog
-        message={<>Eliminar definitivamente a reserva <b>{i.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
+        message={<>Excluir definitivamente a reserva <b>{i.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
         onConfirm={() => { onRemove(i.id); setConfirmDelete(false); }}
         onCancel={() => setConfirmDelete(false)}
       />
     )}
     {confirmRemoverRegistro && (
       <ConfirmDialog
-        message={<>Apagar o lançamento <b>{confirmRemoverRegistro.descricao}</b> de <b>{money(confirmRemoverRegistro.valor)}</b> ({fmtShort(confirmRemoverRegistro.data)})? Esta ação não pode ser desfeita.</>}
+        message={<>Excluir o lançamento <b>{confirmRemoverRegistro.descricao}</b> de <b>{money(confirmRemoverRegistro.valor)}</b> ({fmtShort(confirmRemoverRegistro.data)})? Esta ação não pode ser desfeita.</>}
         onConfirm={() => { removeRegistro(confirmRemoverRegistro.id); setConfirmRemoverRegistro(null); }}
         onCancel={() => setConfirmRemoverRegistro(null)}
       />

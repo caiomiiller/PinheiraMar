@@ -51,7 +51,7 @@ export function TaxasView({ data, update }) {
             </div>
             <div className="pm-taxa-por" style={{ minWidth: 72, fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>{POR_LABEL[tx.por] || tx.por}</div>
             <button onClick={() => setEditing(tx)} style={iconBtn} title="Editar"><Pencil size={15} /></button>
-            <button onClick={() => setConfirmId(tx.id)} style={{ ...iconBtn, color: C.erro }} title="Eliminar"><Trash2 size={15} /></button>
+            <button onClick={() => setConfirmId(tx.id)} style={{ ...iconBtn, color: C.erro }} title="Excluir"><Trash2 size={15} /></button>
           </div>
         ))}
       </div>
@@ -66,7 +66,7 @@ export function TaxasView({ data, update }) {
         const tx = taxas.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer eliminar a taxa <b>{tx?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
+            message={<>Tem a certeza que quer excluir a taxa <b>{tx?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />

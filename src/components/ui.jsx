@@ -216,10 +216,10 @@ export const PageHead = ({ title, sub, action }) => (
 );
 export const Card = ({ children, style, ...rest }) => <div {...rest} style={{ background: C.white, borderRadius: R.modal, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
 
-// Diálogo de confirmação genérico — usado antes de qualquer eliminação
+// Diálogo de confirmação genérico — usado antes de qualquer exclusão
 // permanente (apartamento, taxa, idioma, meio de pagamento, temporada...),
 // para evitar que um toque acidental na lixeira apague algo sem querer.
-export function ConfirmDialog({ title = 'Confirmar exclusão', message, confirmLabel = 'Eliminar', onConfirm, onCancel }) {
+export function ConfirmDialog({ title = 'Confirmar exclusão', message, confirmLabel = 'Excluir', onConfirm, onCancel }) {
   return (
     <Modal title={title} onClose={onCancel}
       footer={<>

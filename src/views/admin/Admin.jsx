@@ -143,7 +143,7 @@ export function Admin({ data, update, initialResidencialId }) {
         <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: tab === 'reservas' ? 'none' : 1180, margin: '0 auto' }}>
           {/* key={residencialId}: ao trocar de residencial, as telas com
               formulário começam de novo com os dados do residencial escolhido
-              (antes, "Guardar" em Configurações/Políticas podia gravar os dados
+              (antes, "Salvar" em Configurações/Políticas podia gravar os dados
               do residencial anterior por cima do novo). */}
           {tab === 'painel' && <Dashboard key={residencialId} data={scoped} go={setTab} openReservation={openReservation} update={scopedUpdate} />}
           {/* Reservas é partilhado pelos dois residenciais (não usa o "recorte" do

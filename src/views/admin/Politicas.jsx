@@ -115,7 +115,7 @@ export function PoliticasView({ data, update }) {
               setSaved(false);
             }}>Cancelar</Btn>
             <Btn variant="primary" icon={saved ? Check : undefined} onClick={onSave}>
-              {saved ? 'Guardado ✓' : 'Salvar'}
+              {saved ? 'Salvo ✓' : 'Salvar'}
             </Btn>
           </div>
         }

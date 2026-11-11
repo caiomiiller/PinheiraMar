@@ -80,7 +80,7 @@ export function IdiomasView({ data, update }) {
             </div>
 
             <button onClick={() => setEditando(lang)} style={iconBtn} title="Editar"><Pencil size={15} /></button>
-            <button onClick={() => setConfirmCodigo(lang.codigo)} style={{ ...iconBtn, color: C.erro }} title="Remover"><Trash2 size={15} /></button>
+            <button onClick={() => setConfirmCodigo(lang.codigo)} style={{ ...iconBtn, color: C.erro }} title="Excluir"><Trash2 size={15} /></button>
           </Card>
         ))}
 
@@ -94,7 +94,7 @@ export function IdiomasView({ data, update }) {
       {/* info note */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 16px', background: C.infoBg, border: `1px solid ${C.infoBorda}`, borderRadius: R.cartao, marginTop: 18, fontSize: 13.5, color: C.info, maxWidth: 760 }}>
         <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
-        <span>Os idiomas ativos aparecem como seletor de bandeira no canto do site público. O hóspede escolhe o idioma e todas as etiquetas, botões e textos do site são apresentados na língua selecionada. Português é sempre o idioma principal e não pode ser removido.</span>
+        <span>Os idiomas ativos aparecem como seletor de bandeira no canto do site público. O hóspede escolhe o idioma e todas as etiquetas, botões e textos do site são apresentados na língua selecionada. Português é sempre o idioma principal e não pode ser excluído.</span>
       </div>
 
       {/* Add language modal */}
@@ -124,7 +124,7 @@ export function IdiomasView({ data, update }) {
         <Modal title={`Editar — ${editando.nome}`} onClose={() => setEditando(null)}
           footer={<>
             <Btn variant="ghost" onClick={() => setEditando(null)}>Cancelar</Btn>
-            <Btn variant="primary" onClick={() => saveEdit(editando.codigo, { nativo: editando.nativo, bandeira: editando.bandeira })}>Guardar</Btn>
+            <Btn variant="primary" onClick={() => saveEdit(editando.codigo, { nativo: editando.nativo, bandeira: editando.bandeira })}>Salvar</Btn>
           </>}>
           <div style={{ display: 'grid', gap: 14 }}>
             <Field label="Nome no próprio idioma (nativo)">
@@ -141,9 +141,9 @@ export function IdiomasView({ data, update }) {
         const lang = idiomas.find(i => i.codigo === confirmCodigo);
         return (
           <ConfirmDialog
-            title="Remover idioma"
-            message={<>Tem a certeza que quer remover <b>{lang?.nativo || 'este idioma'}</b> do site? Os hóspedes deixarão de poder escolhê-lo.</>}
-            confirmLabel="Remover"
+            title="Excluir idioma"
+            message={<>Tem a certeza que quer excluir <b>{lang?.nativo || 'este idioma'}</b> do site? Os hóspedes deixarão de poder escolhê-lo.</>}
+            confirmLabel="Excluir"
             onConfirm={() => { remove(confirmCodigo); setConfirmCodigo(null); }}
             onCancel={() => setConfirmCodigo(null)}
           />
