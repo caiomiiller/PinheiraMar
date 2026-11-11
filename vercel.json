@@ -49,6 +49,11 @@
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "query", "key": "apto" }],
+      "destination": "/api/previa"
     }
   ]
 }
