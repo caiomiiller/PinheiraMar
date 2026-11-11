@@ -875,6 +875,11 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         </div>
         <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 13, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase' }}>
           © {new Date().getFullYear()} Grupo PinheiraMar
+          {/* links das políticas e da privacidade (LGPD) */}
+          <nav aria-label={tr('ps_rodape_politicas')} style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 24, marginTop: 4, letterSpacing: 0, textTransform: 'none', fontSize: 14 }}>
+            <a href="/?politicas" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: BLACK, textDecoration: 'underline' }}>{tr('ps_rodape_politicas')}</a>
+            <a href="/?politicas#privacidade" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: BLACK, textDecoration: 'underline' }}>{tr('ps_rodape_privacidade')}</a>
+          </nav>
         </div>
         <Faixa height={6} />
       </footer>

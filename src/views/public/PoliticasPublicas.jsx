@@ -3,6 +3,7 @@ import { Waves, MessageCircle, RefreshCw } from 'lucide-react';
 import { C, F, R } from '../../lib/constants';
 import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { carregarPublico } from '../../lib/dadosPublico';
+import { secoesPrivacidade } from '../../lib/privacidade';
 
 // Página pública e sem login — pensada para ser um link que o Caio pode
 // mandar direto para um cliente (WhatsApp, e-mail) mostrando as políticas
@@ -52,11 +53,26 @@ function CartaoResidencial({ residencial }) {
       <BlocoPolitica titulo={pol.cancelamento?.titulo || 'Política de Cancelamento'} texto={pol.cancelamento?.texto} />
       {wa && (
         <a href={wa} target="_blank" rel="noopener noreferrer"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4, padding: '10px 16px', borderRadius: R.cartao, background: '#25D366', color: C.white, fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4, padding: '10px 16px', borderRadius: R.cartao, background: C.sucesso, color: C.white, fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
           <MessageCircle size={17} /> Falar no WhatsApp
         </a>
       )}
     </div>
+  );
+}
+
+function BlocoPrivacidade({ contato }) {
+  return (
+    <section id="privacidade" aria-labelledby="privacidade-titulo" style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: R.modal, padding: '26px 24px', marginBottom: 22, scrollMarginTop: 16 }}>
+      <h2 id="privacidade-titulo" style={{ fontSize: 22, fontWeight: 600, color: C.ink, margin: '0 0 4px' }}>Política de Privacidade</h2>
+      <p style={{ fontSize: 13.5, color: C.inkSoft, margin: '0 0 20px', lineHeight: 1.6 }}>Como tratamos os dados pessoais de quem reserva conosco, conforme a Lei Geral de Proteção de Dados (LGPD).</p>
+      {secoesPrivacidade(contato).map(sec => (
+        <div key={sec.id} style={{ marginBottom: 18 }}>
+          <h3 style={{ fontFamily: F.disp, fontSize: 17, fontWeight: 400, color: C.ocean, margin: '0 0 6px' }}>{sec.titulo}</h3>
+          <p style={{ fontSize: 14.5, lineHeight: 1.7, color: C.ink, margin: 0 }}>{sec.texto}</p>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -72,10 +88,18 @@ export function PoliticasPublicas({ filtro }) {
 
   useEffect(() => { carregar(); }, [carregar]);
 
+  // /?politicas#privacidade: depois de carregar, desliza até a política de privacidade
+  useEffect(() => {
+    if (!data || window.location.hash !== '#privacidade') return;
+    const t = setTimeout(() => document.getElementById('privacidade')?.scrollIntoView({ block: 'start' }), 50);
+    return () => clearTimeout(t);
+  }, [data]);
+
   const voltar = () => {
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete('politicas');
+      url.hash = '';
       window.location.href = url.pathname + url.search + url.hash;
     } catch { window.location.href = '/'; }
   };
@@ -116,15 +140,17 @@ export function PoliticasPublicas({ filtro }) {
           <Waves size={22} color={C.ocean} />
           <div style={{ fontFamily: F.disp, fontSize: 15, letterSpacing: '.14em', textTransform: 'uppercase', color: C.ocean}}>Grupo PinheiraMar</div>
         </div>
-        <h1 style={{ fontFamily: F.disp, fontSize: 30, fontWeight: 400, color: C.ink, margin: '4px 0 8px' }}>Políticas de Hospedagem e Cancelamento</h1>
+        <h1 style={{ fontFamily: F.disp, fontSize: 30, fontWeight: 400, color: C.ink, margin: '4px 0 8px' }}>Políticas de Hospedagem, Cancelamento e Privacidade</h1>
         <p style={{ fontSize: 15, color: C.inkSoft, marginBottom: 30, lineHeight: 1.6 }}>
           Estes são os termos que valem para a sua reserva. Qualquer dúvida, fale connosco pelo WhatsApp.
         </p>
 
         {mostrar.map(r => <CartaoResidencial key={r.id} residencial={r} />)}
 
+        <BlocoPrivacidade contato={{ email: (data.residenciais || []).find(r => r.email)?.email, telefone: (data.residenciais || []).find(r => r.telefone)?.telefone }} />
+
         <div style={{ textAlign: 'center', marginTop: 30 }}>
-          <button onClick={voltar} style={{ background: 'none', border: 'none', color: C.brisa, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, fontFamily: F.sans }}>← Voltar ao site</button>
+          <button onClick={voltar} style={{ background: 'none', border: 'none', color: C.ocean, cursor: 'pointer', fontSize: 14.5, fontWeight: 600, fontFamily: F.sans }}>← Voltar ao site</button>
         </div>
       </div>
     </div>

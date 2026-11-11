@@ -260,7 +260,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
           {/* campo-isca anti-robôs (escondido de pessoas e de leitores de tela) */}
           <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={e => setWebsite(e.target.value)} name="website"
             style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
-          <p style={{ fontSize: 14, color: C.inkSoft, margin: 0, lineHeight: 1.5 }}>{tr('bk_privacidade')}</p>
+          <p style={{ fontSize: 14, color: C.inkSoft, margin: 0, lineHeight: 1.5 }}>{tr('bk_privacidade')}{' '}<a href="/?politicas#privacidade" target="_blank" rel="noopener noreferrer" style={{ color: C.ocean, fontWeight: 600 }}>{tr('bk_privacidade_link')}</a></p>
         </div>
       </Modal>
     );
