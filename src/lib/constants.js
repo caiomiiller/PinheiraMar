@@ -12,7 +12,7 @@ const PALETA = Object.freeze({
     line: '#E2E0DB', bordaForte: '#8A8A8A', inativo: '#BBBBBB',
     espuma: '#F2F1F5', fundoSuave: '#F8F8F6', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
     // estados: sucesso · aviso · erro · informação (texto, fundo, borda)
-    sucesso: '#1C7A5B', sucessoBg: '#E1F0EC', sucessoBorda: '#6EE7B7',
+    sucesso: '#156B4E', sucessoBg: '#E1F0EC', sucessoBorda: '#6EE7B7',
     aviso: '#7B5600', avisoBg: '#FFF4D6', avisoBorda: '#EBD9C0',
     erro: '#B42318', erroBg: '#FEF3F2', erroBorda: '#F0C6C6',
     info: '#1A4A7A', infoBg: '#EEF6FF', infoBorda: '#BDD9F8',
