@@ -6,12 +6,16 @@ import { estadoPublico } from '../server/publico.js';
 import { responder } from '../server/http.js';
 import { migrarDados } from '../src/lib/migracoes.js';
 import { hojeISO } from '../src/lib/reservas.js';
+import { mpConfigurado } from '../server/mercadopago.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return responder(res, 405, { erro: 'metodo_nao_permitido' });
   try {
     const { data } = await lerEstado();
-    const corpo = estadoPublico(migrarDados(data).data, hojeISO());
+    // pagamentoOnline: só diz ao site se o botão final leva a um pagamento
+    // (Mercado Pago configurado) ou a um pedido de reserva — o mesmo critério
+    // de api/reservar.js. Não expõe nenhuma chave.
+    const corpo = { ...estadoPublico(migrarDados(data).data, hojeISO()), pagamentoOnline: mpConfigurado() };
     // Pode ficar uns segundos em cache na CDN da Vercel (menos leituras do
     // banco inteiro). A disponibilidade é sempre conferida de novo pelo
     // servidor no momento de reservar (/api/reservar).

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
-  Home, Users, AlertCircle, X } from 'lucide-react';
+  Home, Users, X } from 'lucide-react';
 import { F, fotoTopo, LOGO_RESIDENCIAL, C, R } from '../../lib/constants';
 import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
@@ -280,7 +280,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
 
   /* ── search pill segments ── */
   const Seg = ({ label, children, last }) => (
-    <div style={{ flex: 1, padding: '0 20px', borderRight: last ? 'none' : `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, minWidth: 0 }}>
+    <div style={{ flex: 1, padding: '0 16px', borderRight: last ? 'none' : `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, minWidth: 0 }}>
       {/* 11.5px e tracking mais solto que antes (10px/.12em): versalete
           condensada nesse tamanho é o pior caso de legibilidade para
           presbiopia — público 40+ */}
@@ -355,9 +355,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           <div style={{ fontSize: 14, color: GREY, marginTop: 3 }}>{dado(apt.piso)} · {dado(apt.vista)} · {tr('ps_ate_pessoas', apt.capacidade)}</div>
           {valid && !fits && (
             needsCombo
-              ? <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13.5, color: C.erro, fontWeight: 700, marginTop: 6 }}>
-                  <AlertCircle size={14} /> {tr('ps_combinar_obrigatorio', hosp)}
-                </div>
+              ? <div style={{ fontSize: 13.5, color: GREY, fontWeight: 600, marginTop: 6 }}>{tr('ps_combinar_obrigatorio', hosp)}</div>
               : <div style={{ fontSize: 13.5, color: ACCENT, fontWeight: 600, marginTop: 5 }}>{tr('ps_combinar')}</div>
           )}
           {/* com datas: o TOTAL da estadia, já com as taxas obrigatórias — o
@@ -525,8 +523,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     { key: 'cap2', n: 2, icone: (s) => <Users size={s} />, label: tr('cat_cap2') },
     { key: 'cap4', n: 4, icone: (s) => <Users size={s} />, label: tr('cat_cap4') },
     { key: 'cap6', n: 6, icone: (s) => <Users size={s} />, label: tr('cat_cap6') },
-    { key: 'cap8', n: 8, icone: (s) => <Users size={s} />, label: tr('cat_cap8') },
-  ].map(c => (c.sep ? c : { ...c, nomeCompleto: c.n ? tr('ps_ate_pessoas', c.n) : c.label }));
+    { key: 'cap8', n: 8, curto: '8+', icone: (s) => <Users size={s} />, label: tr('cat_cap8') },
+  ].map(c => (c.sep ? c : { ...c, nomeCompleto: c.label }));
 
   // "Escolha as datas": abre o calendário da busca. No desktop ele abre no
   // topo fixo; no telemóvel a busca fica acima da lista, então sobe até ela.
@@ -565,10 +563,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
 
           {/* centred search (desktop) */}
           <div className="pm-pubsite-search-desktop" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
-            {/* barra em pílula, com o PROCURAR arredondado por dentro (caixas e
+            {/* barra em pílula, com o botão "Ver apartamentos" arredondado por dentro (caixas e
                 botões arredondados, a pedido do Caio). Sem overflow:hidden: o
                 calendário e o seletor de pessoas abrem por baixo dela. */}
-            <div style={{ display: 'flex', alignItems: 'stretch', height: 50, padding: 4, boxSizing: 'border-box', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, boxShadow: '0 2px 10px rgba(27,28,70,.06)', maxWidth: 680, width: '100%', position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'stretch', height: 50, padding: 4, boxSizing: 'border-box', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, boxShadow: '0 2px 10px rgba(27,28,70,.06)', maxWidth: 740, width: '100%', position: 'relative' }}>
               <Seg label={tr('search_checkin')}>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => { setGuestOpen(false); setCalOpen(o => !o); }}>
@@ -614,7 +612,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 )}
               </Seg>
               <button onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-                style={{ padding: '0 24px', background: BLACK, color: WHITE, border: 'none', borderRadius: R.pilula, cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                style={{ padding: '0 18px', background: BLACK, color: WHITE, border: 'none', borderRadius: R.pilula, cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 {tr('search_btn').toUpperCase()}
               </button>
             </div>
@@ -649,7 +647,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 <button key={String(cat.key)} type="button" onClick={() => escolherCategoriaTopo(on ? null : cat.key)}
                   aria-label={cat.nomeCompleto} title={cat.nomeCompleto} aria-pressed={on}
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, minWidth: 48, padding: cat.n ? '0 14px 0 12px' : (comTexto ? '0 14px' : '0 12px'), flexShrink: 0, borderRadius: R.pilula, border: `1px solid ${on ? 'rgba(27,28,70,.45)' : BORDER}`, background: on ? 'rgba(27,28,70,.08)' : WHITE, color: on ? BLACK : GREY, cursor: 'pointer', fontFamily: F.sans, fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                  {cat.icone(20)}{cat.n ? <span aria-hidden>{cat.n}</span> : null}{comTexto ? <span aria-hidden>{cat.label}</span> : null}
+                  {cat.icone(20)}{cat.n ? <span aria-hidden>{cat.curto || cat.n}</span> : null}{comTexto ? <span aria-hidden>{cat.label}</span> : null}
                 </button>
               );
             })}

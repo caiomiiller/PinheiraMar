@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Minus, Plus, PawPrint, Umbrella, SquareParking, Sparkles, Users, Home, AlertCircle, MessageCircle, Clock } from 'lucide-react';
 import { C, R } from '../lib/constants';
-import { money, MIN_PRAZO_INFORMADO } from '../lib/helpers';
+import { money, MIN_PRAZO_INFORMADO, primeiraRegraPolitica } from '../lib/helpers';
 import { orcamentoReserva } from '../lib/precos';
 import { validarHospede } from '../lib/reservas';
 import { guardarUltimaReserva } from '../lib/dadosPublico';
@@ -74,12 +74,16 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
   const o2 = orc?.partes[1]?.orcamento;
   const total = orc?.total || 0;
   const sinal = orc?.sinal || 0;
+  // o servidor diz se o botão final leva a um pagamento (Mercado Pago) ou a um pedido de reserva
+  const pagarOnline = !!data.pagamentoOnline && sinal > 0;
   const noites = o1?.noites || 0;
   const opcTotal = [o1, o2].filter(Boolean).reduce((s, o) => s + o.opcionais.reduce((a, e) => a + e.subtotal, 0), 0);
 
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
   const cancelPol = data.settings.politicas?.cancelamento;
+  // a política é escrita em português no painel: nos outros idiomas fica a frase genérica
+  const regraCancelamento = lang === 'pt' ? primeiraRegraPolitica(cancelPol?.texto) : '';
 
   const [paying, setPaying] = useState(false);
   const [erroEnvio, setErroEnvio] = useState(null);
@@ -189,7 +193,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 15, color: C.ink }}>
               <span>{tr('bk_restante')}</span><span>{money(total - sinal)}</span>
             </div>
-            <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{tr('bk_nada_cobrado')}</div>
+            <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{pagarOnline ? tr('bk_nada_cobrado') : tr('bk_nada_cobrado_manual')}</div>
           </div>
         </div>
       </Modal>
@@ -266,7 +270,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
   const textoErro = erroEnvio ? tr(MENSAGEM_ERRO[erroEnvio.erro] || 'err_generico', erroEnvio) : null;
   return (
     <Modal {...modalNav} title={tr('bk_titulo_revisao')} subtitle={nomes}
-      footer={<Btn variant="accent" disabled={paying} style={{ width: '100%', minHeight: 52, fontSize: 16, opacity: paying ? .6 : 1 }} onClick={handleConfirm}>{paying ? tr('bk_processando') : tr('bk_confirmar')}</Btn>}>
+      footer={<Btn variant="accent" disabled={paying} style={{ width: '100%', minHeight: 52, fontSize: 16, opacity: paying ? .6 : 1 }} onClick={handleConfirm}>{paying ? (pagarOnline ? tr('bk_processando') : tr('bk_processando_manual')) : (pagarOnline ? tr('bk_confirmar', money(sinal)) : tr('bk_confirmar_manual'))}</Btn>}>
       <div style={{ fontSize: 15.5 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}`, marginBottom: 4 }}>
           <div style={{ width: 64, height: 64, borderRadius: R.cartao, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={64} radius={R.cartao} /></div>
@@ -305,7 +309,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
           <span style={{ fontSize: 17, fontWeight: 700, color: C.acaoEscura }}>{money(sinal)}</span>
         </div>
         {/* prazo dito ao hóspede: 5 min a menos do que o link do Mercado Pago vale (ver helpers.js) */}
-        {sinal > 0 && (
+        {pagarOnline && (
           <div style={{ padding: '12px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>
             <Clock size={17} style={{ flexShrink: 0, marginTop: 2 }} />
             <span>{tr('bk_datas_guardadas', MIN_PRAZO_INFORMADO)}</span>
@@ -316,7 +320,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
           <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
             <div style={{ fontWeight: 700, fontSize: 15.5, marginBottom: 4 }}>{cancelPol.titulo}</div>
             <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.5 }}>
-              {tr('bk_cancelamento_resumo')}{' '}
+              {regraCancelamento || tr('bk_cancelamento_resumo')}{' '}
               <button type="button" onClick={() => setShowPolicy(s => !s)} style={linkBtnStyle} aria-expanded={showPolicy}>{showPolicy ? tr('bk_ocultar') : tr('bk_ver_politica')}</button>
             </div>
             {showPolicy && <div style={{ marginTop: 10, fontSize: 14.5, color: C.ink, whiteSpace: 'pre-wrap', background: C.espuma, borderRadius: R.cartao, padding: 12, lineHeight: 1.6 }}>{cancelPol.texto}</div>}

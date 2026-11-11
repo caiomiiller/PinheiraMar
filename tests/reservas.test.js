@@ -146,3 +146,28 @@ describe('pendentesDoHospede', () => {
     expect(pendentesDoHospede(rs, { email: 'nova@exemplo.com', telefone: '11 90000-0000' }, agora)).toBe(0);
   });
 });
+
+import { primeiraRegraPolitica } from '../src/lib/helpers.js';
+describe('primeira regra da política de cancelamento (resumo na revisão)', () => {
+  const politica = `Solicitações de cancelamento são aceitas exclusivamente por ligação ou WhatsApp.
+
+PRAZOS E CONDIÇÕES
+
+• Cancelamento ou troca de data com mais de 31 dias de antecedência do check-in:
+  → Emissão de Voucher no valor já antecipado, válido para nova reserva.
+
+• Cancelamento entre 16 e 30 dias:
+  → Cobrança de 50% do valor total da estadia.`;
+  it('junta o primeiro item da lista numa frase', () => {
+    expect(primeiraRegraPolitica(politica)).toBe('Cancelamento ou troca de data com mais de 31 dias de antecedência do check-in: emissão de Voucher no valor já antecipado, válido para nova reserva.');
+  });
+  it('aceita item de uma linha só, com hífen', () => {
+    expect(primeiraRegraPolitica('Regras:\n- Cancelando até 30 dias antes da entrada, devolvemos o sinal\n- Depois disso, não')).toBe('Cancelando até 30 dias antes da entrada, devolvemos o sinal.');
+  });
+  it('sem lista, vazio ou regra longa demais: devolve vazio (o site usa a frase genérica)', () => {
+    expect(primeiraRegraPolitica('Texto corrido, sem itens.')).toBe('');
+    expect(primeiraRegraPolitica('')).toBe('');
+    expect(primeiraRegraPolitica(undefined)).toBe('');
+    expect(primeiraRegraPolitica('• ' + 'palavra '.repeat(60))).toBe('');
+  });
+});

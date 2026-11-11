@@ -132,6 +132,27 @@ export const MIN_HOLD_PAGAMENTO = 30;
 // Só texto — não muda a janela de pagamento nem o tempo que as datas ficam seguras.
 export const MIN_PRAZO_INFORMADO = MIN_JANELA_PAGAMENTO - 5;
 
+// Primeira regra da política de cancelamento, por extenso, para mostrar na
+// revisão da reserva. A política é texto livre escrito no painel: procura o
+// primeiro item de lista ("•", "-", "*") e junta as linhas dele. Sem lista,
+// ou se a regra for longa demais para uma linha de resumo, devolve '' e o
+// site mostra a frase genérica.
+export function primeiraRegraPolitica(texto, max = 240) {
+  const linhas = String(texto || '').split(/\r?\n/);
+  const i = linhas.findIndex(l => /^\s*[•\-*–]\s+\S/.test(l));
+  if (i < 0) return '';
+  const partes = [linhas[i]];
+  for (let j = i + 1; j < linhas.length; j++) {
+    if (!linhas[j].trim() || /^\s*[•\-*–]\s+\S/.test(linhas[j])) break;
+    partes.push(linhas[j]);
+  }
+  const limpa = partes.map(l => l.replace(/^\s*(?:[•\-*–]|→|->|=>)\s*/, '').trim()).filter(Boolean);
+  let frase = limpa[0] || '';
+  for (const p of limpa.slice(1)) frase += (/[:;,]$/.test(frase) ? ' ' : '. ') + (/:$/.test(frase) ? p.charAt(0).toLowerCase() + p.slice(1) : p);
+  if (frase && !/[.!?]$/.test(frase)) frase += '.';
+  return frase.length <= max ? frase : '';
+}
+
 // Uma reserva provisória cujo prazo passou nunca chegou a ser uma reserva:
 // não bloqueia datas nem entra nas contas do Financeiro. Data inválida ou
 // ausente conta como "não expirada", para nunca libertar datas por engano.
