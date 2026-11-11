@@ -61,7 +61,7 @@ export function Modal({ title, subtitle, onClose, onBack, headerActions, childre
             ))}
           </div>
         )}
-        {footer && <div className="pm-modal-footer" style={{ padding: '16px 22px', borderTop: `1px solid ${C.line}`, background: C.espuma, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>{footer}</div>}
+        {footer && <div className="pm-modal-footer" style={{ padding: '16px 22px', borderTop: `1px solid ${C.line}`, background: C.espuma, display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 10 }}>{footer}</div>}
       </div>
     </div>
   );

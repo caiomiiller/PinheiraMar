@@ -36,3 +36,26 @@ describe('disponibilidade no site público (reservas sem id)', () => {
     expect(isAvailable(pub.reservas, 'a2', '2026-12-11', '2026-12-13')).toBe(true);
   });
 });
+
+import { linkParaRepagar } from '../src/lib/dadosPublico.js';
+describe('tentar pagar de novo (link do Mercado Pago ainda válido)', () => {
+  const criado = Date.parse('2027-01-05T12:00:00Z');
+  const info = { initPoint: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=123', guardadoEm: criado };
+  it('devolve o link enquanto a janela de pagamento não fechou', () => {
+    const r = linkParaRepagar(info, criado + 5 * 60000);
+    expect(r.url).toBe(info.initPoint);
+    expect(r.ate).toBe(criado + 19 * 60000); // 20 min de janela − 1 min de folga
+  });
+  it('não devolve depois do prazo', () => {
+    expect(linkParaRepagar(info, criado + 19 * 60000)).toBeNull();
+    expect(linkParaRepagar(info, criado + 60 * 60000)).toBeNull();
+  });
+  it('não devolve sem link, sem hora ou com endereço que não é do Mercado Pago', () => {
+    expect(linkParaRepagar({ guardadoEm: criado }, criado)).toBeNull();
+    expect(linkParaRepagar({ initPoint: info.initPoint }, criado)).toBeNull();
+    expect(linkParaRepagar({ ...info, initPoint: 'https://mercadopago.com.br.exemplo.com/x' }, criado)).toBeNull();
+    expect(linkParaRepagar({ ...info, initPoint: 'http://www.mercadopago.com.br/x' }, criado)).toBeNull();
+    expect(linkParaRepagar({ ...info, initPoint: 'javascript:alert(1)' }, criado)).toBeNull();
+    expect(linkParaRepagar(null, criado)).toBeNull();
+  });
+});

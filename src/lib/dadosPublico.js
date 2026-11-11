@@ -4,6 +4,7 @@
 import { MODO_DEMO } from './config';
 import { estadoPublico } from './publico.js';
 import { migrarDados } from './migracoes.js';
+import { MIN_JANELA_PAGAMENTO } from './helpers.js';
 import { validarHospede, validarPedido, montarReservas, reservaParaHospede, hojeISO } from './reservas.js';
 
 // Versões antigas do site guardavam uma cópia COMPLETA do banco (com nome,
@@ -82,4 +83,23 @@ export function lerUltimaReserva(reservaId) {
     if (!x || !Array.isArray(x.reservas) || !x.reservas.some(r => r.id === reservaId)) return null;
     return x;
   } catch { return null; }
+}
+
+// "Tentar pagar de novo": o link de pagamento criado com a reserva continua a
+// valer no Mercado Pago durante MIN_JANELA_PAGAMENTO minutos, e o servidor já
+// aceita uma nova tentativa no mesmo link (api/mp-webhook.js). Aqui só se
+// decide se ainda vale a pena mostrá-lo: devolve { url, ate } enquanto o link
+// estiver dentro do prazo (com 1 minuto de folga), senão null. Não cria nem
+// altera nada no servidor.
+const FOLGA_REPAGAR_MS = 60 * 1000;
+export function linkParaRepagar(info, agora = Date.now()) {
+  const url = String(info?.initPoint || '');
+  const criado = Number(info?.guardadoEm);
+  if (!url || !Number.isFinite(criado)) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:' || !/(^|\.)mercadopago\.com(\.[a-z]{2})?$/.test(u.hostname)) return null;
+  } catch { return null; }
+  const ate = criado + MIN_JANELA_PAGAMENTO * 60000 - FOLGA_REPAGAR_MS;
+  return agora < ate ? { url, ate } : null;
 }

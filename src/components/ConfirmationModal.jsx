@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Check, AlertCircle, Clock, MessageCircle, Copy } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, AlertCircle, Clock, MessageCircle, Copy, RefreshCw } from 'lucide-react';
 import { C, F, R } from '../lib/constants';
 import { whatsappUrl, msgReserva } from '../lib/whatsapp';
 import { money, nights } from '../lib/helpers';
 import { useIdioma } from '../lib/i18n';
+import { linkParaRepagar } from '../lib/dadosPublico';
 import { Btn, Modal, Row } from './ui';
 
 // Confirmação mostrada ao hóspede. `info` = { reservas, total, sinal, aptos,
@@ -35,12 +36,26 @@ export function ConfirmationModal({ info, paymentStatus, onClose }) {
   const failed = paymentStatus === 'failure';
   const pending = paymentStatus === 'pending';
   const paid = paymentStatus === 'success';
+  // Pagamento falhou: enquanto o link do Mercado Pago ainda valer, a ação
+  // principal é tentar pagar de novo a MESMA reserva (não cria outra).
+  const [repagar, setRepagar] = useState(() => (failed ? linkParaRepagar(info) : null));
+  useEffect(() => {
+    if (!repagar) return undefined;
+    const t = setTimeout(() => setRepagar(null), Math.max(0, repagar.ate - Date.now()));
+    return () => clearTimeout(t);
+  }, [repagar]);
+  const horaLimite = repagar ? new Date(repagar.ate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
   const aptos = (info?.aptos || []).map(a => [a.nome, dado(a.vista)].filter(Boolean).join(' · ')).join(' + ');
   const titulo = failed ? tr('cf_titulo_falhou') : paid ? tr('cf_titulo_paga') : pending ? tr('cf_titulo_aguardando') : tr('cf_titulo_recebida');
 
   return (
     <Modal title={titulo} onClose={onClose} rotuloFechar={tr('ap_fechar')}
-      footer={<Btn variant="primary" style={{ minHeight: 48, fontSize: 16 }} onClick={onClose}>{tr('cf_voltar_inicio')}</Btn>}>
+      footer={repagar
+        ? <>
+          <Btn variant="ghost" style={{ minHeight: 48, fontSize: 16 }} onClick={onClose}>{tr('cf_voltar_inicio')}</Btn>
+          <Btn variant="primary" icon={RefreshCw} style={{ minHeight: 48, fontSize: 16 }} onClick={() => { window.location.href = repagar.url; }}>{tr('cf_tentar_de_novo')}</Btn>
+        </>
+        : <Btn variant="primary" style={{ minHeight: 48, fontSize: 16 }} onClick={onClose}>{tr('cf_voltar_inicio')}</Btn>}>
       {!r1 ? (
         // voltou do Mercado Pago noutro separador/aparelho: sem os detalhes à mão
         <p style={{ fontSize: 16, lineHeight: 1.6, margin: 0 }}>{failed ? tr('cf_generico_falhou') : tr('cf_generico')}</p>
@@ -70,6 +85,7 @@ export function ConfirmationModal({ info, paymentStatus, onClose }) {
           <p style={{ fontSize: 15, color: C.inkSoft, marginTop: 16, marginBottom: 0, lineHeight: 1.6 }}>
             {failed ? tr('cf_texto_falhou') : paid ? tr('cf_texto_pago', r1.email) : pending ? tr('cf_texto_aguardando', r1.email) : tr('cf_texto_manual', r1.email)}
           </p>
+          {repagar && <p style={{ fontSize: 15, color: C.ink, margin: '10px 0 0', lineHeight: 1.6, fontWeight: 600 }}>{tr('cf_pagar_ate', horaLimite)}</p>}
           {(failed || !paymentStatus) && (
             <a href={whatsappUrl(msgReserva({ codigo: r1.codigo, aptos: (info.aptos || []).map(a => a.nome), ci: r1.checkIn, co: r1.checkOut, falhou: failed }))} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, color: C.ocean, fontWeight: 700, fontSize: 15.5, textDecoration: 'none' }}>
               <MessageCircle size={18} /> {tr('bk_falar_whatsapp')}

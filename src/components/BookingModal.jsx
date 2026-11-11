@@ -100,7 +100,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
     const r = await onReservar(pedido);
     if (r.ok) {
       const info = { reservas: r.reservas, total: r.total, sinal: r.sinal, aptos: [apt, apt2].filter(Boolean).map(a => ({ id: a.id, nome: a.nome, vista: a.vista, residencialId: a.residencialId })), sinalPct: data.settings.sinalPct };
-      if (r.initPoint) { guardarUltimaReserva(info); window.location.href = r.initPoint; return; }
+      if (r.initPoint) { guardarUltimaReserva({ ...info, initPoint: r.initPoint }); window.location.href = r.initPoint; return; }
       setPaying(false);
       onConfirmed(info);
       return;

@@ -60,7 +60,7 @@ const pt = {
   /* confirmação */
   cf_titulo_falhou: 'Pagamento não concluído', cf_titulo_paga: 'Reserva confirmada',
   cf_titulo_aguardando: 'Pagamento em análise', cf_titulo_recebida: 'Reserva recebida',
-  cf_voltar_inicio: 'Voltar ao início', cf_copiar_codigo: 'Copiar código', cf_codigo_copiado: 'Código copiado',
+  cf_voltar_inicio: 'Voltar ao início', cf_tentar_de_novo: 'Tentar pagar de novo', cf_pagar_ate: (h) => `O link de pagamento vale até ${h}. Suas datas não ficam reservadas até o pagamento ser aprovado.`, cf_copiar_codigo: 'Copiar código', cf_codigo_copiado: 'Código copiado',
   cf_generico: 'Recebemos o retorno do pagamento. A confirmação com todos os detalhes chega no seu e-mail.',
   cf_generico_falhou: 'O pagamento não foi concluído. Se quiser, fale conosco pelo WhatsApp para tentar de novo ou combinar outra forma de pagamento.',
   cf_seu_codigo: 'Seu código de reserva', cf_apartamento: 'Apartamento', cf_apartamentos: 'Apartamentos',
@@ -246,7 +246,7 @@ const es = {
 
   cf_titulo_falhou: 'Pago no completado', cf_titulo_paga: 'Reserva confirmada',
   cf_titulo_aguardando: 'Pago en proceso', cf_titulo_recebida: 'Reserva recibida',
-  cf_voltar_inicio: 'Volver al inicio', cf_copiar_codigo: 'Copiar código', cf_codigo_copiado: 'Código copiado',
+  cf_voltar_inicio: 'Volver al inicio', cf_tentar_de_novo: 'Intentar pagar de nuevo', cf_pagar_ate: (h) => `El enlace de pago vale hasta las ${h}. Sus fechas no quedan reservadas hasta que se apruebe el pago.`, cf_copiar_codigo: 'Copiar código', cf_codigo_copiado: 'Código copiado',
   cf_generico: 'Recibimos la respuesta del pago. La confirmación con todos los detalles llegará a su e-mail.',
   cf_generico_falhou: 'El pago no se completó. Si quiere, escríbanos por WhatsApp para intentar de nuevo o acordar otra forma de pago.',
   cf_seu_codigo: 'Su código de reserva', cf_apartamento: 'Departamento', cf_apartamentos: 'Departamentos',
@@ -435,7 +435,7 @@ const en = {
 
   cf_titulo_falhou: 'Payment not completed', cf_titulo_paga: 'Booking confirmed',
   cf_titulo_aguardando: 'Payment being processed', cf_titulo_recebida: 'Booking received',
-  cf_voltar_inicio: 'Back to home', cf_copiar_codigo: 'Copy code', cf_codigo_copiado: 'Code copied',
+  cf_voltar_inicio: 'Back to home', cf_tentar_de_novo: 'Try paying again', cf_pagar_ate: (h) => `The payment link is valid until ${h}. Your dates are not held until the payment is approved.`, cf_copiar_codigo: 'Copy code', cf_codigo_copiado: 'Code copied',
   cf_generico: 'We received the payment response. The confirmation with all the details will arrive by email.',
   cf_generico_falhou: "The payment wasn't completed. If you like, message us on WhatsApp to try again or arrange another way to pay.",
   cf_seu_codigo: 'Your booking code', cf_apartamento: 'Apartment', cf_apartamentos: 'Apartments',
