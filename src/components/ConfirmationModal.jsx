@@ -1,5 +1,5 @@
-import React from 'react';
-import { Check, AlertCircle, Clock, MessageCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, AlertCircle, Clock, MessageCircle, Copy } from 'lucide-react';
 import { C, F, R } from '../lib/constants';
 import { whatsappUrl, msgReserva } from '../lib/whatsapp';
 import { money, nights } from '../lib/helpers';
@@ -15,6 +15,23 @@ import { Btn, Modal, Row } from './ui';
 export function ConfirmationModal({ info, paymentStatus, onClose }) {
   const { tr, fmtCurta, dado } = useIdioma();
   const r1 = info?.reservas?.[0];
+  const [copiado, setCopiado] = useState(false);
+  // Copia o código da reserva; em navegadores sem a API de área de
+  // transferência (ou sem permissão) usa um campo de texto temporário.
+  const copiarCodigo = async () => {
+    const codigo = r1?.codigo;
+    if (!codigo) return;
+    try {
+      await navigator.clipboard.writeText(codigo);
+    } catch {
+      const campo = document.createElement('textarea');
+      campo.value = codigo; campo.setAttribute('readonly', ''); campo.style.position = 'fixed'; campo.style.opacity = '0';
+      document.body.appendChild(campo); campo.select();
+      try { document.execCommand('copy'); } catch { /* sem cópia: o código continua visível para anotar */ }
+      document.body.removeChild(campo);
+    }
+    setCopiado(true); setTimeout(() => setCopiado(false), 2500);
+  };
   const failed = paymentStatus === 'failure';
   const pending = paymentStatus === 'pending';
   const paid = paymentStatus === 'success';
@@ -23,7 +40,7 @@ export function ConfirmationModal({ info, paymentStatus, onClose }) {
 
   return (
     <Modal title={titulo} onClose={onClose} rotuloFechar={tr('ap_fechar')}
-      footer={<Btn variant="primary" style={{ minHeight: 48, fontSize: 16 }} onClick={onClose}>{tr('cf_nova_pesquisa')}</Btn>}>
+      footer={<Btn variant="primary" style={{ minHeight: 48, fontSize: 16 }} onClick={onClose}>{tr('cf_voltar_inicio')}</Btn>}>
       {!r1 ? (
         // voltou do Mercado Pago noutro separador/aparelho: sem os detalhes à mão
         <p style={{ fontSize: 16, lineHeight: 1.6, margin: 0 }}>{failed ? tr('cf_generico_falhou') : tr('cf_generico')}</p>
@@ -34,7 +51,14 @@ export function ConfirmationModal({ info, paymentStatus, onClose }) {
               {failed ? <AlertCircle size={30} color={C.erro} /> : pending ? <Clock size={30} color={C.aviso} /> : <Check size={30} color={C.ocean} />}
             </div>
             <p style={{ margin: 0, color: C.inkSoft, fontSize: 15 }}>{tr('cf_seu_codigo')}</p>
-            <div style={{ fontFamily: F.disp, fontSize: 30, letterSpacing: '.06em', margin: '4px 0 18px', color: C.ocean }}>{r1.codigo}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap', margin: '4px 0 18px' }}>
+              <div style={{ fontFamily: F.disp, fontSize: 30, letterSpacing: '.06em', color: C.ocean }}>{r1.codigo}</div>
+              <button type="button" onClick={copiarCodigo}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 14px', borderRadius: R.cartao, border: `1px solid ${copiado ? C.sucesso : C.line}`, background: C.white, color: copiado ? C.sucesso : C.ink, fontFamily: F.sans, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+                {copiado ? <Check size={17} /> : <Copy size={17} />}
+                <span aria-live="polite">{copiado ? tr('cf_codigo_copiado') : tr('cf_copiar_codigo')}</span>
+              </button>
+            </div>
           </div>
           <div style={{ background: C.espuma, borderRadius: R.cartao, padding: 16, fontSize: 15.5, display: 'grid', gap: 10 }}>
             <Row k={info.aptos?.length > 1 ? tr('cf_apartamentos') : tr('cf_apartamento')} v={aptos} />

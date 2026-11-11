@@ -880,7 +880,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         </div>
         <Faixa height={6} />
       </footer>
-      {done && <ConfirmationModal info={done.info} paymentStatus={done.paymentStatus} onClose={() => setDone(null)} />}
+      {done && <ConfirmationModal info={done.info} paymentStatus={done.paymentStatus} onClose={() => { setDone(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
       {calApt && (
         <Modal title={tr('ps_datas_livres', calApt.nome)}
           subtitle={tr('ps_datas_livres_sub')} rotuloFechar={tr('ap_fechar')}
