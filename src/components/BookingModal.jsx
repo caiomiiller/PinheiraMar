@@ -6,7 +6,7 @@ import { orcamentoReserva } from '../lib/precos';
 import { validarHospede } from '../lib/reservas';
 import { guardarUltimaReserva } from '../lib/dadosPublico';
 import { useIdioma } from '../lib/i18n';
-import { WHATSAPP_URL } from '../lib/constants';
+import { whatsappUrl, msgErroReserva } from '../lib/whatsapp';
 import { Btn, Modal, Field, TextInput, PhotoTile } from './ui';
 import { LinhasOrcamento } from './LinhasOrcamento';
 
@@ -321,7 +321,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
             <span style={{ display: 'flex', gap: 8 }}><AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2 }} />{textoErro}</span>
             {erroEnvio.erro === 'indisponivel'
               ? <button type="button" onClick={onClose} style={{ ...linkBtnStyle, fontSize: 15 }}>{tr('bk_escolher_outras_datas')}</button>
-              : <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ ...linkBtnStyle, fontSize: 15, textDecoration: 'none' }}><MessageCircle size={16} /> {tr('bk_falar_whatsapp')}</a>}
+              : <a href={whatsappUrl(msgErroReserva({ aptos: [apt.nome, apt2?.nome], ci, co }))} target="_blank" rel="noopener noreferrer" style={{ ...linkBtnStyle, fontSize: 15, textDecoration: 'none' }}><MessageCircle size={16} /> {tr('bk_falar_whatsapp')}</a>}
           </div>
         )}
 

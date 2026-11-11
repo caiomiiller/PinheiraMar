@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
   Home, Users, AlertCircle, X } from 'lucide-react';
-import { F, WHATSAPP_URL, fotoTopo, LOGO_RESIDENCIAL, C, R } from '../../lib/constants';
+import { F, fotoTopo, LOGO_RESIDENCIAL, C, R } from '../../lib/constants';
+import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
 import { orcamentoApartamento } from '../../lib/precos';
 import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
@@ -855,7 +856,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
                 <div>{r.endereco}</div>
                 <div>{r.cidade}</div>
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: C.sucesso, fontWeight: 600, textDecoration: 'none' }}>
+                <a href={whatsappUrl(msgGeral(r.nome))} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: C.sucesso, fontWeight: 600, textDecoration: 'none' }}>
                   <MessageCircle size={15} strokeWidth={1.5} /> WhatsApp
                 </a>
               </div>

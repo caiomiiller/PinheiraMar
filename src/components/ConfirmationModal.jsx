@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, AlertCircle, Clock, MessageCircle } from 'lucide-react';
-import { C, F, WHATSAPP_URL, R } from '../lib/constants';
+import { C, F, R } from '../lib/constants';
+import { whatsappUrl, msgReserva } from '../lib/whatsapp';
 import { money, nights } from '../lib/helpers';
 import { useIdioma } from '../lib/i18n';
 import { Btn, Modal, Row } from './ui';
@@ -46,7 +47,7 @@ export function ConfirmationModal({ info, paymentStatus, onClose }) {
             {failed ? tr('cf_texto_falhou') : paid ? tr('cf_texto_pago', r1.email) : pending ? tr('cf_texto_aguardando', r1.email) : tr('cf_texto_manual', r1.email)}
           </p>
           {(failed || !paymentStatus) && (
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, color: C.ocean, fontWeight: 700, fontSize: 15.5, textDecoration: 'none' }}>
+            <a href={whatsappUrl(msgReserva({ codigo: r1.codigo, aptos: (info.aptos || []).map(a => a.nome), ci: r1.checkIn, co: r1.checkOut, falhou: failed }))} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, color: C.ocean, fontWeight: 700, fontSize: 15.5, textDecoration: 'none' }}>
               <MessageCircle size={18} /> {tr('bk_falar_whatsapp')}
             </a>
           )}

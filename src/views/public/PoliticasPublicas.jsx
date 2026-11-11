@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Waves, MessageCircle, RefreshCw } from 'lucide-react';
 import { C, F, R } from '../../lib/constants';
+import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { carregarPublico } from '../../lib/dadosPublico';
 
 // Página pública e sem login — pensada para ser um link que o Caio pode
@@ -40,7 +41,8 @@ function BlocoPolitica({ titulo, texto }) {
 
 function CartaoResidencial({ residencial }) {
   const pol = residencial.politicas || {};
-  const wa = waLink(residencial.telefone);
+  const waBase = waLink(residencial.telefone);
+  const wa = waBase && whatsappUrl(msgGeral(residencial.nome), waBase);
   if (!pol.reservas?.texto && !pol.cancelamento?.texto) return null;
   return (
     <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: R.modal, padding: '26px 24px', marginBottom: 22 }}>

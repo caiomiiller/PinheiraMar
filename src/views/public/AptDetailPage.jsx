@@ -4,7 +4,8 @@ import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Users,
   MessageCircle, X, Share2, DoorOpen, Utensils, SquareParking, Flame, Snowflake,
   Sun, Clock, VolumeX, PawPrint, CigaretteOff, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { Faixa, BRAND } from '../../components/Brand';
-import { C, F, WHATSAPP_URL, GOOGLE_RATING, R } from '../../lib/constants';
+import { C, F, GOOGLE_RATING, R } from '../../lib/constants';
+import { whatsappUrl, msgApartamento } from '../../lib/whatsapp';
 import { money, nights, ymd, today, addDays, isAvailable } from '../../lib/helpers';
 import { orcamentoReserva, regraNoites } from '../../lib/precos';
 import { useIdioma } from '../../lib/i18n';
@@ -596,7 +597,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
             {/* precisa de ajuda */}
             <div style={{ marginTop: 16, padding: '14px 16px', background: C.fundoSuave, borderRadius: R.cartao, fontSize: 15, color: C.ink, lineHeight: 1.55 }}>
               <div style={{ fontWeight: 700, marginBottom: 4 }}>{tr('ap_precisa_ajuda')}</div>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 40, color: BRAND.marinho, fontWeight: 700, textDecoration: 'none' }}>
+              <a href={whatsappUrl(msgApartamento({ aptos: [apt.nome, apt2?.nome], residencial: (data.residenciais || []).find(r => r.id === apt.residencialId)?.nome, ci: localCi, co: localCo, hospedes: localNights ? (useApt2 && apt2 ? g1 + g2 : localHosp) : 0 }))} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 40, color: BRAND.marinho, fontWeight: 700, textDecoration: 'none' }}>
                 <MessageCircle size={17} strokeWidth={1.5} /> {tr('ap_fale_whatsapp')}
               </a>
             </div>

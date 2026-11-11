@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Waves, Map, Car, Plane, Bus, Fish, Sunset, ShieldCheck, Umbrella, Star, MessageCircle, Navigation } from 'lucide-react';
-import { C, F, WHATSAPP_URL, R } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
+import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { Faixa, BRAND } from '../../components/Brand';
 import { useIdioma } from '../../lib/i18n';
 
@@ -176,7 +177,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 40, color: BRAND.marinho, fontWeight: 700, textDecoration: 'none' }}>
                           <Navigation size={16} strokeWidth={1.5} /> {tr('ds_rota')}
                         </a>
-                        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
+                        <a href={whatsappUrl(msgGeral(r.nome))} target="_blank" rel="noopener noreferrer"
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 40, color: BRAND.marinho, fontWeight: 700, textDecoration: 'none' }}>
                           <MessageCircle size={16} strokeWidth={1.5} /> WhatsApp
                         </a>
