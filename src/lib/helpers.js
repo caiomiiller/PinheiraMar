@@ -127,6 +127,10 @@ export const overlaps = (aCi, aCo, bCi, bCo) => parseYMD(aCi) < parseYMD(bCo) &&
    não haver conflito vale mais do que libertar as datas depressa. */
 export const MIN_JANELA_PAGAMENTO = 20;
 export const MIN_HOLD_PAGAMENTO = 30;
+// Prazo DITO ao hóspede na revisão da reserva: 5 minutos a menos do que o
+// link do Mercado Pago vale, para ele não chegar ao fim com o link vencido.
+// Só texto — não muda a janela de pagamento nem o tempo que as datas ficam seguras.
+export const MIN_PRAZO_INFORMADO = MIN_JANELA_PAGAMENTO - 5;
 
 // Uma reserva provisória cujo prazo passou nunca chegou a ser uma reserva:
 // não bloqueia datas nem entra nas contas do Financeiro. Data inválida ou

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronDown, Minus, Plus, PawPrint, Umbrella, SquareParking, Sparkles, Users, Home, AlertCircle, MessageCircle } from 'lucide-react';
+import { ChevronDown, Minus, Plus, PawPrint, Umbrella, SquareParking, Sparkles, Users, Home, AlertCircle, MessageCircle, Clock } from 'lucide-react';
 import { C, R } from '../lib/constants';
-import { money } from '../lib/helpers';
+import { money, MIN_PRAZO_INFORMADO } from '../lib/helpers';
 import { orcamentoReserva } from '../lib/precos';
 import { validarHospede } from '../lib/reservas';
 import { guardarUltimaReserva } from '../lib/dadosPublico';
@@ -304,6 +304,13 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
           <span style={{ fontSize: 15.5, fontWeight: 700, color: C.acaoEscura }}>{tr('bk_sinal_agora', data.settings.sinalPct)}</span>
           <span style={{ fontSize: 17, fontWeight: 700, color: C.acaoEscura }}>{money(sinal)}</span>
         </div>
+        {/* prazo dito ao hóspede: 5 min a menos do que o link do Mercado Pago vale (ver helpers.js) */}
+        {sinal > 0 && (
+          <div style={{ padding: '12px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>
+            <Clock size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>{tr('bk_datas_guardadas', MIN_PRAZO_INFORMADO)}</span>
+          </div>
+        )}
 
         {cancelPol && (
           <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
