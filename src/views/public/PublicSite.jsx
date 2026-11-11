@@ -745,7 +745,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       </section>
 
       {/* ══ CATEGORY FILTER STRIP ══ */}
-      <div className="pm-pubsite-catbar" style={{ borderBottom: `1px solid ${BORDER}`, background: WHITE, position: 'sticky', top: 64, zIndex: 40 }}>
+      {/* top = altura do cabeçalho: 72 px da linha + 1 px da borda */}
+      <div className="pm-pubsite-catbar" style={{ borderBottom: `1px solid ${BORDER}`, background: WHITE, position: 'sticky', top: 73, zIndex: 40 }}>
         <div className="pm-pubsite-catstrip" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px', display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {categorias.map((cat, i) => {
             if (cat.sep) return <div key={`sep${i}`} aria-hidden style={{ alignSelf: 'center', width: 1, height: 26, background: BORDER, margin: '0 10px', flexShrink: 0 }} />;
