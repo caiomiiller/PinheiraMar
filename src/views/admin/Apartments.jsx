@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Plus, Pencil, Trash2, Copy, Star, GripVertical, UploadCloud, AlertCircle } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { uid, money } from '../../lib/helpers';
 import { enviarFotosApartamento } from '../../lib/storage';
 import { Card, PageHead, Btn, Modal, Field, TextInput, NumberInput, Select, Textarea,
@@ -31,17 +31,17 @@ export function Apartments({ data, update }) {
         {data.apartamentos.map((a, idx) => (
           <Card key={a.id} {...dnd.zone(idx)} className="pm-apt-row" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12, ...dnd.deco(idx) }}>
             <DragGrip {...dnd.grip(idx)} />
-            <div style={{ width: 96, flexShrink: 0 }}><PhotoTile apt={a} h={64} radius={10} /></div>
+            <div style={{ width: 96, flexShrink: 0 }}><PhotoTile apt={a} h={64} radius={R.cartao} /></div>
             <div className="pm-apt-info" style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: F.disp, fontSize: 18 }}>{a.nome} <span style={{ fontSize: 13, color: C.inkSoft, fontFamily: F.sans }}>— {a.piso} · {a.vista}</span></div>
               <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 <span>Até {a.capacidade} pessoas</span><span>{money(a.preco)} / noite (base)</span>
-                {!a.ativo && <span style={{ color: '#B23B3B', fontWeight: 600 }}>Inativo</span>}
+                {!a.ativo && <span style={{ color: C.erro, fontWeight: 600 }}>Inativo</span>}
               </div>
             </div>
             <button onClick={() => duplicate(a.id)} title="Duplicar" style={iconBtn}><Copy size={16} /></button>
             <button onClick={() => setEditing(a)} title="Editar" style={iconBtn}><Pencil size={16} /></button>
-            <button onClick={() => setConfirmId(a.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={16} /></button>
+            <button onClick={() => setConfirmId(a.id)} title="Eliminar" style={{ ...iconBtn, color: C.erro }}><Trash2 size={16} /></button>
           </Card>
         ))}
       </div>
@@ -169,7 +169,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
       <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 4 }}>
         {label} {hint && <span style={{ color: C.brisa, fontSize: 11 }}>ⓘ</span>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', border: `1px solid ${C.line}`, borderRadius: 8, overflow: 'hidden', width: 90 }}>
+      <div style={{ display: 'flex', alignItems: 'center', border: `1px solid ${C.line}`, borderRadius: R.campo, overflow: 'hidden', width: 90 }}>
         <button type="button" onClick={() => onChange(Math.max(min, value - 1))}
           style={{ width: 28, height: 36, background: C.espuma, border: 'none', cursor: 'pointer', fontSize: 16, color: C.inkSoft, display: 'grid', placeItems: 'center' }}>−</button>
         <div style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 600 }}>{value}</div>
@@ -283,17 +283,17 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
                 </div>
                 <div style={{ width: 90 }}>
                   <div style={{ fontSize: 12, color: C.inkSoft, marginBottom: 4 }}>Quantidade</div>
-                  <div style={{ display: 'flex', alignItems: 'center', border: `1px solid ${C.line}`, borderRadius: 8, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', border: `1px solid ${C.line}`, borderRadius: R.campo, overflow: 'hidden' }}>
                     <button type="button" onClick={() => updCama(c.id, { qtd: Math.max(1, c.qtd - 1) })} style={{ width: 28, height: 36, background: C.espuma, border: 'none', cursor: 'pointer', fontSize: 16, color: C.inkSoft, display: 'grid', placeItems: 'center' }}>−</button>
                     <div style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 600 }}>{c.qtd}</div>
                     <button type="button" onClick={() => updCama(c.id, { qtd: c.qtd + 1 })} style={{ width: 28, height: 36, background: C.espuma, border: 'none', cursor: 'pointer', fontSize: 16, color: C.inkSoft, display: 'grid', placeItems: 'center' }}>+</button>
                   </div>
                 </div>
-                <button type="button" onClick={() => delCama(c.id)} style={{ ...iconBtn, marginTop: 18, color: '#B23B3B' }}><Trash2 size={15} /></button>
+                <button type="button" onClick={() => delCama(c.id)} style={{ ...iconBtn, marginTop: 18, color: C.erro }}><Trash2 size={15} /></button>
               </div>
             ))}
             <button type="button" onClick={addCama}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: 8, padding: '7px 14px', cursor: 'pointer', color: C.brisa, fontWeight: 600, fontSize: 13, alignSelf: 'flex-start' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: R.campo, padding: '7px 14px', cursor: 'pointer', color: C.brisa, fontWeight: 600, fontSize: 13, alignSelf: 'flex-start' }}>
               <Plus size={14} /> Escolha o tipo
             </button>
           </div>
@@ -330,24 +330,24 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
                   return (
                     <div key={idx} {...dndFotos.zone(idx)}
                       draggable={grip.draggable} onDragStart={grip.onDragStart} onDragEnd={grip.onDragEnd} title={grip.title}
-                      style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3', background: C.espuma, cursor: 'grab', ...dndFotos.deco(idx) }}>
+                      style={{ position: 'relative', borderRadius: R.campo, overflow: 'hidden', aspectRatio: '4/3', background: C.espuma, cursor: 'grab', ...dndFotos.deco(idx) }}>
                       <img src={f} alt="" style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
                         onError={e => { e.target.style.display = 'none'; }} />
-                      <span style={{ position: 'absolute', bottom: 3, left: 3, width: 18, height: 18, borderRadius: 5, background: 'rgba(0,0,0,.4)', display: 'grid', placeItems: 'center', color: '#fff', pointerEvents: 'none' }}>
+                      <span style={{ position: 'absolute', bottom: 3, left: 3, width: 18, height: 18, borderRadius: R.campo, background: 'rgba(0,0,0,.4)', display: 'grid', placeItems: 'center', color: C.white, pointerEvents: 'none' }}>
                         <GripVertical size={12} />
                       </span>
                       {idx === 0 ? (
-                        <span style={{ position: 'absolute', top: 3, left: 3, display: 'flex', alignItems: 'center', gap: 3, background: C.brisa, color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '3px 7px 3px 5px', borderRadius: 999, lineHeight: 1 }}>
-                          <Star size={10} fill="#fff" /> Capa
+                        <span style={{ position: 'absolute', top: 3, left: 3, display: 'flex', alignItems: 'center', gap: 3, background: C.brisa, color: C.white, fontSize: 10.5, fontWeight: 700, padding: '3px 7px 3px 5px', borderRadius: R.pilula, lineHeight: 1 }}>
+                          <Star size={10} fill={C.white} /> Capa
                         </span>
                       ) : (
                         <button type="button" onClick={() => setCapa(idx)} title="Tornar foto de capa"
-                          style={{ position: 'absolute', top: 3, left: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', color: '#fff', display: 'grid', placeItems: 'center' }}>
+                          style={{ position: 'absolute', top: 3, left: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', color: C.white, display: 'grid', placeItems: 'center' }}>
                           <Star size={11} />
                         </button>
                       )}
                       <button type="button" onClick={() => delFoto(idx)}
-                        style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: 12, display: 'grid', placeItems: 'center', lineHeight: 1 }}>×</button>
+                        style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', color: C.white, fontSize: 12, display: 'grid', placeItems: 'center', lineHeight: 1 }}>×</button>
                     </div>
                   );
                 })}
@@ -371,7 +371,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
               <Btn variant="soft" onClick={addFoto} icon={Plus}>Adicionar</Btn>
             </div>
             {erroEnvio && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 8, padding: '8px 10px', background: '#FDEEEE', border: '1px solid #F0C6C6', borderRadius: 8, fontSize: 12.5, color: '#B23B3B' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 8, padding: '8px 10px', background: C.erroBg, border: `1px solid ${C.erroBorda}`, borderRadius: R.campo, fontSize: 12.5, color: C.erro }}>
                 <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>{erroEnvio}</span>
               </div>
@@ -402,8 +402,8 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
           <div style={{ display: 'grid', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 13, color: C.inkSoft }}>Mostrar mapa de localização</span>
-              <div onClick={() => setMostrarMapa(m => !m)} style={{ width: 42, height: 24, borderRadius: 12, background: mostrarMapa ? C.brisa : C.line, cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
-                <div style={{ position: 'absolute', top: 3, left: mostrarMapa ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+              <div onClick={() => setMostrarMapa(m => !m)} style={{ width: 42, height: 24, borderRadius: R.cartao, background: mostrarMapa ? C.brisa : C.line, cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 3, left: mostrarMapa ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: C.white, boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
               </div>
             </div>
             <Field label="Cidade, Estado, País" hint="ⓘ">
@@ -414,7 +414,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
               <Field label="Código postal (CEP)"><TextInput value={cep} onChange={e => setCep(e.target.value)} /></Field>
             </div>
             {mostrarMapa && (
-              <div style={{ borderRadius: 10, overflow: 'hidden', border: `1px solid ${C.line}`, height: 180, background: C.espuma, display: 'grid', placeItems: 'center' }}>
+              <div style={{ borderRadius: R.cartao, overflow: 'hidden', border: `1px solid ${C.line}`, height: 180, background: C.espuma, display: 'grid', placeItems: 'center' }}>
                 <iframe title="mapa" width="100%" height="180" style={{ border: 0, display: 'block' }}
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(endereco + ', ' + cidade)}&output=embed&zoom=15`}
                   loading="lazy" referrerPolicy="no-referrer-when-downgrade" />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pencil, Trash2, AlertCircle, Plus } from 'lucide-react';
-import { C } from '../../lib/constants';
+import { C, R } from '../../lib/constants';
 import { Card, PageHead, Btn, Modal, Field, TextInput, ConfirmDialog } from '../../components/ui';
 import { TRANSLATIONS } from '../../lib/translations';
 import { iconBtn } from './Reservations';
@@ -56,7 +56,7 @@ export function IdiomasView({ data, update }) {
             <span style={{ fontSize: 26, flexShrink: 0 }}>{principal.bandeira}</span>
             <div style={{ flex: 1 }}>
               <span style={{ fontWeight: 700, fontSize: 17 }}>{principal.nativo}</span>
-              <span style={{ marginLeft: 10, fontSize: 13, color: C.inkSoft, background: C.espuma, border: `1px solid ${C.line}`, borderRadius: 999, padding: '2px 9px', fontWeight: 600 }}>Idioma Principal</span>
+              <span style={{ marginLeft: 10, fontSize: 13, color: C.inkSoft, background: C.espuma, border: `1px solid ${C.line}`, borderRadius: R.pilula, padding: '2px 9px', fontWeight: 600 }}>Idioma Principal</span>
             </div>
           </Card>
         )}
@@ -69,30 +69,30 @@ export function IdiomasView({ data, update }) {
               <span style={{ fontWeight: 600, fontSize: 16 }}>{lang.nativo}</span>
               <span style={{ marginLeft: 8, fontSize: 13, color: C.inkSoft }}>({lang.nome})</span>
               {!TRANSLATIONS[lang.codigo] && (
-                <span style={{ marginLeft: 8, fontSize: 11.5, color: '#B26A2E', background: '#FBF1E6', border: '1px solid #EBD9C0', borderRadius: 999, padding: '2px 8px', fontWeight: 600 }}>Tradução parcial</span>
+                <span style={{ marginLeft: 8, fontSize: 11.5, color: C.aviso, background: C.avisoBg, border: `1px solid ${C.avisoBorda}`, borderRadius: R.pilula, padding: '2px 8px', fontWeight: 600 }}>Tradução parcial</span>
               )}
             </div>
 
             {/* toggle ativo/inativo */}
             <div onClick={() => toggle(lang.codigo)}
-              style={{ width: 46, height: 26, borderRadius: 13, background: lang.ativo ? C.brisa : C.line, cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
-              <div style={{ position: 'absolute', top: 3, left: lang.ativo ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+              style={{ width: 46, height: 26, borderRadius: R.pilula, background: lang.ativo ? C.brisa : C.line, cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 3, left: lang.ativo ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: C.white, boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
             </div>
 
             <button onClick={() => setEditando(lang)} style={iconBtn} title="Editar"><Pencil size={15} /></button>
-            <button onClick={() => setConfirmCodigo(lang.codigo)} style={{ ...iconBtn, color: '#B23B3B' }} title="Remover"><Trash2 size={15} /></button>
+            <button onClick={() => setConfirmCodigo(lang.codigo)} style={{ ...iconBtn, color: C.erro }} title="Remover"><Trash2 size={15} /></button>
           </Card>
         ))}
 
         {outros.length === 0 && (
-          <div style={{ padding: '20px 16px', color: C.inkSoft, fontSize: 14, textAlign: 'center', background: '#fff', borderRadius: 12, border: `1px dashed ${C.line}` }}>
+          <div style={{ padding: '20px 16px', color: C.inkSoft, fontSize: 14, textAlign: 'center', background: C.white, borderRadius: R.cartao, border: `1px dashed ${C.line}` }}>
             Nenhum idioma adicional configurado. Clique em <b>Adicionar</b> para disponibilizar o site em mais idiomas.
           </div>
         )}
       </div>
 
       {/* info note */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 16px', background: '#EEF6FF', border: '1px solid #BDD9F8', borderRadius: 12, marginTop: 18, fontSize: 13.5, color: '#1A4A7A', maxWidth: 760 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 16px', background: C.infoBg, border: `1px solid ${C.infoBorda}`, borderRadius: R.cartao, marginTop: 18, fontSize: 13.5, color: C.info, maxWidth: 760 }}>
         <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
         <span>Os idiomas ativos aparecem como seletor de bandeira no canto do site público. O hóspede escolhe o idioma e todas as etiquetas, botões e textos do site são apresentados na língua selecionada. Português é sempre o idioma principal e não pode ser removido.</span>
       </div>
@@ -106,7 +106,7 @@ export function IdiomasView({ data, update }) {
             : <div style={{ display: 'grid', gap: 8 }}>
               {available.map(lang => (
                 <button key={lang.codigo} onClick={() => add(lang)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: C.espuma, border: `1px solid ${C.line}`, borderRadius: 10, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: C.espuma, border: `1px solid ${C.line}`, borderRadius: R.cartao, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
                   <span style={{ fontSize: 24 }}>{lang.bandeira}</span>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 15 }}>{lang.nativo}</div>

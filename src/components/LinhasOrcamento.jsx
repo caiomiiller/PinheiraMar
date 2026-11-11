@@ -1,5 +1,6 @@
 import React from 'react';
 import { money } from '../lib/helpers';
+import { C } from '../lib/constants';
 import { useIdioma } from '../lib/i18n';
 import { SeloTaxa } from './SeloTaxa';
 
@@ -13,7 +14,7 @@ export function LinhasOrcamento({ o, titulo }) {
   const linha = { display: 'flex', justifyContent: 'space-between', gap: 10 };
   return (
     <div style={{ display: 'grid', gap: 6 }}>
-      {titulo && <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: '#555', marginTop: 4 }}>{titulo}</div>}
+      {titulo && <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: C.inkSoft, marginTop: 4 }}>{titulo}</div>}
       {o.grupos.map((g, i) => (
         <div key={'g' + i} style={linha}>
           <span>{money(g.rate)} × {tr('noites', g.n)}</span>

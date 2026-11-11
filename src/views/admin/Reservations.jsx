@@ -4,7 +4,7 @@ import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy, Chevron
   Clock, Info, Users, Wallet, LogIn, LogOut, Car, Sparkles, PawPrint, Umbrella,
   BedDouble, Baby, Percent, Wind, Waves, Utensils, Wifi, Flame, Shield, Gift,
   Sun, Shirt, Sofa, Power } from 'lucide-react';
-import { C, F, THEMES } from '../../lib/constants';
+import { C, F, THEMES, R } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtShort, uid, code, isAvailable, stayBreakdown,
   nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS, WD, HOLIDAY_COLORS, MS,
   seasonForDate, aptRates, roomFullName, overlaps, capacidadeBaseOf } from '../../lib/helpers';
@@ -96,9 +96,9 @@ const FIM_DE_SEMANA_CABECALHO = 'rgba(231,215,182,.25)';
 const FIM_DE_SEMANA_CELULA = 'rgba(231,215,182,.13)';
 const FERIADO_CABECALHO = 'rgba(62,124,177,.10)';
 const FERIADO_CELULA = 'rgba(62,124,177,.07)';
-const HOJE_CABECALHO = '#CDEBCF';
-const HOJE_CELULA = '#EDF7EE';
-const HOJE_TEXTO = '#1C7A4B';
+const HOJE_CABECALHO = C.sucessoBorda;
+const HOJE_CELULA = C.sucessoBg;
+const HOJE_TEXTO = C.sucesso;
 
 const residencialSigla = (nome = '') => nome.replace(/^Residencial\s+/i, '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '—';
 
@@ -116,7 +116,7 @@ function ResBadge({ residencial }) {
       onError={e => { e.target.style.display = 'none'; }} />
   );
   return (
-    <span title={residencial.nome} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', fontSize: 9.5, fontWeight: 800, color: '#fff', background: residencialCor(residencial.id), flexShrink: 0 }}>
+    <span title={residencial.nome} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', fontSize: 9.5, fontWeight: 800, color: C.white, background: residencialCor(residencial.id), flexShrink: 0 }}>
       {residencialSigla(residencial.nome)}
     </span>
   );
@@ -126,7 +126,7 @@ function ResBadge({ residencial }) {
 function ResPill({ residencial }) {
   if (!residencial) return null;
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', color: '#fff', background: residencialCor(residencial.id), borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', color: C.white, background: residencialCor(residencial.id), borderRadius: R.pilula, padding: '3px 9px', whiteSpace: 'nowrap' }}>
       {residencial.nome}
     </span>
   );
@@ -470,9 +470,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             <div style={{ position: 'relative' }}>
               <Btn variant="ghost" icon={Database} onClick={() => setDbOpen(o => !o)}>Base de dados <ChevronDown size={14} style={{ marginLeft: 2 }} /></Btn>
               {dbOpen && (
-                <div onMouseLeave={() => setDbOpen(false)} style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 14px 34px rgba(10,40,46,.18)', padding: 6, zIndex: 30, width: 248 }}>
+                <div onMouseLeave={() => setDbOpen(false)} style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: C.white, border: `1px solid ${C.line}`, borderRadius: R.cartao, boxShadow: '0 14px 34px rgba(10,40,46,.18)', padding: 6, zIndex: 30, width: 248 }}>
                   {DB_ACTIONS.map(([label, fn, Ic], idx) => (
-                    <button key={idx} onClick={fn} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px', background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, color: C.ink, textAlign: 'left' }}
+                    <button key={idx} onClick={fn} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px', background: 'none', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 13, color: C.ink, textAlign: 'left' }}
                       onMouseEnter={e => e.currentTarget.style.background = C.espuma} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                       <Ic size={15} color={C.brisa} /> {label}
                     </button>
@@ -486,7 +486,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
         } />
       <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.json" style={{ display: 'none' }} onChange={onPickFile} />
       {importMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '11px 14px', borderRadius: 12, fontSize: 13.5, fontWeight: 500, background: importMsg.ok ? '#E1F0EC' : '#F7E9E9', color: importMsg.ok ? '#1C7A5B' : '#B23B3B' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '11px 14px', borderRadius: R.cartao, fontSize: 13.5, fontWeight: 500, background: importMsg.ok ? C.sucessoBg : C.erroBg, color: importMsg.ok ? C.sucesso : C.erro }}>
           {importMsg.ok ? <Check size={16} /> : <AlertCircle size={16} />}
           <span style={{ flex: 1 }}>{importMsg.text}</span>
           <button onClick={() => setImportMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'grid', placeItems: 'center' }}><X size={15} /></button>
@@ -494,9 +494,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
       )}
 
       <Card className="pm-res-toolbar" style={{ padding: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <div className="pm-res-toggle" style={{ display: 'flex', background: C.espuma, borderRadius: 10, padding: 3 }}>
+        <div className="pm-res-toggle" style={{ display: 'flex', background: C.espuma, borderRadius: R.cartao, padding: 3 }}>
           {['calendario', 'lista'].map(v => (
-            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, background: view === v ? '#fff' : 'transparent', color: view === v ? C.ocean : C.inkSoft, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>{v === 'calendario' ? 'Calendário' : 'Lista'}</button>
+            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, background: view === v ? C.white : 'transparent', color: view === v ? C.ocean : C.inkSoft, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>{v === 'calendario' ? 'Calendário' : 'Lista'}</button>
           ))}
         </div>
 
@@ -511,7 +511,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             placeholder="Pesquisar código, hóspede, apartamento…"
             style={{ width: 260, height: 34, paddingLeft: 30, fontSize: 13 }} />
           {search.trim() && (
-            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 60, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 14px 34px rgba(10,40,46,.18)', width: 340, maxHeight: 340, overflowY: 'auto' }}>
+            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 60, background: C.white, border: `1px solid ${C.line}`, borderRadius: R.cartao, boxShadow: '0 14px 34px rgba(10,40,46,.18)', width: 340, maxHeight: 340, overflowY: 'auto' }}>
               {searchMatches.length === 0 ? (
                 <div style={{ padding: '12px 14px', fontSize: 13, color: C.inkSoft }}>Nenhuma reserva encontrada.</div>
               ) : <>
@@ -540,14 +540,14 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
           {/* ── mês/ano clicável com dropdown picker ── */}
           <div className="pm-res-monthpicker" style={{ position: 'relative', marginLeft: 8 }} ref={monthPickerRef}>
             <button onClick={() => setMonthPickerOpen(o => !o)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, background: monthPickerOpen ? C.espuma : 'none', border: `1px solid ${monthPickerOpen ? C.line : 'transparent'}`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', fontFamily: F.disp, fontSize: 17, fontWeight: 600, color: C.ocean }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 8, background: monthPickerOpen ? C.espuma : 'none', border: `1px solid ${monthPickerOpen ? C.line : 'transparent'}`, borderRadius: R.cartao, padding: '5px 12px', cursor: 'pointer', fontFamily: F.disp, fontSize: 17, fontWeight: 600, color: C.ocean }}>
               <CalendarDays size={16} color={C.brisa} />
               {monthLabel}
               <ChevronDown size={14} color={C.brisa} style={{ transform: monthPickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
             </button>
 
             {monthPickerOpen && (
-              <div className="pm-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 200, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 16, boxShadow: '0 12px 36px rgba(10,40,46,.16)', padding: 18, minWidth: 280 }}>
+              <div className="pm-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 200, background: C.white, border: `1px solid ${C.line}`, borderRadius: R.modal, boxShadow: '0 12px 36px rgba(10,40,46,.16)', padding: 18, minWidth: 280 }}>
                 {/* year navigation */}
                 {(() => {
                   const pickerYear = start.getFullYear();
@@ -558,12 +558,12 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                         <button onClick={() => { const d = new Date(start); d.setFullYear(d.getFullYear()-1); setStart(new Date(d.getFullYear(), d.getMonth(), 1)); }}
-                          style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.line}`, background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft }}>
+                          style={{ width: 30, height: 30, borderRadius: R.campo, border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft }}>
                           <ChevronLeft size={15} />
                         </button>
                         <span style={{ fontFamily: F.disp, fontSize: 18, fontWeight: 700, color: C.ink }}>{pickerYear}</span>
                         <button onClick={() => { const d = new Date(start); d.setFullYear(d.getFullYear()+1); setStart(new Date(d.getFullYear(), d.getMonth(), 1)); }}
-                          style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.line}`, background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft }}>
+                          style={{ width: 30, height: 30, borderRadius: R.campo, border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft }}>
                           <ChevronRight size={15} />
                         </button>
                       </div>
@@ -574,9 +574,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                           const active = idx === pickerMonth;
                           return (
                             <button key={m} onClick={() => jumpToMonth(pickerYear, idx)}
-                              style={{ padding: '9px 4px', borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: active ? 700 : 500,
+                              style={{ padding: '9px 4px', borderRadius: R.campo, border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: active ? 700 : 500,
                                 background: active ? C.ocean : (isThisMonth ? C.espuma : 'transparent'),
-                                color: active ? '#fff' : (isThisMonth ? C.ocean : C.ink),
+                                color: active ? C.white : (isThisMonth ? C.ocean : C.ink),
                                 outline: isThisMonth && !active ? `2px solid ${C.line}` : 'none',
                               }}>
                               {m}
@@ -586,15 +586,15 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       </div>
                       <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 12, paddingTop: 10, display: 'flex', gap: 6 }}>
                         <button onClick={() => { setStart(today()); setMonthPickerOpen(false); }}
-                          style={{ flex: 1, padding: '8px 0', borderRadius: 9, border: `1px solid ${C.line}`, background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
+                          style={{ flex: 1, padding: '8px 0', borderRadius: R.campo, border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                           Hoje
                         </button>
                         <button onClick={() => jumpToMonth(pickerYear, 0)}
-                          style={{ flex: 1, padding: '8px 0', borderRadius: 9, border: `1px solid ${C.line}`, background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
+                          style={{ flex: 1, padding: '8px 0', borderRadius: R.campo, border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                           Jan {pickerYear}
                         </button>
                         <button onClick={() => jumpToMonth(pickerYear, 11)}
-                          style={{ flex: 1, padding: '8px 0', borderRadius: 9, border: `1px solid ${C.line}`, background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
+                          style={{ flex: 1, padding: '8px 0', borderRadius: R.campo, border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                           Dez {pickerYear}
                         </button>
                       </div>
@@ -611,17 +611,17 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {/* 7 dias atrás */}
               <button onClick={() => shiftWeek(-1)} title="Recuar 7 dias"
-                style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: '8px 0 0 8px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
+                style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: '8px 0 0 8px', background: C.white, cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
                 <ChevronLeft size={14} />
               </button>
               {/* hoje */}
               <button onClick={() => setStart(today())} title="Ir para o dia atual"
-                style={{ height: 32, padding: '0 12px', border: `1px solid ${C.line}`, borderLeft: 'none', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
+                style={{ height: 32, padding: '0 12px', border: `1px solid ${C.line}`, borderLeft: 'none', background: C.white, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: C.ink }}>
                 Hoje
               </button>
               {/* 7 dias à frente */}
               <button onClick={() => shiftWeek(1)} title="Avançar 7 dias"
-                style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderLeft: 'none', borderRadius: '0 8px 8px 0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
+                style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderLeft: 'none', borderRadius: '0 8px 8px 0', background: C.white, cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.inkSoft }}>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -682,7 +682,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                 }).filter(x => x.right - x.left > 4);
                 return (
                   <div key={apt.id} style={{ display: 'flex', borderBottom: `1px solid ${C.line}` }}>
-                    <div style={{ width: NAMEW, flexShrink: 0, padding: '0 14px', borderRight: `1px solid ${C.line}`, background: '#fff', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ width: NAMEW, flexShrink: 0, padding: '0 14px', borderRight: `1px solid ${C.line}`, background: C.white, display: 'flex', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflow: 'hidden' }}>
                         <span style={{ fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap' }}>{apt.nome}</span>
                         <ResBadge residencial={residencial} />
@@ -703,7 +703,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                               onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
                               onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
                               title="Clique para criar uma reserva, ou arraste para escolher um período"
-                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, borderLeft: monthStart ? `2px solid ${C.line}` : 'none', background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE_CELULA : (hol ? FERIADO_CELULA : (we ? FIM_DE_SEMANA_CELULA : '#fff'))), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
+                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, borderLeft: monthStart ? `2px solid ${C.line}` : 'none', background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE_CELULA : (hol ? FERIADO_CELULA : (we ? FIM_DE_SEMANA_CELULA : C.white))), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
                               {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
                             </div>
                           );
@@ -717,7 +717,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                         const sinalMark = r.status === 'reservado' ? `${residencial.sinalPct}% ` : '';
                         return (
                           <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)${r.checkinRealizado ? ' · Check-in realizado' : ''}${r.checkoutRealizado ? ' · Check-out realizado' : ''}`}
-                            style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: barBackground(displayStatus(r)), color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
+                            style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: barBackground(displayStatus(r)), color: C.white, border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
                             {r.status === 'bloqueio' ? '⛔ Bloqueio' : `${sinalMark}${r.hospede || 'Reserva'}`}
                           </button>
                         );
@@ -730,9 +730,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
           </div>
           <div className="pm-res-legend" style={{ display: 'flex', gap: 16, padding: '12px 16px', fontSize: 12.5, color: C.inkSoft, flexWrap: 'wrap', alignItems: 'center', borderTop: `1px solid ${C.line}` }}>
             {Object.entries(STATUS).filter(([k]) => k !== 'cancelada' && k !== 'checkout').map(([k, s]) =>
-              <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: barBackground(k) }} /> {s.label}</span>)}
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LogIn size={12} color="#065F46" /> Check-in realizado</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LogOut size={12} color="#8A2E2E" /> Check-out realizado</span>
+              <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 12, height: 12, borderRadius: R.campo, background: barBackground(k) }} /> {s.label}</span>)}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LogIn size={12} color={C.sucesso} /> Check-in realizado</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LogOut size={12} color={C.erro} /> Check-out realizado</span>
             <span className="pm-hide-sm" style={{ width: 1, height: 16, background: C.line }} />
             {Object.entries(HOLIDAY_LABELS).map(([tp, label]) =>
               <span key={tp} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} /> {label}</span>)}
@@ -746,7 +746,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               <div style={{ borderTop: `1px solid ${C.line}`, padding: '10px 16px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, marginRight: 2 }}>Feriados no período:</span>
                 {items.map((it, idx) => (
-                  <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.espuma, borderRadius: 999, padding: '4px 10px', fontSize: 12, color: C.ink }}>
+                  <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.espuma, borderRadius: R.pilula, padding: '4px 10px', fontSize: 12, color: C.ink }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: HOLIDAY_COLORS[it.tipo] }} />
                     <b style={{ fontWeight: 700 }}>{it.date.getDate()}/{it.date.getMonth() + 1}</b> {it.nome}
                   </span>
@@ -765,11 +765,11 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
         const startD = days[rangeMenu.startIdx], endD = days[rangeMenu.endIdx];
         const nNoites = rangeMenu.endIdx - rangeMenu.startIdx + 1;
         const close = () => setRangeMenu(null);
-        const itemStyle = { width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px', background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, color: C.ink, textAlign: 'left' };
+        const itemStyle = { width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px', background: 'none', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 13, color: C.ink, textAlign: 'left' };
         return (
           <>
             <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 150 }} />
-            <div className="pm-pop" style={{ position: 'fixed', left: rangeMenu.x, top: rangeMenu.y, zIndex: 151, background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, boxShadow: '0 14px 34px rgba(10,40,46,.22)', padding: 6, minWidth: 230 }}>
+            <div className="pm-pop" style={{ position: 'fixed', left: rangeMenu.x, top: rangeMenu.y, zIndex: 151, background: C.white, border: `1px solid ${C.line}`, borderRadius: R.cartao, boxShadow: '0 14px 34px rgba(10,40,46,.22)', padding: 6, minWidth: 230 }}>
               <div style={{ padding: '8px 10px 6px', fontSize: 12, color: C.inkSoft, borderBottom: `1px solid ${C.line}`, marginBottom: 4 }}>
                 {apt?.nome} · {fmtShort(ymd(startD))} → {fmtShort(ymd(addDays(endD, 1)))} · <b>{nNoites} noite{nNoites > 1 ? 's' : ''}</b>
               </div>
@@ -857,24 +857,24 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: `1px solid ${C.line}`, gap: 10, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Pagamento:</span>
-              <button onClick={() => setPaymentFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'todas' ? C.ocean : C.espuma, color: paymentFilter === 'todas' ? '#fff' : C.inkSoft }}>Todas</button>
-              <button onClick={() => setPaymentFilter('sem')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'sem' ? C.coralDeep : C.espuma, color: paymentFilter === 'sem' ? '#fff' : C.inkSoft }}>Sem confirmação (0 pago)</button>
-              <button onClick={() => setPaymentFilter('com')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'com' ? '#1C7A5B' : C.espuma, color: paymentFilter === 'com' ? '#fff' : C.inkSoft }}>Com pagamento</button>
+              <button onClick={() => setPaymentFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'todas' ? C.ocean : C.espuma, color: paymentFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
+              <button onClick={() => setPaymentFilter('sem')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'sem' ? C.coralDeep : C.espuma, color: paymentFilter === 'sem' ? C.white : C.inkSoft }}>Sem confirmação (0 pago)</button>
+              <button onClick={() => setPaymentFilter('com')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: paymentFilter === 'com' ? C.sucesso : C.espuma, color: paymentFilter === 'com' ? C.white : C.inkSoft }}>Com pagamento</button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Status:</span>
-              <button onClick={() => setStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === 'todas' ? C.ocean : C.espuma, color: statusFilter === 'todas' ? '#fff' : C.inkSoft }}>Todas</button>
+              <button onClick={() => setStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === 'todas' ? C.ocean : C.espuma, color: statusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
               {['confirmado', 'reservado', 'pendente', 'bloqueio', 'cancelada'].map(st => (
                 <button key={st} onClick={() => setStatusFilter(st)}
-                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === st ? STATUS[st].fg : C.espuma, color: statusFilter === st ? '#fff' : C.inkSoft }}>
+                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === st ? STATUS[st].fg : C.espuma, color: statusFilter === st ? C.white : C.inkSoft }}>
                   {STATUS[st].label}
                 </button>
               ))}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Ordenação:</span>
-              <button onClick={() => { setManualOrder(false); setSortKey('criadoEm'); setSortDir('desc'); }} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? '#fff' : C.inkSoft }}>Por data</button>
-              <button onClick={() => setManualOrder(true)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 600, background: manualOrder ? C.ocean : C.espuma, color: manualOrder ? '#fff' : C.inkSoft }}>Manual ⠿</button>
+              <button onClick={() => { setManualOrder(false); setSortKey('criadoEm'); setSortDir('desc'); }} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.campo, border: 'none', cursor: 'pointer', fontWeight: 600, background: !manualOrder ? C.ocean : C.espuma, color: !manualOrder ? C.white : C.inkSoft }}>Por data</button>
+              <button onClick={() => setManualOrder(true)} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.campo, border: 'none', cursor: 'pointer', fontWeight: 600, background: manualOrder ? C.ocean : C.espuma, color: manualOrder ? C.white : C.inkSoft }}>Manual ⠿</button>
             </div>
           </div>
           <div className="pm-hide-sm" style={{ overflowX: 'auto' }}>
@@ -1007,15 +1007,15 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     </div>
   );
 }
-export const iconBtn = { background: C.espuma, border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft };
+export const iconBtn = { background: C.espuma, border: 'none', borderRadius: R.campo, width: 32, height: 32, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft };
 
 export const secTitle = { fontFamily: F.disp, fontSize: 16, color: C.ink, margin: '2px 0 10px', display: 'flex', alignItems: 'center', gap: 8 };
-export const cellInput = { width: '100%', padding: '7px 9px', borderRadius: 8, border: `1px solid ${C.line}`, fontSize: 13, fontFamily: F.sans, outline: 'none', background: '#fff', color: C.ink };
+export const cellInput = { width: '100%', padding: '7px 9px', borderRadius: R.campo, border: `1px solid ${C.line}`, fontSize: 13, fontFamily: F.sans, outline: 'none', background: C.white, color: C.ink };
 
 export function Stepper({ value, set, min = 0, max = 99, disabled }) {
   const btn = { width: 36, height: 40, border: 'none', background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ocean };
   return (
-    <div style={{ display: 'flex', alignItems: 'stretch', border: `1px solid ${C.line}`, borderRadius: 10, overflow: 'hidden', opacity: disabled ? 0.5 : 1, background: '#fff' }}>
+    <div style={{ display: 'flex', alignItems: 'stretch', border: `1px solid ${C.line}`, borderRadius: R.cartao, overflow: 'hidden', opacity: disabled ? 0.5 : 1, background: C.white }}>
       <button type="button" disabled={disabled || value <= min} onClick={() => set(Math.max(min, value - 1))} style={{ ...btn, borderRight: `1px solid ${C.line}` }}><Minus size={15} /></button>
       <div style={{ flex: 1, display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 600, minWidth: 44 }}>{value}</div>
       <button type="button" disabled={disabled || value >= max} onClick={() => set(Math.min(max, value + 1))} style={{ ...btn, borderLeft: `1px solid ${C.line}` }}><Plus size={15} /></button>
@@ -1023,7 +1023,7 @@ export function Stepper({ value, set, min = 0, max = 99, disabled }) {
   );
 }
 export const MoneyInput = ({ value, onChange, style }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: 8, padding: '0 8px', background: '#fff', ...style }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: R.campo, padding: '0 8px', background: C.white, ...style }}>
     <span style={{ fontSize: 12, color: C.inkSoft }}>R$</span>
     <input className="pmf" type="number" step="1" value={value} onChange={onChange}
       style={{ width: '100%', border: 'none', outline: 'none', padding: '7px 0', fontSize: 13, fontFamily: F.sans, background: 'transparent', color: C.ink }} />
@@ -1061,7 +1061,7 @@ function QuickRateModal({ apt, startD, endD, nNoites, afetadas, parciais, onClos
       </Field>
       {temParciais && (
         <div style={{ marginTop: 10 }}>
-          <Note color="#b45309" bg="#fff7ed">
+          <Note color={C.aviso} bg={C.avisoBg}>
             {parciais.length > 1 ? `${parciais.length} reservas` : '1 reserva'} deste apartamento {parciais.length > 1 ? 'começam antes ou terminam depois' : 'começa antes ou termina depois'} do período selecionado — o preço {parciais.length > 1 ? 'delas' : 'dela'} não será alterado, para não afetar noites fora da seleção. Edite {parciais.length > 1 ? 'essas reservas' : 'essa reserva'} individualmente se precisar.
           </Note>
         </div>
@@ -1280,7 +1280,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     <Modal title={isNew ? 'Criar nova reserva' : `Reserva ${i.codigo || ''}`} subtitle={`${residencial.nome} · ${apt.nome} · ${apt.piso} · ${apt.vista}${!isNew && i.criadoEm ? ` · Criada em ${fmtShort(i.criadoEm)}` : ''}`} onClose={onClose} wide
       headerActions={!isNew && onDuplicate && (
         <button onClick={() => { onDuplicate(i.id); onClose(); }} title="Duplicar reserva"
-          style={{ background: C.espuma, border: 'none', borderRadius: 9, width: 34, height: 34, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft, flexShrink: 0 }}>
+          style={{ background: C.espuma, border: 'none', borderRadius: R.campo, width: 34, height: 34, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.inkSoft, flexShrink: 0 }}>
           <Copy size={17} />
         </button>
       )}
@@ -1318,11 +1318,11 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
           </div>
           {status !== 'bloqueio' && (
             <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 10, border: `1px solid ${checkinRealizado ? '#6EE7B7' : C.line}`, background: checkinRealizado ? '#EAFBF4' : '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: checkinRealizado ? '#0B6B4F' : C.ink }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: R.cartao, border: `1px solid ${checkinRealizado ? C.sucessoBorda : C.line}`, background: checkinRealizado ? C.sucessoBg : C.white, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: checkinRealizado ? C.sucesso : C.ink }}>
                 <input type="checkbox" checked={checkinRealizado} onChange={e => setCheckinRealizado(e.target.checked)} />
                 <LogIn size={15} /> Check-in realizado
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: 10, border: `1px solid ${checkoutRealizado ? '#EFB3B3' : C.line}`, background: checkoutRealizado ? '#FBE9E9' : '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: checkoutRealizado ? '#8A2E2E' : C.ink }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: R.cartao, border: `1px solid ${checkoutRealizado ? C.erroBorda : C.line}`, background: checkoutRealizado ? C.erroBg : C.white, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: checkoutRealizado ? C.erro : C.ink }}>
                 <input type="checkbox" checked={checkoutRealizado} onChange={e => setCheckoutRealizado(e.target.checked)} />
                 <LogOut size={15} /> Check-out realizado
               </label>
@@ -1364,8 +1364,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               </Select>
             </Field>
           </div>
-          {!free && <div style={{ marginTop: 12 }}><Note color="#B23B3B" bg="#F7E9E9"><AlertCircle size={15} /> Conflito: já existe uma reserva neste apartamento nestas datas.</Note></div>}
-          {overCap && <div style={{ marginTop: 10 }}><Note color="#9A6A14" bg="#FBEFD9"><AlertCircle size={15} /> {totalGuests} hóspedes excede a capacidade do apartamento ({apt.capacidade}).</Note></div>}
+          {!free && <div style={{ marginTop: 12 }}><Note color={C.erro} bg={C.erroBg}><AlertCircle size={15} /> Conflito: já existe uma reserva neste apartamento nestas datas.</Note></div>}
+          {overCap && <div style={{ marginTop: 10 }}><Note color={C.aviso} bg={C.avisoBg}><AlertCircle size={15} /> {totalGuests} hóspedes excede a capacidade do apartamento ({apt.capacidade}).</Note></div>}
         </div>
 
         {/* Hóspede */}
@@ -1401,7 +1401,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                   }}>
                   {emailEnviadoEm ? 'Reenviar e-mail de confirmação' : 'Enviar e-mail de confirmação'}
                 </Btn>
-                <span style={{ fontSize: 12.5, color: envio === 'falhou' ? '#A24C4C' : C.inkSoft }}>
+                <span style={{ fontSize: 12.5, color: envio === 'falhou' ? C.erro : C.inkSoft }}>
                   {envio === 'a-enviar' ? 'Enviando…'
                     : envio === 'enviado' ? 'Enviado agora.'
                     : envio === 'falhou' ? `Não foi possível enviar — ${textoFalhaEmail(motivoEnvio)}.`
@@ -1426,7 +1426,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
         {/* Pagamento */}
         {status !== 'bloqueio' && <div>
           <div style={secTitle}><Wallet size={16} color={C.brisa} /> Detalhes de pagamento</div>
-          <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ border: `1px solid ${C.line}`, borderRadius: R.cartao, overflow: 'hidden' }}>
             <div className="pm-hide-sm" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 560 }}>
                 <thead>
@@ -1513,19 +1513,19 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
             </div>
 
             <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => addExtra()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: C.ocean, fontWeight: 600, fontSize: 12.5 }}><Plus size={14} /> Adicionar item</button>
+              <button type="button" onClick={() => addExtra()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: `1px dashed ${C.line}`, borderRadius: R.campo, padding: '6px 12px', cursor: 'pointer', color: C.ocean, fontWeight: 600, fontSize: 12.5 }}><Plus size={14} /> Adicionar item</button>
               {(data.taxasAdicionais || []).filter(tx => tx.tipo !== 'obrigatoria').map(tx => {
                 const Icon = iconForExtra(tx.nome);
                 return (
                   <button key={tx.id} type="button" onClick={() => addExtra({ nome: tx.nome, preco: tx.preco })} title={`${tx.nome} — Opcional`}
-                    style={{ background: C.areiaSoft, border: `1px solid ${C.areia}`, borderRadius: 999, padding: '6px 12px', cursor: 'pointer', color: C.ink, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    style={{ background: C.areiaSoft, border: `1px solid ${C.areia}`, borderRadius: R.pilula, padding: '6px 12px', cursor: 'pointer', color: C.ink, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <Icon size={14} strokeWidth={2.25} />
                     {money(tx.preco)}
                   </button>
                 );
               })}
             </div>
-            <div style={{ background: C.oceanDeep, color: '#fff', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ background: C.oceanDeep, color: C.white, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {/* Pago/Restante em cima (a pedido do Caio, 2026-09-23) — é a
                   informação mais consultada de relance ao abrir uma reserva. */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -1533,7 +1533,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>Restante: <b style={{ color: restante > 0 ? '#FFB25E' : C.areia }}>{money(restante)}</b></div>
                 {restante > 0 && (
                   <button type="button" onClick={marcarComoPaga}
-                    style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.32)', borderRadius: 8, padding: '6px 12px', color: '#fff', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
+                    style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.32)', borderRadius: R.campo, padding: '6px 12px', color: C.white, fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
                     Marcar como paga
                   </button>
                 )}
@@ -1559,8 +1559,8 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                 {registrosExibidos.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {registrosExibidos.map(reg => (
-                      <div key={reg.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,.08)', borderRadius: 7, padding: '5px 9px', fontSize: 12 }}>
-                        <span style={{ flex: 1, color: '#fff', opacity: reg.legado ? .75 : 1, fontStyle: reg.legado ? 'italic' : 'normal' }}>{reg.descricao}</span>
+                      <div key={reg.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,.08)', borderRadius: R.campo, padding: '5px 9px', fontSize: 12 }}>
+                        <span style={{ flex: 1, color: C.white, opacity: reg.legado ? .75 : 1, fontStyle: reg.legado ? 'italic' : 'normal' }}>{reg.descricao}</span>
                         <span style={{ color: 'rgba(255,255,255,.7)' }}>{fmtShort(reg.data)}</span>
                         <span style={{ fontWeight: 700, minWidth: 64, textAlign: 'right' }}>{money(reg.valor)}</span>
                         {/* Lançamentos com mpId vieram confirmados pelo Mercado
@@ -1592,7 +1592,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                   <MoneyInput value={novoValor} onChange={e => setNovoValor(e.target.value === '' ? '' : Number(e.target.value))} style={{ width: 110 }} />
                   <button type="button" onClick={() => commitRegistro(novaDescricao, novaData, novoValor)}
                     disabled={!novaDescricao.trim() || !(Number(novoValor) > 0)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: C.areia, border: 'none', borderRadius: 8, padding: '6px 12px', cursor: novaDescricao.trim() && Number(novoValor) > 0 ? 'pointer' : 'not-allowed', opacity: novaDescricao.trim() && Number(novoValor) > 0 ? 1 : .5, color: C.oceanDeep, fontWeight: 700, fontSize: 12.5 }}>
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: C.areia, border: 'none', borderRadius: R.campo, padding: '6px 12px', cursor: novaDescricao.trim() && Number(novoValor) > 0 ? 'pointer' : 'not-allowed', opacity: novaDescricao.trim() && Number(novoValor) > 0 ? 1 : .5, color: C.oceanDeep, fontWeight: 700, fontSize: 12.5 }}>
                     <Plus size={14} /> Adicionar
                   </button>
                 </div>

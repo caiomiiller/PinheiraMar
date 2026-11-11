@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarDays, Users, Wallet, ArrowRight, ChevronLeft, Home, Tag, Building2, Receipt } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { nights, parseYMD, ymd, today, addDays, seasonForDate, fmtShort, fmtLong, holdExpirado, money } from '../../lib/helpers';
 import { Card, PageHead, Badge, Btn, CheckinBadge, CheckoutBadge, displayStatus } from '../../components/ui';
 
@@ -102,7 +102,7 @@ export function Dashboard({ data, go, openReservation, update }) {
     const isToday = ymd(d) === ymd(t);
     return (
       <div onClick={() => openReservation?.(r.id)} title="Abrir reserva"
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: isToday ? '#FBF1E6' : C.espuma, borderRadius: 10, border: isToday ? `1px solid #EBD9C0` : '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: isToday ? C.avisoBg : C.espuma, borderRadius: R.cartao, border: isToday ? `1px solid ${C.avisoBorda}` : '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
         onMouseEnter={openReservation ? e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(10,40,46,.10)' : undefined}
         onMouseLeave={openReservation ? e => e.currentTarget.style.boxShadow = '' : undefined}>
         <div style={{ textAlign: 'center', minWidth: 40, flexShrink: 0 }}>
@@ -127,7 +127,7 @@ export function Dashboard({ data, go, openReservation, update }) {
     const d = parseYMD(criadoLimpo(r.criadoEm));
     return (
       <div onClick={() => openReservation?.(r.id)} title="Abrir reserva"
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: C.espuma, borderRadius: 10, border: '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: C.espuma, borderRadius: R.cartao, border: '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
         onMouseEnter={openReservation ? e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(10,40,46,.10)' : undefined}
         onMouseLeave={openReservation ? e => e.currentTarget.style.boxShadow = '' : undefined}>
         <div style={{ textAlign: 'center', minWidth: 40, flexShrink: 0 }}>
@@ -158,14 +158,14 @@ export function Dashboard({ data, go, openReservation, update }) {
       <PageHead title="Painel de controle" sub={`Hoje, ${fmtLong(ymd(t))}`} />
 
       {avisosPagamento.length > 0 && (
-        <Card style={{ padding: 16, marginBottom: 18, background: '#FDECEC', border: '1px solid #F2C4C4' }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#A23B3B', marginBottom: 8 }}>
+        <Card style={{ padding: 16, marginBottom: 18, background: C.erroBg, border: `1px solid ${C.erroBorda}` }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: C.erro, marginBottom: 8 }}>
             {avisosPagamento.length} pagamento(s) do Mercado Pago precisa(m) de atenção
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             {avisosPagamento.map(r => (
               <button key={r.id} onClick={() => openReservation?.(r.id)}
-                style={{ textAlign: 'left', background: 'rgba(255,255,255,.7)', border: 'none', borderRadius: 8, padding: '8px 10px', cursor: 'pointer', fontSize: 13, color: C.ink, fontFamily: F.sans }}>
+                style={{ textAlign: 'left', background: 'rgba(255,255,255,.7)', border: 'none', borderRadius: R.campo, padding: '8px 10px', cursor: 'pointer', fontSize: 13, color: C.ink, fontFamily: F.sans }}>
                 <b>{r.codigo}</b> · {r.hospede || '—'} · {aptName(r.apartamentoId)} —{' '}
                 {r.pagamentoEstornado
                   ? `pagamento ${r.pagamentoEstornado.status === 'charged_back' ? 'contestado (chargeback)' : 'estornado'} em ${fmtShort(String(r.pagamentoEstornado.em || '').slice(0, 10) || ymd(t))}`
@@ -177,8 +177,8 @@ export function Dashboard({ data, go, openReservation, update }) {
       )}
 
       {conflitos.length > 0 && (
-        <Card style={{ padding: 16, marginBottom: 18, background: '#FBEFD9', border: '1px solid #EBD9C0' }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#9A6A14', marginBottom: 4 }}>
+        <Card style={{ padding: 16, marginBottom: 18, background: C.avisoBg, border: `1px solid ${C.avisoBorda}` }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: C.aviso, marginBottom: 4 }}>
             {conflitos.length} reserva(s) paga(s) para datas que já estavam ocupadas
           </div>
           <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 10 }}>
@@ -188,13 +188,13 @@ export function Dashboard({ data, go, openReservation, update }) {
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             {conflitos.map(r => (
-              <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'rgba(255,255,255,.7)', borderRadius: 8, padding: '8px 10px' }}>
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'rgba(255,255,255,.7)', borderRadius: R.campo, padding: '8px 10px' }}>
                 <button onClick={() => openReservation?.(r.id)}
                   style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: C.ink, fontFamily: F.sans, flex: 1, minWidth: 0 }}>
                   <b>{r.codigo}</b> · {r.hospede || '—'} · {aptName(r.apartamentoId)}
                 </button>
                 <button onClick={() => update?.(prev => ({ ...prev, reservas: prev.reservas.map(x => x.id === r.id ? { ...x, conflitoDatas: false } : x) }))}
-                  style={{ flexShrink: 0, background: '#fff', border: '1px solid #EBD9C0', borderRadius: 999, padding: '6px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: '#9A6A14', fontFamily: F.sans }}>
+                  style={{ flexShrink: 0, background: C.white, border: `1px solid ${C.avisoBorda}`, borderRadius: R.pilula, padding: '6px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: C.aviso, fontFamily: F.sans }}>
                   Marcar como resolvido
                 </button>
               </div>
@@ -210,7 +210,7 @@ export function Dashboard({ data, go, openReservation, update }) {
             onMouseLeave={s.click ? e => e.currentTarget.style.boxShadow = '' : undefined}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ fontSize: 13, color: C.inkSoft, fontWeight: 600 }}>{s.label}</div>
-              <div style={{ width: 34, height: 34, borderRadius: 9, background: C.espuma, display: 'grid', placeItems: 'center', color: C.brisa }}><s.icon size={18} /></div>
+              <div style={{ width: 34, height: 34, borderRadius: R.campo, background: C.espuma, display: 'grid', placeItems: 'center', color: C.brisa }}><s.icon size={18} /></div>
             </div>
             <div style={{ fontSize: 26, fontWeight: 700, margin: '8px 0 2px', fontFamily: F.disp, color: C.ink }}>{s.value}</div>
             <div style={{ fontSize: 12.5, color: s.click ? C.brisa : C.inkSoft }}>{s.sub}</div>
@@ -269,8 +269,8 @@ export function Dashboard({ data, go, openReservation, update }) {
               <div style={{ width: 104, fontSize: 13, color: C.inkSoft, flexShrink: 0 }}>
                 {p.nome}{p.capacidade ? <span style={{ opacity: .65 }}> · {p.capacidade}p</span> : null}
               </div>
-              <div style={{ flex: 1, height: 10, background: C.espuma, borderRadius: 6, overflow: 'hidden' }}>
-                <div style={{ width: `${p.pct}%`, height: '100%', borderRadius: 6, background: p.pct >= 70 ? `linear-gradient(90deg,${C.coral},${C.coralDeep})` : `linear-gradient(90deg,${C.brisa},${C.ocean})` }} />
+              <div style={{ flex: 1, height: 10, background: C.espuma, borderRadius: R.campo, overflow: 'hidden' }}>
+                <div style={{ width: `${p.pct}%`, height: '100%', borderRadius: R.campo, background: p.pct >= 70 ? `linear-gradient(90deg,${C.coral},${C.coralDeep})` : `linear-gradient(90deg,${C.brisa},${C.ocean})` }} />
               </div>
               <div style={{ width: 36, fontSize: 12.5, textAlign: 'right', color: C.inkSoft, flexShrink: 0 }}>{p.pct}%</div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, Check } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { Card, PageHead, Btn } from '../../components/ui';
 import { PolicyBlock } from '../../components/PolicyBlock';
 
@@ -149,7 +149,7 @@ export function PoliticasView({ data, update }) {
           { pol: reservas, accent: C.ocean },
           { pol: cancelamento, accent: C.coralDeep },
         ].map(({ pol, accent }) => (
-          <div key={pol.titulo} style={{ marginBottom: 22, padding: '18px 20px', background: C.espuma, borderRadius: 12, border: `1px solid ${C.line}` }}>
+          <div key={pol.titulo} style={{ marginBottom: 22, padding: '18px 20px', background: C.espuma, borderRadius: R.cartao, border: `1px solid ${C.line}` }}>
             <div style={{ fontFamily: F.disp, fontSize: 17, color: accent, marginBottom: 12 }}>{pol.titulo}</div>
             <div style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.72, whiteSpace: 'pre-wrap' }}>
               {pol.texto.split('\n').map((line, idx) => {
@@ -166,7 +166,7 @@ export function PoliticasView({ data, update }) {
       </Card>
 
       {/* reminder */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 16px', background: '#EEF6FF', border: '1px solid #BDD9F8', borderRadius: 12, marginTop: 16, fontSize: 13.5, color: '#1A4A7A' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 16px', background: C.infoBg, border: `1px solid ${C.infoBorda}`, borderRadius: R.cartao, marginTop: 16, fontSize: 13.5, color: C.info }}>
         <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
         <span>As políticas são apresentadas ao hóspede na página de reserva do site e podem ser incluídas no e-mail de confirmação. Clique em <b>Salvar</b> para que as alterações entrem em vigor.</span>
       </div>

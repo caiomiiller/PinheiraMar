@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, fmtShort, holdExpirado } from '../../lib/helpers';
 import { Card, PageHead, Badge, Btn, DateInput, STATUS } from '../../components/ui';
 
@@ -181,9 +181,9 @@ export function Financeiro({ data, go }) {
       <PageHead title="Financeiro" sub="Receitas, estatísticas e desempenho por apartamento."
         action={
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', background: C.espuma, borderRadius: 10, padding: 3 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', background: C.espuma, borderRadius: R.cartao, padding: 3 }}>
               {PERIODOS.map(p => (
-                <button key={p.id} onClick={() => selectPeriodo(p.id)} style={{ padding: '7px 12px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: periodo === p.id ? '#fff' : 'transparent', color: periodo === p.id ? C.ocean : C.inkSoft, boxShadow: periodo === p.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none', whiteSpace: 'nowrap' }}>
+                <button key={p.id} onClick={() => selectPeriodo(p.id)} style={{ padding: '7px 12px', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: periodo === p.id ? C.white : 'transparent', color: periodo === p.id ? C.ocean : C.inkSoft, boxShadow: periodo === p.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none', whiteSpace: 'nowrap' }}>
                   {p.label}
                 </button>
               ))}
@@ -222,7 +222,7 @@ export function Financeiro({ data, go }) {
           {porMes.map((m, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 42 }}>
               <div style={{ fontSize: 10.5, color: C.inkSoft, marginBottom: 3, whiteSpace: 'nowrap' }}>{m.v > 0 ? money(m.v).replace('R$\u00a0', '') : ''}</div>
-              <div title={money(m.v)} style={{ width: '100%', borderRadius: '5px 5px 0 0', background: m.v > 0 ? `linear-gradient(180deg,${C.brisa},${C.ocean})` : C.espuma, height: `${Math.max(4, Math.round((m.v / maxMes) * 100))}px`, minHeight: 4, transition: 'height .3s' }} />
+              <div title={money(m.v)} style={{ width: '100%', borderRadius: '8px 8px 0 0', background: m.v > 0 ? `linear-gradient(180deg,${C.brisa},${C.ocean})` : C.espuma, height: `${Math.max(4, Math.round((m.v / maxMes) * 100))}px`, minHeight: 4, transition: 'height .3s' }} />
               <div style={{ fontSize: 10, color: C.inkSoft, marginTop: 4, textTransform: 'uppercase' }}>{m.label}</div>
             </div>
           ))}
@@ -254,8 +254,8 @@ export function Financeiro({ data, go }) {
                     <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{money(p.receita)}</td>
                     <td style={{ padding: '9px 10px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                        <div style={{ width: 64, height: 7, background: C.espuma, borderRadius: 4, overflow: 'hidden' }}>
-                          <div style={{ width: `${recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.brisa},${C.ocean})`, borderRadius: 4 }} />
+                        <div style={{ width: 64, height: 7, background: C.espuma, borderRadius: R.campo, overflow: 'hidden' }}>
+                          <div style={{ width: `${recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.brisa},${C.ocean})`, borderRadius: R.campo }} />
                         </div>
                         <span style={{ fontSize: 12, color: C.inkSoft, minWidth: 30, textAlign: 'right' }}>{recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%</span>
                       </div>
@@ -290,8 +290,8 @@ export function Financeiro({ data, go }) {
                     <span style={{ fontWeight: 600 }}>{o}</span>
                     <span style={{ color: C.inkSoft }}>{v} ({totalOrig > 0 ? Math.round((v / totalOrig) * 100) : 0}%)</span>
                   </div>
-                  <div style={{ height: 8, background: C.espuma, borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ width: `${totalOrig > 0 ? Math.round((v / totalOrig) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.coral},${C.coralDeep})`, borderRadius: 4 }} />
+                  <div style={{ height: 8, background: C.espuma, borderRadius: R.campo, overflow: 'hidden' }}>
+                    <div style={{ width: `${totalOrig > 0 ? Math.round((v / totalOrig) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.coral},${C.coralDeep})`, borderRadius: R.campo }} />
                   </div>
                 </div>
               ))}
@@ -321,10 +321,10 @@ export function Financeiro({ data, go }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
           <span style={{ fontSize: 12, color: C.inkSoft }}>Status:</span>
-          <button onClick={() => setResStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === 'todas' ? C.ocean : C.espuma, color: resStatusFilter === 'todas' ? '#fff' : C.inkSoft }}>Todas</button>
+          <button onClick={() => setResStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === 'todas' ? C.ocean : C.espuma, color: resStatusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
           {['confirmado', 'reservado', 'pendente', 'bloqueio'].map(st => (
             <button key={st} onClick={() => setResStatusFilter(st)}
-              style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === st ? STATUS[st].fg : C.espuma, color: resStatusFilter === st ? '#fff' : C.inkSoft }}>
+              style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === st ? STATUS[st].fg : C.espuma, color: resStatusFilter === st ? C.white : C.inkSoft }}>
               {STATUS[st].label}
             </button>
           ))}

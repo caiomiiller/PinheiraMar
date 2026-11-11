@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
-import { C, F, applyTheme } from '../../lib/constants';
+import { C, F, applyTheme, R } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 
 import { Dashboard } from './Dashboard';
@@ -60,8 +60,8 @@ export function Admin({ data, update, initialResidencialId }) {
       {/* sidebar (md+) */}
       <aside className="pm-sidebar" style={{ width: sidebarCollapsed ? 68 : 240, transition: 'width .16s ease', background: C.ocean, color: 'rgba(255,255,255,.78)', flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 10px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: '#fff', flexShrink: 0 }}><Waves size={19} /></div>
-          {!sidebarCollapsed && <div><div style={{ fontFamily: F.disp, fontSize: 17, color: '#fff', lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>}
+          <div style={{ width: 34, height: 34, borderRadius: R.campo, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: C.white, flexShrink: 0 }}><Waves size={19} /></div>
+          {!sidebarCollapsed && <div><div style={{ fontFamily: F.disp, fontSize: 17, color: C.white, lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>}
         </div>
 
         <div style={{ display: 'flex', justifyContent: sidebarCollapsed ? 'center' : 'flex-end', padding: '0 8px 18px' }}>
@@ -77,16 +77,16 @@ export function Admin({ data, update, initialResidencialId }) {
             <button onClick={() => setPicker(p => !p)} style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
               padding: '9px 11px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.16)',
-              borderRadius: 10, color: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, textAlign: 'left',
+              borderRadius: R.cartao, color: C.white, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, textAlign: 'left',
             }}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{residencial.nome}</span>
               <ChevronDown size={14} style={{ flexShrink: 0 }} />
             </button>
             {picker && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: C.white, borderRadius: R.cartao, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
                 {data.residenciais.map(r => (
                   <button key={r.id} onClick={() => { setResidencialId(r.id); setPicker(false); }}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: r.id === residencialId ? C.espuma : '#fff', color: C.ink, cursor: 'pointer', fontSize: 13, fontWeight: r.id === residencialId ? 700 : 500 }}>
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: r.id === residencialId ? C.espuma : C.white, color: C.ink, cursor: 'pointer', fontSize: 13, fontWeight: r.id === residencialId ? 700 : 500 }}>
                     {r.nome}
                   </button>
                 ))}
@@ -101,8 +101,8 @@ export function Admin({ data, update, initialResidencialId }) {
             return (
               <button key={t.id} onClick={() => setTab(t.id)} title={sidebarCollapsed ? t.label : undefined} style={{
                 width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 11, padding: sidebarCollapsed ? '11px 0' : '11px 14px', marginBottom: 3,
-                background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? '#fff' : 'rgba(255,255,255,.78)',
-                border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: on ? 600 : 500, textAlign: 'left',
+                background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? C.white : 'rgba(255,255,255,.78)',
+                border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontSize: 14, fontWeight: on ? 600 : 500, textAlign: 'left',
               }}><t.icon size={18} /> {!sidebarCollapsed && t.label}</button>
             );
           })}
@@ -116,16 +116,16 @@ export function Admin({ data, update, initialResidencialId }) {
             <button onClick={() => setPicker(p => !p)} style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
               padding: '10px 12px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.16)',
-              borderRadius: 10, color: '#fff', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, textAlign: 'left',
+              borderRadius: R.cartao, color: C.white, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, textAlign: 'left',
             }}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{residencial.nome}</span>
               <ChevronDown size={14} style={{ flexShrink: 0, transform: picker ? 'rotate(180deg)' : 'none' }} />
             </button>
             {picker && (
-              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 14, right: 14, background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 14, right: 14, background: C.white, borderRadius: R.cartao, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
                 {data.residenciais.map(r => (
                   <button key={r.id} onClick={() => { setResidencialId(r.id); setPicker(false); }}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '11px 12px', border: 'none', background: r.id === residencialId ? C.espuma : '#fff', color: C.ink, cursor: 'pointer', fontSize: 13.5, fontWeight: r.id === residencialId ? 700 : 500 }}>
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '11px 12px', border: 'none', background: r.id === residencialId ? C.espuma : C.white, color: C.ink, cursor: 'pointer', fontSize: 13.5, fontWeight: r.id === residencialId ? 700 : 500 }}>
                     {r.nome}
                   </button>
                 ))}
@@ -136,7 +136,7 @@ export function Admin({ data, update, initialResidencialId }) {
         {/* mobile tab bar */}
         <div className="pm-tabbar" style={{ display: 'none', background: C.ocean, padding: '10px', gap: 6, overflowX: 'auto' }}>
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 9, border: 'none', whiteSpace: 'nowrap', background: tab === t.id ? 'rgba(255,255,255,.16)' : 'transparent', color: '#fff', fontSize: 13, fontWeight: 600 }}><t.icon size={15} /> {t.label}</button>
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: R.campo, border: 'none', whiteSpace: 'nowrap', background: tab === t.id ? 'rgba(255,255,255,.16)' : 'transparent', color: C.white, fontSize: 13, fontWeight: 600 }}><t.icon size={15} /> {t.label}</button>
           ))}
         </div>
         {/* Reservas ganha a largura toda disponível (sem o limite de 1180px das

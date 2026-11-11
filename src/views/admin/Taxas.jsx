@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
-import { C } from '../../lib/constants';
+import { C, R } from '../../lib/constants';
 import { money, uid } from '../../lib/helpers';
 import { PageHead, Btn, Modal, Field, TextInput, Select, DragGrip, MoneyInput, ConfirmDialog } from '../../components/ui';
 import { useReorder, reordenarPorIds } from '../../hooks/useReorder';
@@ -31,7 +31,7 @@ export function TaxasView({ data, update }) {
         sub="Taxas obrigatórias ou opcionais apresentadas ao hóspede durante a reserva · arraste para ordenar."
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Adicionar</Btn>} />
 
-      <div style={{ display: 'grid', gap: 0, background: '#fff', borderRadius: 16, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gap: 0, background: C.white, borderRadius: R.modal, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
         {taxas.length === 0 && (
           <div style={{ padding: '28px 20px', textAlign: 'center', color: C.inkSoft, fontSize: 14 }}>
             Nenhuma taxa configurada. Clique em <b>Adicionar</b> para criar a primeira.
@@ -45,18 +45,18 @@ export function TaxasView({ data, update }) {
             </div>
             <div className="pm-taxa-price" style={{ fontWeight: 700, fontSize: 14, color: C.ink, minWidth: 64, textAlign: 'right' }}>{money(tx.preco)}</div>
             <div className="pm-taxa-tipo" style={{ minWidth: 90, textAlign: 'center' }}>
-              <span style={{ fontSize: 13, color: tx.tipo === 'obrigatoria' ? '#1C7A5B' : C.inkSoft, background: tx.tipo === 'obrigatoria' ? '#D1FAE5' : C.espuma, borderRadius: 999, padding: '3px 10px', fontWeight: 600 }}>
+              <span style={{ fontSize: 13, color: tx.tipo === 'obrigatoria' ? C.sucesso : C.inkSoft, background: tx.tipo === 'obrigatoria' ? C.sucessoBg : C.espuma, borderRadius: R.pilula, padding: '3px 10px', fontWeight: 600 }}>
                 {TIPO_LABEL[tx.tipo] || tx.tipo}
               </span>
             </div>
             <div className="pm-taxa-por" style={{ minWidth: 72, fontSize: 13, color: C.inkSoft, textAlign: 'center' }}>{POR_LABEL[tx.por] || tx.por}</div>
             <button onClick={() => setEditing(tx)} style={iconBtn} title="Editar"><Pencil size={15} /></button>
-            <button onClick={() => setConfirmId(tx.id)} style={{ ...iconBtn, color: '#B23B3B' }} title="Eliminar"><Trash2 size={15} /></button>
+            <button onClick={() => setConfirmId(tx.id)} style={{ ...iconBtn, color: C.erro }} title="Eliminar"><Trash2 size={15} /></button>
           </div>
         ))}
       </div>
 
-      <div style={{ marginTop: 14, padding: '12px 16px', background: '#EEF6FF', border: '1px solid #BDD9F8', borderRadius: 12, fontSize: 13, color: '#1A4A7A' }}>
+      <div style={{ marginTop: 14, padding: '12px 16px', background: C.infoBg, border: `1px solid ${C.infoBorda}`, borderRadius: R.cartao, fontSize: 13, color: C.info }}>
         <AlertCircle size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
         As taxas <b>obrigatórias</b> são adicionadas automaticamente a cada reserva. As <b>opcionais</b> ficam disponíveis como chips rápidos no formulário de reserva para o gestor adicionar manualmente.
       </div>

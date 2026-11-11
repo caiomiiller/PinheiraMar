@@ -5,7 +5,7 @@
 // tentar de novo; nada é "gravado só neste dispositivo" em silêncio.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Waves, Home, LogOut, RefreshCw, AlertTriangle, Check, Eye, EyeOff, Upload } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { Admin } from './Admin';
 import {
   sessaoAtual, aoMudarSessao, entrar, sair, carregarAdmin, gravarAdmin, ouvirAlteracoes, frescura, criarLinhaInicial,
@@ -24,10 +24,10 @@ function Tela({ children }) {
   return <div style={{ minHeight: '100vh', background: C.oceanDeep, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F.sans, padding: 24 }}>{children}</div>;
 }
 function Cartao({ children }) {
-  return <div className="pm-pop" style={{ background: '#fff', borderRadius: 24, padding: '36px 32px', width: '100%', maxWidth: 400, boxShadow: '0 32px 80px rgba(0,0,0,.36)' }}>{children}</div>;
+  return <div className="pm-pop" style={{ background: C.white, borderRadius: R.modal, padding: '36px 32px', width: '100%', maxWidth: 400, boxShadow: '0 32px 80px rgba(0,0,0,.36)' }}>{children}</div>;
 }
-const campo = { width: '100%', boxSizing: 'border-box', padding: '13px 14px', fontSize: 16, border: `1.5px solid ${C.line}`, borderRadius: 12, outline: 'none', fontFamily: F.sans, color: C.ink, background: '#fff' };
-const botao = { width: '100%', minHeight: 50, background: C.ocean, color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, fontSize: 16, cursor: 'pointer', fontFamily: F.sans };
+const campo = { width: '100%', boxSizing: 'border-box', padding: '13px 14px', fontSize: 16, border: `1.5px solid ${C.line}`, borderRadius: R.cartao, outline: 'none', fontFamily: F.sans, color: C.ink, background: C.white };
+const botao = { width: '100%', minHeight: 50, background: C.ocean, color: C.white, border: 'none', borderRadius: R.cartao, fontWeight: 600, fontSize: 16, cursor: 'pointer', fontFamily: F.sans };
 
 export function LoginScreen({ onEntrar }) {
   const [email, setEmail] = useState('');
@@ -51,7 +51,7 @@ export function LoginScreen({ onEntrar }) {
             <div style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Gestão dos residenciais</div>
             <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 4, letterSpacing: '.08em', textTransform: 'uppercase' }}>Acesso ao painel</div>
           </div>
-          {MODO_DEMO && <div style={{ fontSize: 13.5, background: '#FFF4D6', color: '#5C4400', borderRadius: 10, padding: '8px 12px', marginBottom: 14 }}>Demonstração: entre com qualquer e-mail.</div>}
+          {MODO_DEMO && <div style={{ fontSize: 13.5, background: C.avisoBg, color: C.aviso, borderRadius: R.cartao, padding: '8px 12px', marginBottom: 14 }}>Demonstração: entre com qualquer e-mail.</div>}
           <label htmlFor="pm-login-email" style={{ fontSize: 14, fontWeight: 600, color: C.inkSoft, display: 'block', marginBottom: 6 }}>E-mail</label>
           <input id="pm-login-email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} autoFocus style={{ ...campo, marginBottom: 14 }} />
           <label htmlFor="pm-login-senha" style={{ fontSize: 14, fontWeight: 600, color: C.inkSoft, display: 'block', marginBottom: 6 }}>Senha</label>
@@ -62,7 +62,7 @@ export function LoginScreen({ onEntrar }) {
               {ver ? <EyeOff size={19} /> : <Eye size={19} />}
             </button>
           </div>
-          {erro && <div role="alert" style={{ color: '#B42318', fontSize: 14, margin: '6px 0 4px', fontWeight: 600 }}>{erro}</div>}
+          {erro && <div role="alert" style={{ color: C.erro, fontSize: 14, margin: '6px 0 4px', fontWeight: 600 }}>{erro}</div>}
           <button type="submit" disabled={aguarde || (!MODO_DEMO && (!email || !senha))} style={{ ...botao, marginTop: 14, opacity: aguarde ? .6 : 1 }}>
             {aguarde ? 'Entrando…' : 'Entrar no painel'}
           </button>
@@ -80,7 +80,7 @@ function AvisoPainel({ titulo, texto, children }) {
     <Tela>
       <Cartao>
         <div style={{ textAlign: 'center' }}>
-          <AlertTriangle size={30} color="#B54708" />
+          <AlertTriangle size={30} color={C.aviso} />
           <div style={{ fontSize: 19, fontWeight: 500, color: C.ink, margin: '10px 0 8px' }}>{titulo}</div>
           <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.55, marginBottom: 18 }}>{texto}</div>
           <div style={{ display: 'grid', gap: 10 }}>{children}</div>
@@ -98,7 +98,7 @@ export default function PainelGestao({ onVerSite }) {
     const off = aoMudarSessao(s => setSessao(s));
     return () => { vivo = false; off(); };
   }, []);
-  if (sessao === undefined) return <Tela><Waves size={34} color="#fff" /></Tela>;
+  if (sessao === undefined) return <Tela><Waves size={34} color={C.white} /></Tela>;
   if (!sessao) {
     return <LoginScreen onEntrar={async (email, senha) => { const r = await entrar(email, senha); if (r.ok) setSessao(r.sessao); return r; }} />;
   }
@@ -224,25 +224,25 @@ function PainelComDados({ sessao, onVerSite, onSair }) {
           : 'Verifique a conexão e tente de novo. Nada foi alterado.'}>
         <button onClick={recarregar} style={botao}><RefreshCw size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Tentar de novo</button>
         {semAcesso && <RestaurarBancoVazio onFeito={recarregar} />}
-        <button onClick={onSair} style={{ ...botao, background: '#fff', color: C.ink, border: `1.5px solid ${C.line}` }}>Sair</button>
+        <button onClick={onSair} style={{ ...botao, background: C.white, color: C.ink, border: `1.5px solid ${C.line}` }}>Sair</button>
       </AvisoPainel>
     );
   }
-  if (!data) return <Tela><Waves size={34} color="#fff" /></Tela>;
+  if (!data) return <Tela><Waves size={34} color={C.white} /></Tela>;
 
   return (
     <div>
       <div style={{ background: C.oceanDeep, color: 'rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '7px 16px', fontSize: 13, flexWrap: 'wrap' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Waves size={15} color={C.brisa} />
-          <span style={{ fontWeight: 600, color: '#fff' }}>Painel de gestão</span>
+          <span style={{ fontWeight: 600, color: C.white }}>Painel de gestão</span>
           <span style={{ opacity: .7 }}>· {sessao?.user?.email}</span>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={onVerSite} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.9)', padding: '6px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={onVerSite} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: R.campo, color: 'rgba(255,255,255,.9)', padding: '6px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Home size={13} /> Ver site
           </button>
-          <button onClick={onSair} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 7, color: 'rgba(255,255,255,.9)', padding: '6px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={onSair} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: R.campo, color: 'rgba(255,255,255,.9)', padding: '6px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
             <LogOut size={13} /> Sair
           </button>
         </div>
@@ -259,17 +259,17 @@ function BarraSync({ sync, pendentes, onTentar, onRecarregar }) {
   return (
     <div role="status" aria-live="polite" style={{
       position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 200, maxWidth: 560, margin: '0 auto',
-      background: erro ? '#FEF3F2' : '#fff', border: `1px solid ${erro ? '#FDA29B' : C.line}`, borderRadius: 14,
+      background: erro ? C.erroBg : C.white, border: `1px solid ${erro ? C.erroBorda : C.line}`, borderRadius: R.cartao,
       boxShadow: '0 10px 30px rgba(0,0,0,.16)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, fontFamily: F.sans, fontSize: 14.5, color: C.ink,
     }}>
-      {erro ? <AlertTriangle size={20} color="#B42318" style={{ flexShrink: 0 }} /> : <RefreshCw size={18} className="pm-girar" style={{ flexShrink: 0 }} />}
+      {erro ? <AlertTriangle size={20} color={C.erro} style={{ flexShrink: 0 }} /> : <RefreshCw size={18} className="pm-girar" style={{ flexShrink: 0 }} />}
       <div style={{ flex: 1, lineHeight: 1.45 }}>
         {erro
           ? (MENSAGENS_ERRO[sync.codigo] || `Não foi possível salvar ${pendentes > 1 ? `${pendentes} alterações` : 'a última alteração'} — verifique a conexão.`)
           : `Salvando${pendentes > 1 ? ` ${pendentes} alterações` : ''}…`}
       </div>
-      {erro && pendentes > 0 && <button onClick={onTentar} style={{ minHeight: 40, padding: '0 14px', borderRadius: 10, border: 'none', background: C.ocean, color: '#fff', fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }}>Tentar de novo</button>}
-      {erro && <button onClick={onRecarregar} style={{ minHeight: 40, padding: '0 12px', borderRadius: 10, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }} title="Descarta o que não foi salvo e recarrega os dados do servidor">Recarregar</button>}
+      {erro && pendentes > 0 && <button onClick={onTentar} style={{ minHeight: 40, padding: '0 14px', borderRadius: R.cartao, border: 'none', background: C.ocean, color: C.white, fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }}>Tentar de novo</button>}
+      {erro && <button onClick={onRecarregar} style={{ minHeight: 40, padding: '0 12px', borderRadius: R.cartao, border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }} title="Descarta o que não foi salvo e recarrega os dados do servidor">Recarregar</button>}
     </div>
   );
 }
@@ -295,8 +295,8 @@ function RestaurarBancoVazio({ onFeito }) {
   return (
     <>
       <input ref={ref} type="file" accept="application/json,.json" onChange={escolher} style={{ display: 'none' }} />
-      <button onClick={() => ref.current?.click()} style={{ ...botao, background: '#fff', color: C.ink, border: `1.5px solid ${C.line}` }}><Upload size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Banco vazio? Restaurar backup</button>
-      {msg && <div style={{ fontSize: 14, color: msg.ok ? '#067647' : '#B42318' }}>{msg.ok && <Check size={14} />} {msg.t}</div>}
+      <button onClick={() => ref.current?.click()} style={{ ...botao, background: C.white, color: C.ink, border: `1.5px solid ${C.line}` }}><Upload size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Banco vazio? Restaurar backup</button>
+      {msg && <div style={{ fontSize: 14, color: msg.ok ? C.sucesso : C.erro }}>{msg.ok && <Check size={14} />} {msg.t}</div>}
     </>
   );
 }

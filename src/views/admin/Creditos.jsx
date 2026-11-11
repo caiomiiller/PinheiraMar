@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, RotateCcw, AlertCircle } from 'lucide-react';
-import { C } from '../../lib/constants';
+import { C, R } from '../../lib/constants';
 import { money, uid, today, ymd, fmtShort } from '../../lib/helpers';
 import { PageHead, Btn, Modal, Field, TextInput, Textarea, DateInput, MoneyInput, ConfirmDialog } from '../../components/ui';
 import { iconBtn } from './Reservations';
@@ -45,7 +45,7 @@ export function CreditosView({ data, update }) {
         sub={`Registo manual de créditos/vouchers (ex.: por cancelamento de reserva).${creditos.length ? ` ${money(totalAberto)} em aberto.` : ''}`}
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Adicionar</Btn>} />
 
-      <div style={{ background: '#fff', borderRadius: 16, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+      <div style={{ background: C.white, borderRadius: R.modal, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <div style={{ minWidth: 680 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.9fr 1.1fr 1.6fr 108px 92px', gap: 12, padding: '10px 20px', background: C.espuma, borderBottom: `1px solid ${C.line}`, fontSize: 12, fontWeight: 700, color: C.inkSoft }}>
@@ -66,15 +66,15 @@ export function CreditosView({ data, update }) {
                 <div style={{ fontSize: 13, color: C.ink, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.motivo}>{c.motivo || '—'}</div>
                 <div>
                   {c.utilizado
-                    ? <span style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, background: C.espuma, borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap' }}>Utilizado{c.utilizadoEm ? ` · ${fmtShort(c.utilizadoEm)}` : ''}</span>
-                    : <span style={{ fontSize: 12, fontWeight: 700, color: '#1C7A5B', background: '#D1FAE5', borderRadius: 999, padding: '3px 9px' }}>Em aberto</span>}
+                    ? <span style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, background: C.espuma, borderRadius: R.pilula, padding: '3px 9px', whiteSpace: 'nowrap' }}>Utilizado{c.utilizadoEm ? ` · ${fmtShort(c.utilizadoEm)}` : ''}</span>
+                    : <span style={{ fontSize: 12, fontWeight: 700, color: C.sucesso, background: C.sucessoBg, borderRadius: R.pilula, padding: '3px 9px' }}>Em aberto</span>}
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {c.utilizado
                     ? <button onClick={() => marcarUtilizado(c.id, false)} style={iconBtn} title="Reabrir (marcar como não utilizado)"><RotateCcw size={14} /></button>
-                    : <button onClick={() => marcarUtilizado(c.id, true)} style={{ ...iconBtn, color: '#1C7A5B' }} title="Marcar como utilizado"><Check size={14} /></button>}
+                    : <button onClick={() => marcarUtilizado(c.id, true)} style={{ ...iconBtn, color: C.sucesso }} title="Marcar como utilizado"><Check size={14} /></button>}
                   <button onClick={() => setEditing(c)} style={iconBtn} title="Editar"><Pencil size={14} /></button>
-                  <button onClick={() => setConfirmId(c.id)} style={{ ...iconBtn, color: '#B23B3B' }} title="Eliminar"><Trash2 size={14} /></button>
+                  <button onClick={() => setConfirmId(c.id)} style={{ ...iconBtn, color: C.erro }} title="Eliminar"><Trash2 size={14} /></button>
                 </div>
               </div>
             ))}
@@ -82,7 +82,7 @@ export function CreditosView({ data, update }) {
         </div>
       </div>
 
-      <div style={{ marginTop: 14, padding: '12px 16px', background: '#EEF6FF', border: '1px solid #BDD9F8', borderRadius: 12, fontSize: 13, color: '#1A4A7A' }}>
+      <div style={{ marginTop: 14, padding: '12px 16px', background: C.infoBg, border: `1px solid ${C.infoBorda}`, borderRadius: R.cartao, fontSize: 13, color: C.info }}>
         <AlertCircle size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
         Isto é só um registo — não gera código nem aplica desconto sozinho. Ao usar o crédito numa reserva nova, ajuste o valor manualmente (campo de extras da reserva) e marque este registo como <b>Utilizado</b>.
       </div>

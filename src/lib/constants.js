@@ -5,12 +5,25 @@
 // títulos e ações, noite para fundos escuros, pedra para texto de apoio.
 // As chaves antigas (ocean, coral…) mantêm-se para não partir componentes;
 // "coral" deixou de ser laranja — as ações do grupo são em marinho.
-export const C = {
+const PALETA = {
+    // marca
     ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
-    espuma: '#F2F1F5', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
-    coral: '#1B1C46', coralDeep: '#14152F',
-    ink: '#1B1C46', inkSoft: '#6F6B64', line: '#E2E0DB', white: '#FFFFFF',
+    coral: '#1B1C46', coralDeep: '#14152F',            // chaves antigas (= marinho)
+    // texto, linhas e fundos
+    ink: '#1B1C46', inkSoft: '#6F6B64', white: '#FFFFFF',
+    line: '#E2E0DB', bordaForte: '#8A8A8A', inativo: '#BBBBBB',
+    espuma: '#F2F1F5', fundoSuave: '#F8F8F6', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
+    // estados: sucesso · aviso · erro · informação (texto, fundo, borda)
+    sucesso: '#1C7A5B', sucessoBg: '#E1F0EC', sucessoBorda: '#6EE7B7',
+    aviso: '#7B5600', avisoBg: '#FFF4D6', avisoBorda: '#EBD9C0',
+    erro: '#B42318', erroBg: '#FEF3F2', erroBorda: '#F0C6C6',
+    info: '#1A4A7A', infoBg: '#EEF6FF', infoBorda: '#BDD9F8',
 };
+// Todas as cores de interface vêm daqui (C.<nome>) — não escrever #hex nos componentes.
+export const C = { ...PALETA };
+// Cantos: só quatro valores — campo (8), botão/cartão (12), modal (16) e pílula (999).
+// Círculos continuam '50%'. Não escrever números soltos em borderRadius.
+export const R = { campo: 8, cartao: 12, modal: 16, pilula: 999 };
 export const F = {
   // uma só família em todo o grupo: Montserrat (carregada em index.html)
   disp: "'Montserrat','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
@@ -55,18 +68,8 @@ export const GOOGLE_RATING = {
 export const THEMES = {
   // os dois residenciais partilham a paleta do grupo (a cor própria de cada
   // um — vermelho / azul — entra só nas suas peças e no seu segmento da faixa)
-  pinheiramar: {
-    ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
-    espuma: '#F2F1F5', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
-    coral: '#1B1C46', coralDeep: '#14152F',
-    ink: '#1B1C46', inkSoft: '#6F6B64', line: '#E2E0DB', white: '#FFFFFF',
-  },
-  novoimovel: {
-    ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
-    espuma: '#F2F1F5', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
-    coral: '#1B1C46', coralDeep: '#14152F',
-    ink: '#1B1C46', inkSoft: '#6F6B64', line: '#E2E0DB', white: '#FFFFFF',
-  },
+  pinheiramar: { ...PALETA },
+  novoimovel: { ...PALETA },
 };
 
 // Muta C in-place para o tema do imóvel indicado, mantendo a mesma referência

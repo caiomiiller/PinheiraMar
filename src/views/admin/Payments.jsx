@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, Star, Copy, Trash2, Database } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { uid } from '../../lib/helpers';
 import { Card, PageHead, Btn, DragGrip, duplicateInList, ConfirmDialog } from '../../components/ui';
 import { useReorder, reordenarPorIds } from '../../hooks/useReorder';
@@ -20,13 +20,13 @@ export function PaymentsView({ data, update }) {
       <PageHead title="Pagamentos" sub="Configure como os hóspedes pagam o sinal e o saldo da reserva · arraste para reordenar." />
 
       {/* recommendation banner */}
-      <div style={{ background: 'linear-gradient(135deg,#E8F4FD,#EEF6FF)', border: '1px solid #BDD9F8', borderRadius: 14, padding: '16px 20px', marginBottom: 22, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#1A56DB', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-          <Star size={18} color="#fff" fill="#fff" />
+      <div style={{ background: `linear-gradient(135deg,${C.infoBg},${C.infoBg})`, border: `1px solid ${C.infoBorda}`, borderRadius: R.cartao, padding: '16px 20px', marginBottom: 22, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: C.info, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+          <Star size={18} color={C.white} fill={C.white} />
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: '#1A3A6B', marginBottom: 4 }}>Recomendação para o {data.settings.nome}</div>
-          <div style={{ fontSize: 13.5, color: '#1e3a5f', lineHeight: 1.6 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: C.info, marginBottom: 4 }}>Recomendação para o {data.settings.nome}</div>
+          <div style={{ fontSize: 13.5, color: C.info, lineHeight: 1.6 }}>
             <b>Mercado Pago + Pix</b> é a combinação mais vantajosa para aluguel de temporada no Brasil. O Pix cobre o sinal de 50% (taxa zero, confirmação imediata) e o Mercado Pago oferece parcelamento em até 12x sem juros para o hóspede — aumentando a conversão em alta temporada. O saldo de 50% no check-in fica com <b>Pagamento presencial</b> (maquininha ou Pix direto).
           </div>
         </div>
@@ -39,18 +39,18 @@ export function PaymentsView({ data, update }) {
               <DragGrip {...dnd.grip(idx)} style={{ marginTop: 4 }} />
 
               {/* colour badge */}
-              <div className="pm-pay-icon" style={{ width: 44, height: 44, borderRadius: 11, background: p.cor, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <span style={{ color: '#fff', fontWeight: 800, fontSize: 13, letterSpacing: '-.02em' }}>{p.nome.slice(0, 2).toUpperCase()}</span>
+              <div className="pm-pay-icon" style={{ width: 44, height: 44, borderRadius: R.cartao, background: p.cor, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <span style={{ color: C.white, fontWeight: 800, fontSize: 13, letterSpacing: '-.02em' }}>{p.nome.slice(0, 2).toUpperCase()}</span>
               </div>
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                   <span style={{ fontWeight: 700, fontSize: 16, color: C.ink }}>{p.nome}</span>
                   {RECOMENDADO.includes(p.id) && (
-                    <span style={{ fontSize: 11, fontWeight: 700, background: '#FFF3CD', color: '#7B5600', border: '1px solid #F5C542', borderRadius: 999, padding: '2px 8px' }}>★ Recomendado</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, background: C.avisoBg, color: C.aviso, border: `1px solid ${C.avisoBorda}`, borderRadius: R.pilula, padding: '2px 8px' }}>★ Recomendado</span>
                   )}
                   {p.conectado && (
-                    <span style={{ fontSize: 11, fontWeight: 700, background: '#D1FAE5', color: '#065F46', border: '1px solid #6EE7B7', borderRadius: 999, padding: '2px 8px' }}>● Ativo</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, background: C.sucessoBg, color: C.sucesso, border: `1px solid ${C.sucessoBorda}`, borderRadius: R.pilula, padding: '2px 8px' }}>● Ativo</span>
                   )}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: p.cor, marginBottom: 6 }}>{p.taxa}</div>
@@ -75,7 +75,7 @@ export function PaymentsView({ data, update }) {
                 )}
                 <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
                   <button onClick={() => duplicate(p.id)} title="Duplicar" style={iconBtn}><Copy size={14} /></button>
-                  <button onClick={() => setConfirmId(p.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={14} /></button>
+                  <button onClick={() => setConfirmId(p.id)} title="Eliminar" style={{ ...iconBtn, color: C.erro }}><Trash2 size={14} /></button>
                 </div>
               </div>
             </div>
@@ -106,16 +106,16 @@ export function PaymentsView({ data, update }) {
             { step: '3', title: 'Webhook', desc: 'Não é preciso configurar: cada link de pagamento já informa ao Mercado Pago o endereço de aviso do site (/api/mp-webhook), que confere o pagamento e confirma a reserva.', cor: C.coral },
             { step: '4', title: 'Fluxo no motor de reservas', desc: 'Reserva criada no site → link de pagamento do sinal → hóspede paga → o aviso do Mercado Pago confirma → a reserva passa a "Reservado" e o hóspede recebe o e-mail.', cor: '#7C3AED' },
           ].map(s => (
-            <div key={s.step} style={{ padding: '14px 16px', background: C.espuma, borderRadius: 12, borderLeft: `4px solid ${s.cor}` }}>
+            <div key={s.step} style={{ padding: '14px 16px', background: C.espuma, borderRadius: R.cartao, borderLeft: `4px solid ${s.cor}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <div style={{ width: 24, height: 24, borderRadius: '50%', background: s.cor, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{s.step}</div>
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: s.cor, color: C.white, display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{s.step}</div>
                 <div style={{ fontWeight: 700, fontSize: 14, color: C.ink }}>{s.title}</div>
               </div>
               <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.55 }}>{s.desc}</div>
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 14, padding: '12px 14px', background: '#FFF8E1', border: '1px solid #FFD54F', borderRadius: 10, fontSize: 13, color: '#7B5600', lineHeight: 1.55 }}>
+        <div style={{ marginTop: 14, padding: '12px 14px', background: C.avisoBg, border: `1px solid ${C.avisoBorda}`, borderRadius: R.cartao, fontSize: 13, color: C.aviso, lineHeight: 1.55 }}>
           <b>Nota:</b> o Mercado Pago já está integrado pelas funções do próprio site na Vercel (pasta <code>api/</code>). Sem o <b>MP_ACCESS_TOKEN</b> configurado, as reservas do site seguem pelo fluxo manual: ficam pendentes e a equipa combina o sinal por WhatsApp/Pix e lança o pagamento no painel.
         </div>
       </Card>

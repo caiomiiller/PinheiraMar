@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, AlertCircle, Clock, MessageCircle } from 'lucide-react';
-import { C, F, WHATSAPP_URL } from '../lib/constants';
+import { C, F, WHATSAPP_URL, R } from '../lib/constants';
 import { money, nights } from '../lib/helpers';
 import { useIdioma } from '../lib/i18n';
 import { Btn, Modal, Row } from './ui';
@@ -29,13 +29,13 @@ export function ConfirmationModal({ info, paymentStatus, onClose }) {
       ) : (
         <>
           <div style={{ textAlign: 'center', padding: '6px 0 4px' }}>
-            <div style={{ width: 60, height: 60, borderRadius: '50%', background: failed ? '#FEF3F2' : (pending ? '#FFF4D6' : 'rgba(27,28,70,.07)'), display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}>
-              {failed ? <AlertCircle size={30} color="#B42318" /> : pending ? <Clock size={30} color="#8A6A14" /> : <Check size={30} color={C.ocean} />}
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: failed ? C.erroBg : (pending ? C.avisoBg : 'rgba(27,28,70,.07)'), display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}>
+              {failed ? <AlertCircle size={30} color={C.erro} /> : pending ? <Clock size={30} color={C.aviso} /> : <Check size={30} color={C.ocean} />}
             </div>
             <p style={{ margin: 0, color: C.inkSoft, fontSize: 15 }}>{tr('cf_seu_codigo')}</p>
             <div style={{ fontFamily: F.disp, fontSize: 30, letterSpacing: '.06em', margin: '4px 0 18px', color: C.ocean }}>{r1.codigo}</div>
           </div>
-          <div style={{ background: C.espuma, borderRadius: 12, padding: 16, fontSize: 15.5, display: 'grid', gap: 10 }}>
+          <div style={{ background: C.espuma, borderRadius: R.cartao, padding: 16, fontSize: 15.5, display: 'grid', gap: 10 }}>
             <Row k={info.aptos?.length > 1 ? tr('cf_apartamentos') : tr('cf_apartamento')} v={aptos} />
             <Row k={tr('cf_estadia')} v={`${fmtCurta(r1.checkIn)} → ${fmtCurta(r1.checkOut)} · ${tr('noites', nights(r1.checkIn, r1.checkOut))}`} />
             <Row k={tr('cf_hospede')} v={r1.hospede} />

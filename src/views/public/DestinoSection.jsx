@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Waves, Map, Car, Plane, Bus, Fish, Sunset, ShieldCheck, Umbrella, Star, MessageCircle, Navigation } from 'lucide-react';
-import { C, F, WHATSAPP_URL } from '../../lib/constants';
+import { C, F, WHATSAPP_URL, R } from '../../lib/constants';
 import { Faixa, BRAND } from '../../components/Brand';
 import { useIdioma } from '../../lib/i18n';
 
@@ -39,12 +39,12 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
     { Icon: MapPin, titulo: tr('ds_distancias'), texto: tr('ds_distancias_txt') },
   ];
   const h3 = { fontSize: 28, fontWeight: 300, lineHeight: 1.2, margin: '0 0 10px', color: C.ink };
-  const par = { fontSize: 16, color: '#4A4843', lineHeight: 1.75, margin: '0 0 18px' };
+  const par = { fontSize: 16, color: C.inkSoft, lineHeight: 1.75, margin: '0 0 18px' };
 
   return (
-    <section style={{ background: '#fff', borderTop: '1px solid #eee' }}>
+    <section style={{ background: C.white, borderTop: `1px solid ${C.line}` }}>
       {/* faixa de abertura em marinho */}
-      <div style={{ background: `linear-gradient(160deg, ${BRAND.noite} 0%, ${BRAND.marinho} 70%)`, color: '#fff', textAlign: 'center', padding: '64px 24px 56px' }}>
+      <div style={{ background: `linear-gradient(160deg, ${BRAND.noite} 0%, ${BRAND.marinho} 70%)`, color: C.white, textAlign: 'center', padding: '64px 24px 56px' }}>
         {/* seletor de idioma — só aparece aqui no telemóvel (escondido por
             padrão, .pm-destino-lang liga no media query em App.jsx); no
             desktop o idioma continua só no cabeçalho. A pedido do Caio,
@@ -55,7 +55,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
           <div className="pm-destino-lang" style={{ display: 'none', justifyContent: 'center', gap: 2, marginBottom: 12 }}>
             {idiomasAtivos.map(id => (
               <button key={id.codigo} onClick={() => setLang(id.codigo)} title={id.nativo} aria-label={id.nativo} aria-pressed={lang === id.codigo}
-                style={{ width: 40, height: 40, borderRadius: '50%', border: lang === id.codigo ? '1px solid #fff' : '1px solid transparent', background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
+                style={{ width: 40, height: 40, borderRadius: '50%', border: lang === id.codigo ? `1px solid ${C.white}` : '1px solid transparent', background: 'transparent', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>
                 {id.bandeira}
               </button>
             ))}
@@ -68,10 +68,10 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
       </div>
 
       <div className="pm-destino-wrap" style={{ maxWidth: 1160, margin: '0 auto', padding: '0 24px 64px' }}>
-        <div role="tablist" style={{ display: 'flex', gap: 0, borderBottom: '2px solid #eee', marginBottom: 36, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        <div role="tablist" style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${C.line}`, marginBottom: 36, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {TABS_DEST.map(t => (
             <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 52, padding: '0 22px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.ink : '#5f5f5f', borderBottom: tab === t.id ? `3px solid ${BRAND.marinho}` : '3px solid transparent', marginBottom: -2, whiteSpace: 'nowrap', fontFamily: F.sans }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 52, padding: '0 22px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.ink : C.inkSoft, borderBottom: tab === t.id ? `3px solid ${BRAND.marinho}` : '3px solid transparent', marginBottom: -2, whiteSpace: 'nowrap', fontFamily: F.sans }}>
               <t.Icon size={18} strokeWidth={1.5} /> {t.label}
             </button>
           ))}
@@ -92,9 +92,9 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
               <h4 style={{ fontSize: 20, fontWeight: 400, margin: '0 0 14px', color: C.ink }}>{tr('ds_por_que')}</h4>
               <div style={{ display: 'grid', gap: 10 }}>
                 {motivos.map(([Icon, chave], i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: '#f7f7f5', borderRadius: 10 }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: C.fundoSuave, borderRadius: R.cartao }}>
                     <Icon {...icone} style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: 15.5, color: '#333', lineHeight: 1.5 }}>{tr(chave)}</span>
+                    <span style={{ fontSize: 15.5, color: C.ink, lineHeight: 1.5 }}>{tr(chave)}</span>
                   </div>
                 ))}
               </div>
@@ -108,31 +108,31 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
               <div>
                 <h3 style={h3}>{tr('ds_atrativos_titulo')}</h3>
                 <Faixa height={2} width={44} style={{ marginBottom: 16 }} />
-                <p style={{ ...par, color: '#5f5f5f' }}>{tr('ds_atrativos_sub')}</p>
-                <div style={{ borderRadius: 14, overflow: 'hidden', border: `1px solid ${C.line}`, height: 240 }}>
+                <p style={{ ...par, color: C.inkSoft }}>{tr('ds_atrativos_sub')}</p>
+                <div style={{ borderRadius: R.cartao, overflow: 'hidden', border: `1px solid ${C.line}`, height: 240 }}>
                   <iframe title={tr('ds_mapa_enseada')}
                     src="https://maps.google.com/maps?q=Praia+da+Pinheira,+Palhoça,+SC&output=embed&zoom=13"
                     width="100%" height="240" style={{ border: 0, display: 'block' }}
                     loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
                 </div>
-                <p style={{ fontSize: 14, color: '#5f5f5f', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {tr('ds_enseada')}</p>
+                <p style={{ fontSize: 14, color: C.inkSoft, marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {tr('ds_enseada')}</p>
               </div>
               <div style={{ display: 'grid', gap: 16 }}>
                 {ATRATIVOS.filter(a => a.destaque).map(a => (
-                  <div key={a.id} style={{ padding: '18px 20px', background: '#fff', border: `1px solid ${C.line}`, borderRadius: 14, borderLeft: `4px solid ${BRAND.marinho}` }}>
+                  <div key={a.id} style={{ padding: '18px 20px', background: C.white, border: `1px solid ${C.line}`, borderRadius: R.cartao, borderLeft: `4px solid ${BRAND.marinho}` }}>
                     <div style={{ fontWeight: 600, fontSize: 17, marginBottom: 6, color: C.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
                       {tr('ds_at_' + a.id)} <Star size={16} strokeWidth={1.5} color={BRAND.vermelho} aria-label={tr('ds_destaque')} />
                     </div>
-                    <div style={{ fontSize: 15.5, color: '#4A4843', lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
+                    <div style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
                   </div>
                 ))}
               </div>
             </div>
             <div className="pm-destino-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: 18 }}>
               {ATRATIVOS.filter(a => !a.destaque).map(a => (
-                <div key={a.id} style={{ padding: '16px 18px', background: '#fafaf8', border: '1px solid #eee', borderRadius: 12 }}>
+                <div key={a.id} style={{ padding: '16px 18px', background: C.fundoSuave, border: `1px solid ${C.line}`, borderRadius: R.cartao }}>
                   <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, color: C.ink }}>{tr('ds_at_' + a.id)}</div>
-                  <div style={{ fontSize: 15, color: '#4A4843', lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
+                  <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
                 </div>
               ))}
             </div>
@@ -146,18 +146,18 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
               <Faixa height={2} width={44} style={{ marginBottom: 22 }} />
               <div style={{ display: 'grid', gap: 16 }}>
                 {comoChegar.map((it, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 14, padding: '16px 18px', background: '#f7f7f5', borderRadius: 14 }}>
+                  <div key={i} style={{ display: 'flex', gap: 14, padding: '16px 18px', background: C.fundoSuave, borderRadius: R.cartao }}>
                     <it.Icon size={26} strokeWidth={1.5} color={BRAND.marinho} style={{ flexShrink: 0 }} />
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 5, color: C.ink }}>{it.titulo}</div>
-                      <div style={{ fontSize: 15, color: '#4A4843', lineHeight: 1.6 }}>{it.texto}</div>
+                      <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6 }}>{it.texto}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <div style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid ${C.line}`, marginBottom: 16 }}>
+              <div style={{ borderRadius: R.modal, overflow: 'hidden', border: `1px solid ${C.line}`, marginBottom: 16 }}>
                 <iframe title={tr('ds_mapa_enseada')}
                   src="https://maps.google.com/maps?q=Praia+da+Pinheira,+Palhoça,+SC&output=embed&zoom=14"
                   width="100%" height="380" style={{ border: 0, display: 'block' }}
@@ -168,7 +168,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
                 {residenciais.map(r => {
                   const completo = [r.endereco, r.cidade].filter(Boolean).join(', ');
                   return (
-                    <div key={r.id} style={{ padding: '16px 18px', background: C.espuma, borderRadius: 12, fontSize: 15.5, color: C.ink, lineHeight: 1.65 }}>
+                    <div key={r.id} style={{ padding: '16px 18px', background: C.espuma, borderRadius: R.cartao, fontSize: 15.5, color: C.ink, lineHeight: 1.65 }}>
                       <div style={{ fontWeight: 600, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={16} strokeWidth={1.5} /> {r.nome}</div>
                       {r.endereco}<br />{r.cidade}{r.cep ? ` · CEP ${r.cep}` : ''}
                       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8 }}>

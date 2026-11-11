@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, Copy, Wallet } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { uid, money, today, parseYMD, fmtLong, ymd, addDays, roomFullName, isTarifaRapida } from '../../lib/helpers';
 import { Card, PageHead, Btn, Modal, Field, TextInput, DateInput, NumberInput, duplicateInList,
   DragGrip, PhotoTile, MoneyInput, ConfirmDialog } from '../../components/ui';
@@ -47,7 +47,7 @@ export function Seasons({ data, update }) {
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontFamily: F.disp, fontSize: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
                   {s.nome}
-                  {ativa && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.coralDeep, background: '#FBE6DD', padding: '2px 9px', borderRadius: 999, fontFamily: F.sans }}>● Em vigor</span>}
+                  {ativa && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.coralDeep, background: C.avisoBg, padding: '2px 9px', borderRadius: R.pilula, fontFamily: F.sans }}>● Em vigor</span>}
                   {s.ativa === false && <span style={{ fontSize: 11.5, color: C.inkSoft, fontFamily: F.sans }}>(desativada)</span>}
                 </div>
                 <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2 }}>{fmtLong(s.inicio)} – {fmtLong(s.fim)} · mín. {s.minNoites || 1} noite(s){s.maxNoites ? ` · máx. ${s.maxNoites}` : ''}</div>
@@ -58,7 +58,7 @@ export function Seasons({ data, update }) {
               </div>
               <button onClick={() => duplicate(s.id)} title="Duplicar" style={iconBtn}><Copy size={16} /></button>
               <button onClick={() => setEditing(s)} title="Editar" style={iconBtn}><Pencil size={16} /></button>
-              <button onClick={() => setConfirmId(s.id)} title="Eliminar" style={{ ...iconBtn, color: '#B23B3B' }}><Trash2 size={16} /></button>
+              <button onClick={() => setConfirmId(s.id)} title="Eliminar" style={{ ...iconBtn, color: C.erro }}><Trash2 size={16} /></button>
             </Card>
           );
         })}
@@ -130,9 +130,9 @@ export function SeasonForm({ initial, isNew, apartamentos, onSave, onClose }) {
           <div style={secTitle}><Wallet size={16} color={C.brisa} /> Encargos por acomodação</div>
           <div style={{ display: 'grid', gap: 12 }}>
             {apartamentos.map(a => (
-              <div key={a.id} style={{ border: `1px solid ${C.line}`, borderRadius: 12, padding: 12 }}>
+              <div key={a.id} style={{ border: `1px solid ${C.line}`, borderRadius: R.cartao, padding: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                  <div style={{ width: 76, flexShrink: 0 }}><PhotoTile apt={a} h={50} radius={9} /></div>
+                  <div style={{ width: 76, flexShrink: 0 }}><PhotoTile apt={a} h={50} radius={R.campo} /></div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>{roomFullName(a)}</div>
                     <div style={{ fontSize: 11.5, color: C.inkSoft }}>Encargos por acomodação · 1 unidade</div>

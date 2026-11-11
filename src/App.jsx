@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Waves, RefreshCw, FlaskConical } from 'lucide-react';
-import { C, F, applyTheme, TELEFONE_CONTATO } from './lib/constants';
+import { C, F, applyTheme, TELEFONE_CONTATO, R } from './lib/constants';
 import { PublicSite } from './views/public/PublicSite';
 import { PoliticasPublicas } from './views/public/PoliticasPublicas';
 import { carregarPublico, reservar, limparCopiasAntigas } from './lib/dadosPublico';
@@ -48,7 +48,7 @@ export function Aviso({ titulo, texto, acao, rotuloAcao = 'Tentar de novo' }) {
         <h1 style={{ fontSize: 22, fontWeight: 400, margin: '12px 0 8px' }}>{titulo}</h1>
         <p style={{ fontSize: 16, lineHeight: 1.6, color: C.inkSoft }}>{texto}</p>
         {acao && (
-          <button onClick={acao} style={{ marginTop: 20, minHeight: 48, padding: '0 22px', border: 'none', borderRadius: 12, background: C.ocean, color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: F.sans }}>
+          <button onClick={acao} style={{ marginTop: 20, minHeight: 48, padding: '0 22px', border: 'none', borderRadius: R.cartao, background: C.ocean, color: C.white, fontSize: 16, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: F.sans }}>
             <RefreshCw size={18} /> {rotuloAcao}
           </button>
         )}
@@ -60,7 +60,7 @@ export function Aviso({ titulo, texto, acao, rotuloAcao = 'Tentar de novo' }) {
 // Faixa de aviso nos previews da Vercel (VITE_AMBIENTE=teste) e na demonstração.
 function FaixaTeste() {
   return (
-    <div role="status" style={{ background: '#FFF4D6', color: '#5C4400', borderBottom: '1px solid #E9D18A', fontSize: 13.5, fontWeight: 600, padding: '7px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.sans }}>
+    <div role="status" style={{ background: C.avisoBg, color: C.aviso, borderBottom: `1px solid ${C.avisoBorda}`, fontSize: 13.5, fontWeight: 600, padding: '7px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.sans }}>
       <FlaskConical size={15} /> {MODO_DEMO ? 'Demonstração — dados fictícios, nada é gravado no sistema real.' : 'Ambiente de testes — não use para reservas reais.'}
     </div>
   );
@@ -171,7 +171,7 @@ export default function App() {
       .pm-cal-backdrop{display:none!important;}
       /* no telemóvel os dias ficam mais juntos, para os círculos caberem */
       .pm-cal-grid{column-gap:2px!important;}
-      .pm-searchbar{flex-direction:column!important;border-radius:18px!important;}
+      .pm-searchbar{flex-direction:column!important;border-radius:16px!important;}
       .pm-seg{border-right:none!important;border-bottom:1px solid #ddd!important;}
       .pm-search-btn{margin:10px!important;width:calc(100% - 20px)!important;justify-content:center!important;}
 
@@ -225,7 +225,7 @@ export default function App() {
       .pm-detail-side[data-sheet="open"]{display:block!important;position:fixed!important;inset:0!important;z-index:300!important;background:#fff!important;overflow-y:auto!important;padding:max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom))!important;}
       .pm-detail-sheethead{display:flex!important;}
       .pm-detail-gallery{display:flex!important;overflow-x:auto!important;gap:6px!important;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
-      .pm-detail-gallery>div{display:block!important;grid-row:auto!important;flex:0 0 86%!important;height:240px!important;scroll-snap-align:start;border-radius:10px;}
+      .pm-detail-gallery>div{display:block!important;grid-row:auto!important;flex:0 0 86%!important;height:240px!important;scroll-snap-align:start;border-radius:12px;}
 
       /* ── modais (reserva, confirmação, admin) — ecrã cheio no telemóvel ── */
       .pm-modal-overlay{padding:0!important;align-items:stretch!important;overflow:hidden!important;}

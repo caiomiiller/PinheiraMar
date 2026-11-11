@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { C, F } from '../lib/constants';
+import { C, F, R } from '../lib/constants';
 import { ymd, parseYMD, addDays, isAvailable, ultimaSaidaPossivel } from '../lib/helpers';
 import { hojeISO } from '../lib/reservas';
 import { useIdioma } from '../lib/i18n';
 
 // Cor de fundo de cada dia antes de qualquer seleção: verde-claro disponível,
 // vermelho-claro ocupado (a mesma linguagem do painel).
-const DIA_DISPONIVEL = '#E1F0EC';
-const DIA_INDISPONIVEL = '#F3E3E3';
+const DIA_DISPONIVEL = C.sucessoBg;
+const DIA_INDISPONIVEL = C.erroBg;
 
 function buildMonthCells(year, month) {
   const startWeekday = new Date(year, month, 1).getDay(); // 0 = domingo
@@ -20,7 +20,7 @@ function buildMonthCells(year, month) {
 }
 
 const navBtnStyle = {
-  width: 40, height: 40, borderRadius: '50%', border: `1px solid ${C.line}`, background: '#fff',
+  width: 40, height: 40, borderRadius: '50%', border: `1px solid ${C.line}`, background: C.white,
   color: C.ink, cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0,
 };
 
@@ -86,7 +86,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
   const semana = diasSemana();
 
   return (
-    <div style={{ border: `1px solid ${C.line}`, borderRadius: 14, padding: '14px 14px 16px', background: '#fff', fontFamily: F.sans }}>
+    <div style={{ border: `1px solid ${C.line}`, borderRadius: R.cartao, padding: '14px 14px 16px', background: C.white, fontFamily: F.sans }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
         <button type="button" onClick={goPrev} disabled={noPrimeiroMes} style={{ ...navBtnStyle, opacity: noPrimeiroMes ? .35 : 1 }} aria-label={tr('cal_mes_anterior')}><ChevronLeft size={18} /></button>
         <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, textAlign: 'center' }} aria-live="polite">
@@ -131,7 +131,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
                       aspectRatio: '1', minHeight: 40, border: 'none', borderRadius: '50%', padding: 0,
                       fontSize: 14, cursor: (disabled || soSaidaVisivel) ? 'default' : 'pointer', fontFamily: F.sans,
                       background: (isStart || isEnd) ? C.ocean : (within ? C.espuma : baseBg),
-                      color: (isStart || isEnd) ? '#fff' : (disabled ? '#8E9895' : C.ink),
+                      color: (isStart || isEnd) ? C.white : (disabled ? C.bordaForte : C.ink),
                       textDecoration: blocked ? 'line-through' : 'none',
                       fontWeight: (isStart || isEnd) ? 700 : 500,
                     }}>{d.getDate()}</button>

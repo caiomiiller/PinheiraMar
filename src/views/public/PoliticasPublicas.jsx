@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Waves, MessageCircle, RefreshCw } from 'lucide-react';
-import { C, F } from '../../lib/constants';
+import { C, F, R } from '../../lib/constants';
 import { carregarPublico } from '../../lib/dadosPublico';
 
 // Página pública e sem login — pensada para ser um link que o Caio pode
@@ -31,7 +31,7 @@ function BlocoPolitica({ titulo, texto }) {
   return (
     <div style={{ marginBottom: 26 }}>
       <div style={{ fontFamily: F.disp, fontSize: 19, color: C.ocean, marginBottom: 10 }}>{titulo}</div>
-      <div style={{ fontSize: 14.5, lineHeight: 1.7, color: '#333', whiteSpace: 'pre-wrap', background: '#F9FAFA', border: `1px solid ${C.line}`, borderRadius: 12, padding: '16px 18px' }}>
+      <div style={{ fontSize: 14.5, lineHeight: 1.7, color: C.ink, whiteSpace: 'pre-wrap', background: C.fundoSuave, border: `1px solid ${C.line}`, borderRadius: R.cartao, padding: '16px 18px' }}>
         {texto}
       </div>
     </div>
@@ -43,14 +43,14 @@ function CartaoResidencial({ residencial }) {
   const wa = waLink(residencial.telefone);
   if (!pol.reservas?.texto && !pol.cancelamento?.texto) return null;
   return (
-    <div style={{ background: '#fff', border: `1px solid ${C.line}`, borderRadius: 16, padding: '26px 24px', marginBottom: 22 }}>
+    <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: R.modal, padding: '26px 24px', marginBottom: 22 }}>
       <div style={{ fontSize: 22, fontWeight: 600, color: C.ink, marginBottom: 4 }}>{residencial.nome}</div>
       {residencial.endereco && <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 20 }}>{residencial.endereco}{residencial.cidade ? ` · ${residencial.cidade}` : ''}</div>}
       <BlocoPolitica titulo={pol.reservas?.titulo || 'Termos e Políticas de Hospedagem'} texto={pol.reservas?.texto} />
       <BlocoPolitica titulo={pol.cancelamento?.titulo || 'Política de Cancelamento'} texto={pol.cancelamento?.texto} />
       {wa && (
         <a href={wa} target="_blank" rel="noopener noreferrer"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4, padding: '10px 16px', borderRadius: 10, background: '#25D366', color: '#fff', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4, padding: '10px 16px', borderRadius: R.cartao, background: '#25D366', color: C.white, fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
           <MessageCircle size={17} /> Falar no WhatsApp
         </a>
       )}
@@ -85,7 +85,7 @@ export function PoliticasPublicas({ filtro }) {
           <Waves size={32} color={C.brisa} />
           <h1 style={{ fontSize: 20, fontWeight: 500, margin: '12px 0 8px' }}>Não foi possível carregar</h1>
           <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6 }}>Verifique a sua conexão e tente de novo.</p>
-          <button onClick={carregar} style={{ marginTop: 16, minHeight: 44, padding: '0 18px', border: 'none', borderRadius: 10, background: C.ocean, color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: F.sans }}>
+          <button onClick={carregar} style={{ marginTop: 16, minHeight: 44, padding: '0 18px', border: 'none', borderRadius: R.cartao, background: C.ocean, color: C.white, fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: F.sans }}>
             <RefreshCw size={16} /> Tentar de novo
           </button>
         </div>
