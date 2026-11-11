@@ -935,7 +935,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       {deleteConfirm && (
         <ConfirmDialog
-          message={<>Excluir definitivamente a reserva <b>{deleteConfirm.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
+          title={`Excluir a reserva ${deleteConfirm.codigo || ''}?`.replace(' ?', '?')}
+          message="A reserva é apagada de vez e as datas ficam livres. Para manter o registro sem bloquear as datas, marque como Cancelada."
+          confirmLabel="Excluir reserva"
           onConfirm={() => { remove(deleteConfirm.id); setDeleteConfirm(null); }}
           onCancel={() => setDeleteConfirm(null)}
         />
@@ -1245,7 +1247,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
               <Select value={status} onChange={e => setStatus(e.target.value)}
                 style={{ background: (STATUS[status] || STATUS.pendente).bg, color: (STATUS[status] || STATUS.pendente).fg, borderColor: (STATUS[status] || STATUS.pendente).bar, fontWeight: 700 }}>
                 <option value="pendente">Pendente (sem pagamento)</option>
-                <option value="reservado">Reservado (50% pago)</option>
+                <option value="reservado">Reservado ({Number(residencial?.sinalPct) || 50}% pago)</option>
                 <option value="confirmado">Confirmado (100% pago)</option>
                 <option value="bloqueio">Bloqueio</option>
                 <option value="cancelada">Cancelada</option>
@@ -1542,14 +1544,18 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     </Modal>
     {confirmDelete && (
       <ConfirmDialog
-        message={<>Excluir definitivamente a reserva <b>{i.codigo || ''}</b>? Esta ação não pode ser desfeita — para manter o registo sem bloquear as datas, marque o estado como Cancelada em vez disso.</>}
+        title={`Excluir a reserva ${i.codigo || ''}?`.replace(' ?', '?')}
+        message="A reserva é apagada de vez e as datas ficam livres. Para manter o registro sem bloquear as datas, marque como Cancelada."
+        confirmLabel="Excluir reserva"
         onConfirm={() => { onRemove(i.id); setConfirmDelete(false); }}
         onCancel={() => setConfirmDelete(false)}
       />
     )}
     {confirmRemoverRegistro && (
       <ConfirmDialog
-        message={<>Excluir o lançamento <b>{confirmRemoverRegistro.descricao}</b> de <b>{money(confirmRemoverRegistro.valor)}</b> ({fmtShort(confirmRemoverRegistro.data)})? Esta ação não pode ser desfeita.</>}
+        title={`Excluir o lançamento de ${money(confirmRemoverRegistro.valor)}?`}
+        message={<><b>{confirmRemoverRegistro.descricao}</b> ({fmtShort(confirmRemoverRegistro.data)}) sai desta reserva quando você salvar.</>}
+        confirmLabel="Excluir lançamento"
         onConfirm={() => { removeRegistro(confirmRemoverRegistro.id); setConfirmRemoverRegistro(null); }}
         onCancel={() => setConfirmRemoverRegistro(null)}
       />

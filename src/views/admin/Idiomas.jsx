@@ -141,9 +141,9 @@ export function IdiomasView({ data, update }) {
         const lang = idiomas.find(i => i.codigo === confirmCodigo);
         return (
           <ConfirmDialog
-            title="Excluir idioma"
-            message={<>Tem a certeza que quer excluir <b>{lang?.nativo || 'este idioma'}</b> do site? Os hóspedes deixarão de poder escolhê-lo.</>}
-            confirmLabel="Excluir"
+            title={`Excluir o idioma ${lang?.nativo || ''}?`.replace(' ?', '?')}
+            message="Os hóspedes deixam de poder escolhê-lo no site."
+            confirmLabel="Excluir idioma"
             onConfirm={() => { remove(confirmCodigo); setConfirmCodigo(null); }}
             onCancel={() => setConfirmCodigo(null)}
           />

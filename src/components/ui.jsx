@@ -222,12 +222,17 @@ export const Card = ({ children, style, ...rest }) => <div {...rest} style={{ ba
 // Diálogo de confirmação genérico — usado antes de qualquer exclusão
 // permanente (apartamento, taxa, idioma, meio de pagamento, temporada...),
 // para evitar que um toque acidental na lixeira apague algo sem querer.
-export function ConfirmDialog({ title = 'Confirmar exclusão', message, confirmLabel = 'Excluir', onConfirm, onCancel }) {
+// Cada tela passa o título com o objeto ("Excluir o apartamento 102?"), a
+// consequência numa linha e o botão com o nome da ação ("Excluir apartamento");
+// o outro botão é "Manter". `perigo={false}` para confirmações que não apagam nada.
+export function ConfirmDialog({ title = 'Excluir este item?', message, confirmLabel = 'Excluir', cancelLabel = 'Manter', perigo = true, onConfirm, onCancel }) {
   return (
     <Modal title={title} onClose={onCancel}
       footer={<>
-        <Btn variant="ghost" onClick={onCancel}>Cancelar</Btn>
-        <Btn variant="danger" icon={undefined} onClick={onConfirm} style={{ background: C.erro, color: C.white, border: `1px solid ${C.erro}` }}>{confirmLabel}</Btn>
+        <Btn variant="ghost" onClick={onCancel}>{cancelLabel}</Btn>
+        {perigo
+          ? <Btn variant="danger" icon={undefined} onClick={onConfirm} style={{ background: C.erro, color: C.white, border: `1px solid ${C.erro}` }}>{confirmLabel}</Btn>
+          : <Btn variant="primary" onClick={onConfirm}>{confirmLabel}</Btn>}
       </>}>
       <p style={{ fontSize: 14, color: C.ink, lineHeight: 1.55, margin: 0 }}>{message}</p>
     </Modal>

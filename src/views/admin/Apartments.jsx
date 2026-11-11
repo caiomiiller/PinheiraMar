@@ -50,7 +50,9 @@ export function Apartments({ data, update }) {
         const a = data.apartamentos.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer excluir <b>{a?.nome || 'este apartamento'}</b>? Esta ação não pode ser desfeita.</>}
+            title={`Excluir o apartamento ${a?.nome || ''}?`.replace(' ?', '?')}
+            message="O apartamento sai do site e do painel. Não dá para desfazer."
+            confirmLabel="Excluir apartamento"
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />

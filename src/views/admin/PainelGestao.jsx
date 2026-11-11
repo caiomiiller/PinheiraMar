@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Waves, Home, LogOut, RefreshCw, AlertTriangle, Check, Eye, EyeOff, Upload } from 'lucide-react';
 import { C, F, R } from '../../lib/constants';
 import { Admin } from './Admin';
+import { ConfirmDialog } from '../../components/ui';
 import {
   sessaoAtual, aoMudarSessao, entrar, sair, carregarAdmin, gravarAdmin, ouvirAlteracoes, frescura, criarLinhaInicial,
 } from '../../lib/dadosAdmin';
@@ -279,6 +280,7 @@ function BarraSync({ sync, pendentes, onTentar, onRecarregar }) {
 function RestaurarBancoVazio({ onFeito }) {
   const ref = useRef(null);
   const [msg, setMsg] = useState(null);
+  const [pendente, setPendente] = useState(null); // backup lido, à espera de confirmação
   const escolher = async (e) => {
     const f = e.target.files?.[0]; e.target.value = '';
     if (!f) return;
@@ -286,17 +288,34 @@ function RestaurarBancoVazio({ onFeito }) {
       const obj = JSON.parse(await f.text());
       const d = obj?.data && Array.isArray(obj.data.reservas) ? obj.data : obj;
       if (!d || !Array.isArray(d.reservas) || !Array.isArray(d.apartamentos)) throw new Error('estrutura não reconhecida');
-      if (!window.confirm(`Criar o banco a partir deste backup (${d.reservas.length} reservas, ${d.apartamentos.length} apartamentos)?\n\nSó funciona se o banco estiver mesmo vazio — nunca substitui dados existentes.`)) return;
+      setPendente(d); // a confirmação é feita no diálogo do painel (abaixo), não na janela do navegador
+    } catch (err) { setMsg({ ok: false, t: 'Backup inválido: ' + err.message }); }
+  };
+  const criar = async () => {
+    const d = pendente;
+    setPendente(null);
+    try {
       const r = await criarLinhaInicial(d);
       setMsg(r.ok ? { ok: true, t: 'Banco criado a partir do backup.' } : { ok: false, t: r.motivo === 'existe' ? 'O banco não está vazio: o problema é de acesso (e-mail fora da lista admins).' : 'Não foi possível criar: ' + (r.motivo || 'erro') });
       if (r.ok) onFeito();
-    } catch (err) { setMsg({ ok: false, t: 'Backup inválido: ' + err.message }); }
+    } catch (err) { setMsg({ ok: false, t: 'Não foi possível criar: ' + err.message }); }
   };
   return (
     <>
       <input ref={ref} type="file" accept="application/json,.json" onChange={escolher} style={{ display: 'none' }} />
       <button onClick={() => ref.current?.click()} style={{ ...botao, background: C.white, color: C.ink, border: `1.5px solid ${C.line}` }}><Upload size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Banco vazio? Restaurar backup</button>
       {msg && <div style={{ fontSize: 14, color: msg.ok ? C.sucesso : C.erro }}>{msg.ok && <Check size={14} />} {msg.t}</div>}
+      {pendente && (
+        <ConfirmDialog
+          title="Criar o banco a partir deste backup?"
+          message={<>O arquivo tem <b>{pendente.reservas.length} reservas</b> e <b>{pendente.apartamentos.length} apartamentos</b>. Só funciona se o banco estiver mesmo vazio — nunca substitui dados existentes.</>}
+          confirmLabel="Criar banco"
+          cancelLabel="Cancelar"
+          perigo={false}
+          onConfirm={criar}
+          onCancel={() => setPendente(null)}
+        />
+      )}
     </>
   );
 }

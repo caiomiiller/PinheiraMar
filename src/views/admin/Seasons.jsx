@@ -68,7 +68,9 @@ export function Seasons({ data, update }) {
         const s = data.seasons.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer excluir a temporada <b>{s?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
+            title={`Excluir a temporada ${s?.nome || 'selecionada'}?`}
+            message="Os preços desta temporada deixam de valer. Não dá para desfazer."
+            confirmLabel="Excluir temporada"
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />

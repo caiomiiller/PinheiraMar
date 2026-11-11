@@ -92,7 +92,9 @@ export function CreditosView({ data, update }) {
         const c = creditos.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer excluir o crédito de <b>{c?.hospede || 'hóspede'}</b> ({money(c?.valor || 0)})? Esta ação não pode ser desfeita.</>}
+            title={`Excluir o crédito de ${c?.hospede || 'hóspede'}?`}
+            message={`O crédito de ${money(c?.valor || 0)} sai da lista. Não dá para desfazer.`}
+            confirmLabel="Excluir crédito"
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />

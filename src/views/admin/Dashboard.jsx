@@ -101,8 +101,8 @@ export function Dashboard({ data, go, openReservation, update }) {
     const d = parseYMD(r[dateField]);
     const isToday = ymd(d) === ymd(t);
     return (
-      <div onClick={() => openReservation?.(r.id)} title="Abrir reserva"
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: isToday ? C.avisoBg : C.espuma, borderRadius: R.cartao, border: isToday ? `1px solid ${C.avisoBorda}` : '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
+      <button type="button" onClick={() => openReservation?.(r.id)} title="Abrir reserva"
+        style={{ width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit', display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: isToday ? C.avisoBg : C.espuma, borderRadius: R.cartao, border: isToday ? `1px solid ${C.avisoBorda}` : '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
         onMouseEnter={openReservation ? e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(10,40,46,.10)' : undefined}
         onMouseLeave={openReservation ? e => e.currentTarget.style.boxShadow = '' : undefined}>
         <div style={{ textAlign: 'center', minWidth: 40, flexShrink: 0 }}>
@@ -119,15 +119,15 @@ export function Dashboard({ data, go, openReservation, update }) {
           <div style={{ fontSize: 12, color: C.inkSoft }}>{aptName(r.apartamentoId)} · {nights(r.checkIn, r.checkOut)} noite(s)</div>
         </div>
         <Badge status={displayStatus(r)} />
-      </div>
+      </button>
     );
   };
 
   const LatestReservationRow = ({ r }) => {
     const d = parseYMD(criadoLimpo(r.criadoEm));
     return (
-      <div onClick={() => openReservation?.(r.id)} title="Abrir reserva"
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: C.espuma, borderRadius: R.cartao, border: '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
+      <button type="button" onClick={() => openReservation?.(r.id)} title="Abrir reserva"
+        style={{ width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit', display: 'flex', alignItems: 'center', gap: 12, padding: '9px 11px', background: C.espuma, borderRadius: R.cartao, border: '1px solid transparent', cursor: openReservation ? 'pointer' : 'default' }}
         onMouseEnter={openReservation ? e => e.currentTarget.style.boxShadow = '0 2px 10px rgba(10,40,46,.10)' : undefined}
         onMouseLeave={openReservation ? e => e.currentTarget.style.boxShadow = '' : undefined}>
         <div style={{ textAlign: 'center', minWidth: 40, flexShrink: 0 }}>
@@ -149,7 +149,7 @@ export function Dashboard({ data, go, openReservation, update }) {
           </div>
           <Badge status={displayStatus(r)} />
         </div>
-      </div>
+      </button>
     );
   };
 

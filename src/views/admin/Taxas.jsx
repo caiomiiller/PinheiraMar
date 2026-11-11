@@ -66,7 +66,9 @@ export function TaxasView({ data, update }) {
         const tx = taxas.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer excluir a taxa <b>{tx?.nome || 'selecionada'}</b>? Esta ação não pode ser desfeita.</>}
+            title={`Excluir a taxa ${tx?.nome || 'selecionada'}?`}
+            message="Ela deixa de ser cobrada nas novas reservas. Não dá para desfazer."
+            confirmLabel="Excluir taxa"
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />

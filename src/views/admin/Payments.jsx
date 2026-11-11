@@ -87,7 +87,9 @@ export function PaymentsView({ data, update }) {
         const p = data.pagamentos.find(x => x.id === confirmId);
         return (
           <ConfirmDialog
-            message={<>Tem a certeza que quer excluir <b>{p?.nome || 'este meio de pagamento'}</b>? Esta ação não pode ser desfeita.</>}
+            title={`Excluir ${p?.nome || 'este meio de pagamento'}?`}
+            message="Este meio de pagamento sai da lista. Não dá para desfazer."
+            confirmLabel="Excluir meio de pagamento"
             onConfirm={() => { remove(confirmId); setConfirmId(null); }}
             onCancel={() => setConfirmId(null)}
           />
