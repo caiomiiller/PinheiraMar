@@ -14,6 +14,7 @@ import { IdiomasView } from './Idiomas';
 import { PoliticasView } from './Politicas';
 import { SettingsView } from './Settings';
 import { PaymentsView } from './Payments';
+import { Manutencao } from './Manutencao';
 
 // Menu em três grupos: o que se usa todo dia primeiro, a configuração por último.
 export const GRUPOS = [
@@ -207,6 +208,8 @@ export function Admin({ data, update, initialResidencialId }) {
           {tab === 'politicas' && <PoliticasView key={residencialId} data={scoped} update={scopedUpdate} />}
           {tab === 'idiomas' && <IdiomasView key={residencialId} data={scoped} update={scopedUpdate} />}
           {tab === 'configuracoes' && <SettingsView key={residencialId} data={scoped} update={scopedUpdate} />}
+          {/* backup, restauração e sessões valem para o banco inteiro (os dois residenciais) */}
+          {tab === 'configuracoes' && <Manutencao data={data} update={update} />}
           {tab === 'pagamentos' && <PaymentsView key={residencialId} data={scoped} update={scopedUpdate} />}
         </main>
       </div>

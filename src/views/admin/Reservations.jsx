@@ -3,7 +3,7 @@ import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy, Chevron
   X, Check, AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Minus, Tag,
   Clock, Info, Users, Wallet, LogIn, LogOut, Car, Sparkles, PawPrint, Umbrella,
   BedDouble, Baby, Percent, Wind, Waves, Utensils, Wifi, Flame, Shield, Gift,
-  Sun, Shirt, Sofa, Power } from 'lucide-react';
+  Sun, Shirt, Sofa } from 'lucide-react';
 import { C, F, R } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtShort, uid, code, isAvailable, stayBreakdown,
   nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS, WD, HOLIDAY_COLORS, MS,
@@ -12,8 +12,7 @@ import { buildCSV, downloadBlob, rowToReserva, PAISES, reservaToRow, CSV_COLS } 
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput, Select, Textarea, duplicateInList,
   Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus } from '../../components/ui';
 import { moverPorId } from '../../hooks/useReorder';
-import { enviarConfirmacaoReserva, encerrarTodasSessoes, carregarAdmin } from '../../lib/dadosAdmin';
-import { migrarDados } from '../../lib/migracoes';
+import { enviarConfirmacaoReserva } from '../../lib/dadosAdmin';
 import { extrasObrigatorios, quantidadeTaxa } from '../../lib/precos';
 import { aplicarEdicaoReserva } from '../../lib/reservas';
 
@@ -287,31 +286,12 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   const duplicate = (id) => update(prev => ({ ...prev, reservas: duplicateInList(prev.reservas, id, r => ({ ...r, id: uid(), codigo: code(), status: 'pendente', extras: (r.extras || []).map(e => ({ ...e, id: uid() })) })) }));
   const remove = (id) => { update(prev => ({ ...prev, reservas: prev.reservas.filter(x => x.id !== id) })); setEditing(null); };
 
-  // ── Base de dados: exportar / importar ──
+  // ── Importar / exportar reservas (backup, restauração e sessões: ver Manutencao.jsx) ──
   const fileRef = useRef(null);
   const [dbOpen, setDbOpen] = useState(false);
   const [importMsg, setImportMsg] = useState(null); // { ok, text }
 
-  const [restaurar, setRestaurar] = useState(null); // { obj, nome } — backup JSON à espera de confirmação
-  const carimbo = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-
-  // Encerrar todas as sessões do painel (kill switch) — para quando se quer
-  // ter a certeza de que nenhuma aba antiga fica aberta gravando por cima,
-  // ex.: antes de aplicar uma migração de banco. Desconecta TODOS os
-  // administradores agora, inclusive quem aciona.
-  const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState(false);
-  const [encerrandoSessoes, setEncerrandoSessoes] = useState(false);
-  const acionarEncerrarSessoes = async () => {
-    setConfirmEncerrarSessoes(false);
-    setEncerrandoSessoes(true);
-    const r = await encerrarTodasSessoes();
-    setEncerrandoSessoes(false);
-    setImportMsg(r.ok
-      ? { ok: true, text: `Sessões encerradas (${r.contas ?? '?'} conta(s) de administrador). Recarregue a página para entrar de novo.` }
-      : { ok: false, text: `Não foi possível encerrar as sessões (${r.motivo || 'erro'}).` });
-  };
   const exportCSV = () => downloadBlob(buildCSV(data.reservas, data.apartamentos), 'reservas-pinheiramar.csv', 'text/csv;charset=utf-8');
-  const exportJSON = () => downloadBlob(JSON.stringify(data, null, 2), `pinheiramar-backup-${carimbo()}.json`, 'application/json');
   const exportXLSX = async () => {
     try {
       const XLSX = await carregarXLSX();
@@ -327,18 +307,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
     if (!file) return;
     const name = file.name.toLowerCase();
     if (name.endsWith('.json')) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const bruto = JSON.parse(reader.result);
-          const obj = bruto?.data && Array.isArray(bruto.data.reservas) ? bruto.data : bruto;
-          if (!obj || !Array.isArray(obj.apartamentos) || !Array.isArray(obj.reservas)) throw new Error('estrutura não reconhecida');
-          // Restaurar SUBSTITUI tudo — antes acontecia logo ao escolher o
-          // arquivo, sem perguntar. Agora pede confirmação (ver abaixo).
-          setRestaurar({ obj, nome: file.name });
-        } catch (err) { setImportMsg({ ok: false, text: 'JSON inválido: ' + err.message }); }
-      };
-      reader.readAsText(file); return;
+      // backup completo (JSON): a restauração saiu daqui — ver Manutencao.jsx
+      setImportMsg({ ok: false, text: 'Para restaurar um backup (JSON), use Configurações → Dados do residencial → Backup e segurança.' });
+      return;
     }
     (async () => {
       try {
@@ -372,12 +343,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
   };
 
   const DB_ACTIONS = [
-    ['Importar (Excel / CSV / JSON)', () => { fileRef.current?.click(); }, Upload],
+    ['Importar (Excel / CSV)', () => { fileRef.current?.click(); }, Upload],
     ['Exportar Excel (.xlsx)', () => { exportXLSX(); setDbOpen(false); }, Download],
     ['Exportar CSV', () => { exportCSV(); setDbOpen(false); }, Download],
-    ['Backup completo (JSON)', () => { exportJSON(); setDbOpen(false); }, Database],
-    [encerrandoSessoes ? 'Encerrando sessões…' : 'Encerrar todas as sessões do painel',
-      () => { if (encerrandoSessoes) return; setDbOpen(false); setConfirmEncerrarSessoes(true); }, Power],
   ];
 
   const [manualOrder, setManualOrder] = useState(false);
@@ -469,7 +437,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <div style={{ position: 'relative' }}>
-              <Btn variant="ghost" icon={Database} onClick={() => setDbOpen(o => !o)}>Base de dados <ChevronDown size={14} style={{ marginLeft: 2 }} /></Btn>
+              <Btn variant="ghost" icon={Database} onClick={() => setDbOpen(o => !o)}>Importar / exportar <ChevronDown size={14} style={{ marginLeft: 2 }} /></Btn>
               {dbOpen && (
                 <div onMouseLeave={() => setDbOpen(false)} style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: C.white, border: `1px solid ${C.line}`, borderRadius: R.cartao, boxShadow: '0 14px 34px rgba(10,40,46,.18)', padding: 6, zIndex: 30, width: 248 }}>
                   {DB_ACTIONS.map(([label, fn, Ic], idx) => (
@@ -485,7 +453,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             <Btn icon={Plus} onClick={() => openNew(null, today())}>Nova reserva</Btn>
           </div>
         } />
-      <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.json" style={{ display: 'none' }} onChange={onPickFile} />
+      <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={onPickFile} />
       {importMsg && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '11px 14px', borderRadius: R.cartao, fontSize: 13.5, fontWeight: 500, background: importMsg.ok ? C.sucessoBg : C.erroBg, color: importMsg.ok ? C.sucesso : C.erro }}>
           {importMsg.ok ? <Check size={16} /> : <AlertCircle size={16} />}
@@ -973,38 +941,6 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
         />
       )}
 
-      {restaurar && (
-        <ConfirmDialog
-          title="Restaurar backup?"
-          confirmLabel="Restaurar e substituir tudo"
-          message={<>O arquivo <b>{restaurar.nome}</b> tem <b>{restaurar.obj.reservas.length} reservas</b> e <b>{restaurar.obj.apartamentos.length} apartamentos</b>. Hoje o sistema tem <b>{data.reservas.length} reservas</b> e <b>{data.apartamentos.length} apartamentos</b>.<br /><br />Restaurar <b>substitui todos os dados</b> pelos do backup — inclusive reservas feitas pelo site depois da data do backup. Antes de substituir, uma cópia dos dados atuais será baixada para este computador.</>}
-          onCancel={() => setRestaurar(null)}
-          onConfirm={async () => {
-            const { obj } = restaurar;
-            setRestaurar(null);
-            // a cópia de segurança sai dos dados MAIS RECENTES do banco (não só
-            // do que este painel tinha em memória) — assim inclui também as
-            // reservas feitas pelo site desde a última atualização do painel
-            let atuais = data;
-            try { atuais = (await carregarAdmin()).data || data; } catch { /* sem rede: guarda o que o painel tem */ }
-            downloadBlob(JSON.stringify(atuais, null, 2), `pinheiramar-antes-de-restaurar-${carimbo()}.json`, 'application/json');
-            const novo = migrarDados(obj).data;
-            update(() => novo, { permitirReducao: true })
-              .then(() => setImportMsg({ ok: true, text: `Backup restaurado — ${novo.reservas.length} reservas e ${novo.apartamentos.length} apartamentos. A cópia dos dados anteriores foi baixada.` }))
-              .catch(e => setImportMsg({ ok: false, text: e?.codigo === 'descartada' ? 'A restauração foi cancelada.' : `Não foi possível restaurar (${e?.codigo || e?.message || 'erro'}). Nada foi alterado.` }));
-          }}
-        />
-      )}
-
-      {confirmEncerrarSessoes && (
-        <ConfirmDialog
-          title="Encerrar todas as sessões do painel?"
-          confirmLabel="Encerrar todas as sessões"
-          message={<>Isso vai desconectar <b>todos os administradores</b>, em qualquer dispositivo — <b>inclusive você</b>. Todos precisarão entrar de novo com e-mail e senha.<br /><br />Aviso: uma aba que já esteja aberta continua a funcionar até o acesso dela vencer sozinho (normalmente até 1 hora) — isto impede que alguém entre de novo, mas não fecha instantaneamente uma aba já aberta.</>}
-          onCancel={() => setConfirmEncerrarSessoes(false)}
-          onConfirm={acionarEncerrarSessoes}
-        />
-      )}
     </div>
   );
 }
