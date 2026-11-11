@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Plus, AlertCircle, Sun, ChevronDown, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Receipt, FileText, Globe, ChevronDown, ChevronLeft, ChevronRight, Gift, Menu, X } from 'lucide-react';
 import { C, F, R } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 
@@ -15,25 +15,37 @@ import { PoliticasView } from './Politicas';
 import { SettingsView } from './Settings';
 import { PaymentsView } from './Payments';
 
-export const TABS = [
-  { id: 'painel', label: 'Painel', icon: LayoutDashboard },
-  { id: 'reservas', label: 'Reservas', icon: CalendarDays },
-  { id: 'financeiro', label: 'Financeiro', icon: Wallet },
-  { id: 'apartamentos', label: 'Apartamentos', icon: Home },
-  { id: 'temporadas', label: 'Opções de preços', icon: Tag },
-  { id: 'taxas', label: 'Taxas Adicionais', icon: Plus },
-  { id: 'creditos', label: 'Créditos de Hóspedes', icon: Gift },
-  { id: 'politicas', label: 'Políticas', icon: AlertCircle },
-  { id: 'idiomas', label: 'Idiomas', icon: Sun },
-  { id: 'configuracoes', label: 'Configurações', icon: Settings },
-  { id: 'pagamentos', label: 'Pagamentos', icon: CreditCard },
+// Menu em três grupos: o que se usa todo dia primeiro, a configuração por último.
+export const GRUPOS = [
+  { titulo: 'Dia a dia', itens: [
+    { id: 'painel', label: 'Painel', icon: LayoutDashboard },
+    { id: 'reservas', label: 'Reservas', icon: CalendarDays },
+    { id: 'financeiro', label: 'Financeiro', icon: Wallet },
+    { id: 'creditos', label: 'Créditos', icon: Gift },
+  ] },
+  { titulo: 'Apartamentos e preços', itens: [
+    { id: 'apartamentos', label: 'Apartamentos', icon: Home },
+    { id: 'temporadas', label: 'Temporadas e preços', icon: Tag },
+    { id: 'taxas', label: 'Taxas', icon: Receipt },
+  ] },
+  { titulo: 'Configurações', itens: [
+    { id: 'configuracoes', label: 'Dados do residencial', icon: Settings },
+    { id: 'pagamentos', label: 'Pagamentos', icon: CreditCard },
+    { id: 'politicas', label: 'Políticas', icon: FileText },
+    { id: 'idiomas', label: 'Idiomas', icon: Globe },
+  ] },
 ];
+export const TABS = GRUPOS.flatMap(g => g.itens);
+// No celular: barra inferior com os três mais usados + "Mais" (o resto, nos mesmos grupos).
+const BARRA_CELULAR = ['painel', 'reservas', 'financeiro'];
 
 export function Admin({ data, update, initialResidencialId }) {
   const [tab, setTab] = useState('painel');
   const [residencialId, setResidencialId] = useState(initialResidencialId || data.residenciais[0].id);
   const residencial = data.residenciais.find(r => r.id === residencialId) || data.residenciais[0];
   const [picker, setPicker] = useState(false);
+  const [maisAberto, setMaisAberto] = useState(false); // folha "Mais" da barra inferior (celular)
+  const irPara = (id) => { setTab(id); setMaisAberto(false); };
   // recolhe a barra lateral (só no desktop — no mobile ela já fica sempre
   // oculta) para dar mais largura ao painel de reservas mostrar mais dias
   // do mês sem rolagem horizontal
@@ -95,16 +107,23 @@ export function Admin({ data, update, initialResidencialId }) {
         )}
 
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-          {TABS.map(t => {
-            const on = tab === t.id;
-            return (
-              <button key={t.id} onClick={() => setTab(t.id)} title={sidebarCollapsed ? t.label : undefined} style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 11, padding: sidebarCollapsed ? '11px 0' : '11px 14px', marginBottom: 3,
-                background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? C.white : 'rgba(255,255,255,.78)',
-                border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontSize: 14, fontWeight: on ? 600 : 500, textAlign: 'left',
-              }}><t.icon size={18} /> {!sidebarCollapsed && t.label}</button>
-            );
-          })}
+          {GRUPOS.map((g, gi) => (
+            <div key={g.titulo} style={{ marginTop: gi ? 14 : 0 }}>
+              {sidebarCollapsed
+                ? (gi > 0 && <div aria-hidden style={{ height: 1, background: 'rgba(255,255,255,.16)', margin: '0 12px 12px' }} />)
+                : <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.72)', padding: '0 14px 6px' }}>{g.titulo}</div>}
+              {g.itens.map(t => {
+                const on = tab === t.id;
+                return (
+                  <button key={t.id} onClick={() => setTab(t.id)} title={sidebarCollapsed ? t.label : undefined} aria-current={on ? 'page' : undefined} style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 11, padding: sidebarCollapsed ? '11px 0' : '10px 14px', marginBottom: 3,
+                    background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? C.white : 'rgba(255,255,255,.78)',
+                    border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontSize: 14, fontWeight: on ? 600 : 500, textAlign: 'left',
+                  }}><t.icon size={18} /> {!sidebarCollapsed && t.label}</button>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </aside>
 
@@ -132,15 +151,44 @@ export function Admin({ data, update, initialResidencialId }) {
             )}
           </div>
         )}
-        {/* mobile tab bar */}
-        <div className="pm-tabbar" style={{ display: 'none', background: C.ocean, padding: '10px', gap: 6, overflowX: 'auto' }}>
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: R.campo, border: 'none', whiteSpace: 'nowrap', background: tab === t.id ? 'rgba(255,255,255,.16)' : 'transparent', color: C.white, fontSize: 13, fontWeight: 600 }}><t.icon size={15} /> {t.label}</button>
-          ))}
-        </div>
+        {/* celular: barra inferior fixa com Painel, Reservas, Financeiro e "Mais"
+            (antes eram os 11 itens numa fileira que rolava para o lado) */}
+        <nav className="pm-tabbar" aria-label="Menu do painel" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 70, background: C.ocean, padding: '6px 6px calc(6px + env(safe-area-inset-bottom))', gap: 4, boxShadow: '0 -4px 18px rgba(10,20,30,.22)' }}>
+          {[...TABS.filter(t => BARRA_CELULAR.includes(t.id)), { id: '__mais', label: 'Mais', icon: maisAberto ? X : Menu }].map(t => {
+            const mais = t.id === '__mais';
+            const on = mais ? (maisAberto || !BARRA_CELULAR.includes(tab)) : (tab === t.id && !maisAberto);
+            return (
+              <button key={t.id} onClick={() => (mais ? setMaisAberto(o => !o) : irPara(t.id))} aria-current={!mais && on ? 'page' : undefined} aria-expanded={mais ? maisAberto : undefined}
+                style={{ flex: 1, minWidth: 0, minHeight: 52, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: R.cartao, border: 'none', cursor: 'pointer', background: on ? 'rgba(255,255,255,.16)' : 'transparent', color: C.white, fontFamily: F.sans, fontSize: 12, fontWeight: on ? 700 : 500 }}>
+                <t.icon size={20} /> {t.label}
+              </button>
+            );
+          })}
+        </nav>
+        {maisAberto && (
+          <div className="pm-tabbar-mais" onClick={() => setMaisAberto(false)} style={{ position: 'fixed', inset: 0, zIndex: 65, background: 'rgba(10,20,30,.45)', display: 'flex', alignItems: 'flex-end' }}>
+            <div role="dialog" aria-label="Mais opções do painel" onClick={e => e.stopPropagation()} style={{ width: '100%', maxHeight: '75vh', overflowY: 'auto', background: C.white, borderRadius: `${R.modal}px ${R.modal}px 0 0`, padding: '16px 14px calc(84px + env(safe-area-inset-bottom))' }}>
+              {GRUPOS.map(g => {
+                const itens = g.itens.filter(t => !BARRA_CELULAR.includes(t.id));
+                if (!itens.length) return null;
+                return (
+                  <div key={g.titulo} style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: C.inkSoft, padding: '4px 10px 6px' }}>{g.titulo}</div>
+                    {itens.map(t => (
+                      <button key={t.id} onClick={() => irPara(t.id)} aria-current={tab === t.id ? 'page' : undefined}
+                        style={{ width: '100%', minHeight: 50, display: 'flex', alignItems: 'center', gap: 12, padding: '0 12px', border: 'none', borderRadius: R.cartao, cursor: 'pointer', background: tab === t.id ? C.espuma : 'transparent', color: C.ink, fontFamily: F.sans, fontSize: 15.5, fontWeight: tab === t.id ? 700 : 500, textAlign: 'left' }}>
+                        <t.icon size={20} /> {t.label}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {/* Reservas ganha a largura toda disponível (sem o limite de 1180px das
             outras abas) para aproveitar o espaço liberado ao minimizar o menu */}
-        <main style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: tab === 'reservas' ? 'none' : 1180, margin: '0 auto' }}>
+        <main className="pm-admin-main" style={{ padding: 'clamp(18px, 3vw, 34px)', maxWidth: tab === 'reservas' ? 'none' : 1180, margin: '0 auto' }}>
           {/* key={residencialId}: ao trocar de residencial, as telas com
               formulário começam de novo com os dados do residencial escolhido
               (antes, "Salvar" em Configurações/Políticas podia gravar os dados

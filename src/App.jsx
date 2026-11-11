@@ -122,6 +122,7 @@ export default function App() {
     @media(max-width:760px){
       .pm-sidebar{display:none!important;}
       .pm-tabbar{display:flex!important;}
+      .pm-admin-main{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important;}
       .pm-mobile-picker{display:block!important;}
       .pm-hide-sm{display:none!important;}
 
