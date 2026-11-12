@@ -44,10 +44,19 @@ export const LOGO_RESIDENCIAL = {
 // Mostrado quando o site não consegue carregar os dados (aí não há o telefone do residencial à mão).
 export const TELEFONE_CONTATO = '(48) 98476-1800';
 
-// Foto do topo do site quando o residencial ainda usa a imagem genérica do
-// Unsplash (a de origem) — uma foto real, tirada do próprio residencial.
-export const FOTO_TOPO_PADRAO = '/fotos/a305/2.jpg';
-export const fotoTopo = (url) => (!url || /images\.unsplash\.com\/photo-1507525428034/.test(url) ? FOTO_TOPO_PADRAO : url);
+// Foto do topo do site. A de 2026-11-12 vem do original sem efeitos (terraço,
+// 9000×12000 px), em 2560 px de largura: a anterior (/fotos/a305/2.jpg, 1536 px
+// com efeitos de saturação e contorno) perdia qualidade ao ser esticada na faixa
+// toda. Quem ainda tem a foto antiga ou a genérica do Unsplash gravada nos dados
+// passa a ver a nova; uma foto escolhida de propósito no painel continua a valer.
+export const FOTO_TOPO_PADRAO = '/fotos/hero/pinheiramar-2560.jpg';
+const FOTO_TOPO_ANTIGA = '/fotos/a305/2.jpg';
+export const fotoTopo = (url) => (!url || url === FOTO_TOPO_ANTIGA || /images\.unsplash\.com\/photo-1507525428034/.test(url) ? FOTO_TOPO_PADRAO : url);
+// Versões da foto de abertura (WebP e JPG, 1280 e 2560 px) — só para a padrão.
+export const heroVersoes = (url) => (url === FOTO_TOPO_PADRAO ? {
+  webp: '/fotos/hero/pinheiramar-1280.webp 1280w, /fotos/hero/pinheiramar-2560.webp 2560w',
+  jpg: '/fotos/hero/pinheiramar-1280.jpg 1280w, /fotos/hero/pinheiramar-2560.jpg 2560w',
+} : null);
 
 // Avaliação real do perfil Google Meu Negócio "PinheiraMar Residencial"
 // (não é calculada pela aplicação — atualizar manualmente de vez em quando,

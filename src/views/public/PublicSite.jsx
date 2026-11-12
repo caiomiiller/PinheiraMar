@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
   Home, Users, X } from 'lucide-react';
-import { F, fotoTopo, LOGO_RESIDENCIAL, C, R } from '../../lib/constants';
+import { F, fotoTopo, heroVersoes, LOGO_RESIDENCIAL, C, R } from '../../lib/constants';
 import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
 import { orcamentoApartamento } from '../../lib/precos';
@@ -12,6 +12,7 @@ import { PhotoTile, Modal } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
 import { DestinoSection } from './DestinoSection';
+import { GaleriaResidencial } from '../../components/GaleriaResidencial';
 import { AvailabilityCalendar } from '../../components/AvailabilityCalendar';
 import { GroupLogo, Faixa, FAIXA_INDEX, BRAND } from '../../components/Brand';
 import { BookingModal } from '../../components/BookingModal';
@@ -475,6 +476,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             senão um residencial com poucas unidades filtradas vira grade enquanto
             o outro continua carrossel, a pedido do Caio, 2026-09-23. */}
         <Row items={list} scrollable={!valid} needsCombo={needsCombo} />
+        {!invert && <GaleriaResidencial residencialId={r.id} nome={r.nome} />}
       </div>
     );
   };
@@ -721,9 +723,18 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             foto de ponta a ponta; o enquadramento fica um pouco abaixo do
             centro, para mostrar mar e praia. Nas outras fotos do site
             continua a regra de nunca cortar (FotoInteira em ui.jsx). */}
-        <img src={fotoTopo(r0.heroImage)} alt="" fetchpriority="high" decoding="async"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 58%' }}
-          onError={e => { e.currentTarget.style.display = 'none'; }} />
+        {(() => {
+          const src = fotoTopo(r0.heroImage);
+          const v = heroVersoes(src);   // WebP + JPG em 2 tamanhos (foto padrão); outra foto vai como está
+          return (
+            <picture>
+              {v && <source type="image/webp" srcSet={v.webp} sizes="100vw" />}
+              <img src={src} srcSet={v?.jpg} sizes={v ? '100vw' : undefined} alt="" fetchpriority="high" decoding="async"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 66%' }}
+                onError={e => { e.currentTarget.style.display = 'none'; }} />
+            </picture>
+          );
+        })()}
         {/* escurece de baixo para cima e um pouco à esquerda, onde fica o texto */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.05) 0%, rgba(0,0,0,.15) 45%, rgba(0,0,0,.65) 100%), linear-gradient(to right, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) 55%)' }} />
         <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>

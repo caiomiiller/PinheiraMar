@@ -2,6 +2,7 @@ import React from 'react';
 import { X, ChevronLeft, GripVertical, Minus, Plus, LogIn, LogOut } from 'lucide-react';
 import { C, F, R } from '../lib/constants';
 import { ymd, today } from '../lib/helpers';
+import { FOTOS_OTIMIZADAS } from '../lib/fotosOtimizadas';
 
 // 16 px: abaixo disso o iPhone dá zoom sozinho ao tocar no campo (e é mais
 // legível para o público 50+).
@@ -160,14 +161,26 @@ export const CheckoutBadge = ({ compact }) => (
 // com a própria foto desfocada, como fazem o Booking e o Airbnb. Antes a
 // <img> esticava para encher a moldura e as fotos verticais apareciam
 // alargadas até 3 vezes (auditoria de 2026-11-08).
-export function FotoInteira({ src, alt = '', loading, fetchPriority, onError }) {
+// Fotos de /public/fotos que têm versão WebP (ver lib/fotosOtimizadas.js) vão como
+// <picture>: o navegador usa o WebP e, se não o souber ler, o .jpg de sempre.
+// `miniatura`: cartões pequenos pedem a versão de 640 px (3 a 5 vezes menor).
+// O fundo desfocado usa sempre a de 640 px — fica desfocado de qualquer maneira.
+const comoWebp = (src, miniatura) => (FOTOS_OTIMIZADAS.has(src) ? src.replace(/\.jpg$/i, miniatura ? '-640.webp' : '.webp') : null);
+export function FotoInteira({ src, alt = '', loading, fetchPriority, onError, miniatura = false }) {
+  const webp = comoWebp(src, miniatura);
+  const fundo = comoWebp(src, true) || src;
+  const foto = (
+    <img src={src} alt={alt} loading={loading} decoding="async" fetchpriority={fetchPriority}
+      style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+      onError={e => { const box = e.currentTarget.closest('[data-foto-inteira]'); if (box) box.style.display = 'none'; onError?.(e); }} />
+  );
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: C.line }}>
-      <img src={src} alt="" aria-hidden="true" loading={loading} decoding="async"
+    <div data-foto-inteira style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: C.line }}>
+      <img src={fundo} alt="" aria-hidden="true" loading={loading} decoding="async"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(18px) brightness(.88)', transform: 'scale(1.15)' }} />
-      <img src={src} alt={alt} loading={loading} decoding="async" fetchpriority={fetchPriority}
-        style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-        onError={e => { const box = e.currentTarget.parentElement; if (box) box.style.display = 'none'; onError?.(e); }} />
+      {webp
+        ? <picture style={{ display: 'contents' }}><source type="image/webp" srcSet={webp} />{foto}</picture>
+        : foto}
     </div>
   );
 }
@@ -185,7 +198,7 @@ export function PhotoTile({ apt, h = 184, radius = 12, rotulo }) {
     // fotos abrirem nítidas em tamanho grande (galeria/lightbox).
     // foto inteira, sem cortar nem deformar (ver FotoInteira)
     return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', position: 'relative' }}>
-      <FotoInteira src={apt.foto} alt={apt.nome || ''} loading="lazy" />
+      <FotoInteira src={apt.foto} alt={apt.nome || ''} loading="lazy" miniatura />
       {etiqueta && <span style={tilePill}>{etiqueta}</span>}
     </div>;
   }
