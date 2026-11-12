@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy, ChevronDown,
-  X, Check, AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Minus, Tag,
+  X, Check, AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Tag,
   Clock, Info, Users, Wallet, LogIn, LogOut, Car, Sparkles, PawPrint, Umbrella,
   BedDouble, Baby, Percent, Wind, Waves, Utensils, Wifi, Flame, Shield, Gift,
   Sun, Shirt, Sofa } from 'lucide-react';
@@ -10,7 +10,7 @@ import { money, nights, ymd, today, parseYMD, fmtShort, uid, code, isAvailable, 
   seasonForDate, aptRates, roomFullName, overlaps, capacidadeBaseOf } from '../../lib/helpers';
 import { buildCSV, downloadBlob, rowToReserva, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput, Select, Textarea, duplicateInList,
-  Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus } from '../../components/ui';
+  Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus, Stepper, MoneyInput } from '../../components/ui';
 import { moverPorId } from '../../hooks/useReorder';
 import { enviarConfirmacaoReserva } from '../../lib/dadosAdmin';
 import { extrasObrigatorios, quantidadeTaxa } from '../../lib/precos';
@@ -950,24 +950,6 @@ export const iconBtn = { background: C.espuma, border: 'none', borderRadius: R.c
 
 export const secTitle = { fontFamily: F.disp, fontSize: 16, color: C.ink, margin: '2px 0 10px', display: 'flex', alignItems: 'center', gap: 8 };
 export const cellInput = { width: '100%', padding: '7px 9px', borderRadius: R.campo, border: `1px solid ${C.line}`, fontSize: 13, fontFamily: F.sans, outline: 'none', background: C.white, color: C.ink };
-
-export function Stepper({ value, set, min = 0, max = 99, disabled }) {
-  const btn = { width: 36, height: 40, border: 'none', background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ocean };
-  return (
-    <div style={{ display: 'flex', alignItems: 'stretch', border: `1px solid ${C.line}`, borderRadius: R.cartao, overflow: 'hidden', opacity: disabled ? 0.5 : 1, background: C.white }}>
-      <button type="button" disabled={disabled || value <= min} onClick={() => set(Math.max(min, value - 1))} style={{ ...btn, borderRight: `1px solid ${C.line}` }}><Minus size={15} /></button>
-      <div style={{ flex: 1, display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 600, minWidth: 44 }}>{value}</div>
-      <button type="button" disabled={disabled || value >= max} onClick={() => set(Math.min(max, value + 1))} style={{ ...btn, borderLeft: `1px solid ${C.line}` }}><Plus size={15} /></button>
-    </div>
-  );
-}
-export const MoneyInput = ({ value, onChange, style }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: R.campo, padding: '0 8px', background: C.white, ...style }}>
-    <span style={{ fontSize: 12, color: C.inkSoft }}>R$</span>
-    <input className="pmf" type="number" step="1" value={value} onChange={onChange}
-      style={{ width: '100%', border: 'none', outline: 'none', padding: '7px 0', fontSize: 13, fontFamily: F.sans, background: 'transparent', color: C.ink }} />
-  </div>
-);
 
 // Modal simples usado pela opção "Adicionar tarifa rápida" do menu de
 // arrastar no calendário. Quando o período escolhido já tem reserva(s) deste
