@@ -1,23 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { GALERIA_RESIDENCIAL } from '../src/lib/galeriaResidencial.js';
 import { FOTOS_OTIMIZADAS } from '../src/lib/fotosOtimizadas.js';
 import { fotoTopo, FOTO_TOPO_PADRAO, heroVersoes } from '../src/lib/constants.js';
 
 const pub = (p) => path.resolve(__dirname, '../public', '.' + p);
-
-describe('galeria do residencial', () => {
-  it('cada residencial tem fotos que existem e texto alternativo nos 3 idiomas', () => {
-    for (const [id, fotos] of Object.entries(GALERIA_RESIDENCIAL)) {
-      expect(fotos.length, id).toBeGreaterThanOrEqual(3);
-      for (const f of fotos) {
-        expect(fs.existsSync(pub(f.src)), f.src).toBe(true);
-        for (const l of ['pt', 'es', 'en']) expect(f.alt[l], `${f.src} ${l}`).toBeTruthy();
-      }
-    }
-  });
-});
 
 describe('fotos otimizadas', () => {
   it('toda foto listada tem o .jpg, o .webp e o -640.webp', () => {

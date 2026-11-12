@@ -12,7 +12,6 @@ import { PhotoTile, Modal } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
 import { AptDetailPage } from './AptDetailPage';
 import { DestinoSection } from './DestinoSection';
-import { GaleriaResidencial } from '../../components/GaleriaResidencial';
 import { AvailabilityCalendar } from '../../components/AvailabilityCalendar';
 import { GroupLogo, Faixa, FAIXA_INDEX, BRAND } from '../../components/Brand';
 import { BookingModal } from '../../components/BookingModal';
@@ -476,7 +475,6 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             senão um residencial com poucas unidades filtradas vira grade enquanto
             o outro continua carrossel, a pedido do Caio, 2026-09-23. */}
         <Row items={list} scrollable={!valid} needsCombo={needsCombo} />
-        {!invert && <GaleriaResidencial residencialId={r.id} nome={r.nome} />}
       </div>
     );
   };
