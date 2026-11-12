@@ -12,3 +12,8 @@ vite.config.js.timestamp-*.mjs
 .idea/
 .claude/
 .preview-demo/
+
+# backups do banco têm dados de hóspedes: nunca vão para o Git
+*backup*.json
+.DS_Store
+__MACOSX/
