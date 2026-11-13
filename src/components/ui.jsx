@@ -87,6 +87,8 @@ export const Field = ({ label, children, hint, required }) => (
 //                                 Mercado Pago, ou marcado manualmente para
 //                                 reservas por telefone/WhatsApp)
 //   confirmado (verde)          — pagamento dos 100% confirmado
+//   cortesia   (azul)           — estadia oferecida: ocupa as datas mas os valores
+//                                 NÃO entram no Financeiro (2026-11-13)
 //   bloqueio   (cinza riscado)  — período bloqueado, não disponível
 //   cancelada  (roxo)           — reserva cancelada, período liberto
 //   check-out  (vermelho)       — estadia terminada (ver displayStatus)
@@ -96,6 +98,7 @@ export const STATUS = {
   pendente: { label: 'Pendente', bg: '#EDEFEF', fg: '#5C6B6A', bar: '#AEB8B7' },
   reservado: { label: 'Reservado', bg: C.avisoBg, fg: C.aviso, bar: '#E0A23A' },
   confirmado: { label: 'Confirmado', bg: C.sucessoBg, fg: C.sucesso, bar: '#2E9E78' },
+  cortesia: { label: 'Cortesia', bg: '#E3F1F6', fg: '#1D6F8C', bar: '#6FB3CB' },
   bloqueio: { label: 'Bloqueio', bg: '#E9ECEC', fg: '#5C6B6A', bar: C.bordaForte, hatch: true },
   cancelada: { label: 'Cancelada', bg: '#F1EAF8', fg: '#6D3FA0', bar: '#B79AD6' },
   // pseudo-estado, só para cor/etiqueta (ver displayStatus abaixo) — nunca é

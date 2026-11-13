@@ -31,8 +31,9 @@ export function reservaToRow(r, apartamentos) {
     'Check-Out date': r.checkOut || '',
     'Room': apt ? roomFullName(apt) : '',
     'Unit No': 1,
-    'Subtotal': Math.round(r.precoTabela ?? r.total ?? 0),
-    'Revenue': Math.round(r.total ?? 0),
+    // cortesia: sem valor financeiro
+    'Subtotal': r.status === 'cortesia' ? 0 : Math.round(r.precoTabela ?? r.total ?? 0),
+    'Revenue': r.status === 'cortesia' ? 0 : Math.round(r.total ?? 0),
     'Currency': 'BRL',
     'Create Date': r.criadoEm || '',
   };

@@ -833,7 +833,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: C.inkSoft }}>Status:</span>
               <button onClick={() => setStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === 'todas' ? C.ocean : C.espuma, color: statusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
-              {['confirmado', 'reservado', 'pendente', 'bloqueio', 'cancelada'].map(st => (
+              {['confirmado', 'reservado', 'pendente', 'cortesia', 'bloqueio', 'cancelada'].map(st => (
                 <button key={st} onClick={() => setStatusFilter(st)}
                   style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === st ? STATUS[st].fg : C.espuma, color: statusFilter === st ? C.white : C.inkSoft }}>
                   {STATUS[st].label}
@@ -882,8 +882,8 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{criadoLimpo(r.criadoEm) ? fmtShort(criadoLimpo(r.criadoEm)) : '—'}</td>
                     <td style={{ padding: '11px 14px', color: C.inkSoft }}>{r.origem}</td>
-                    <td style={{ padding: '11px 14px', fontWeight: 600 }}>{money(r.total)}</td>
-                    <td style={{ padding: '11px 14px', color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{r.status === 'bloqueio' ? <span style={{ color: C.inkSoft }}>—</span> : money(r.valorPago || 0)}</td>
+                    <td style={{ padding: '11px 14px', fontWeight: 600 }}>{r.status === 'cortesia' ? <span style={{ color: C.inkSoft, fontWeight: 400 }}>Cortesia</span> : money(r.total)}</td>
+                    <td style={{ padding: '11px 14px', color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{r.status === 'bloqueio' || r.status === 'cortesia' ? <span style={{ color: C.inkSoft }}>—</span> : money(r.valorPago || 0)}</td>
                     <td style={{ padding: '11px 14px' }}><Badge status={displayStatus(r)} /></td>
                     <td style={{ padding: '11px 14px', whiteSpace: 'nowrap' }}>
                       <button onClick={() => setDeleteConfirm(r)} title="Excluir" style={iconBtn}><Trash2 size={15} /></button>
@@ -916,7 +916,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, flexWrap: 'wrap', rowGap: 4 }}>
                   <span style={{ color: C.inkSoft }}>{fmtShort(r.checkIn)} → {fmtShort(r.checkOut)}</span>
-                  <span style={{ fontWeight: 700 }}>{money(r.total)}</span>
+                  <span style={{ fontWeight: 700 }}>{r.status === 'cortesia' ? 'Cortesia' : money(r.total)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
                   <button onClick={() => setEditing(r)} title="Editar" style={iconBtn}><Pencil size={15} /></button>
@@ -997,7 +997,7 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
   const [aptId, setAptId] = useState(i.apartamentoId || firstApt.id);
   const [ci, setCi] = useState(i.checkIn || ymd(today()));
   const [co, setCo] = useState(i.checkOut || ymd(addDays(today(), 1)));
-  const [status, setStatus] = useState(i.status || 'confirmado');
+  const [status, setStatus] = useState(i.status || 'pendente');
   const [origem, setOrigem] = useState(i.origem || 'Manual');
   const [adultos, setAdultos] = useState(i.adultos ?? (i.hospedes || 2));
   const [criancas, setCriancas] = useState(i.criancas ?? 0);
@@ -1231,12 +1231,16 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
                 <option value="pendente">Pendente (sem pagamento)</option>
                 <option value="reservado">Reservado ({Number(residencial?.sinalPct) || 50}% pago)</option>
                 <option value="confirmado">Confirmado (100% pago)</option>
+                <option value="cortesia">Cortesia (sem valor financeiro)</option>
                 <option value="bloqueio">Bloqueio</option>
                 <option value="cancelada">Cancelada</option>
               </Select>
             </Field>
             <Field label="Origem"><Select value={origem} onChange={e => setOrigem(e.target.value)}>{ORIGENS.map(o => <option key={o}>{o}</option>)}</Select></Field>
           </div>
+          {status === 'cortesia' && (
+            <div style={{ marginTop: 12 }}><Note color={STATUS.cortesia.fg} bg={STATUS.cortesia.bg}><Tag size={15} /> Cortesia: as datas ficam ocupadas, mas os valores desta reserva não entram no Financeiro (receita, ticket médio e totais).</Note></div>
+          )}
           {status !== 'bloqueio' && (
             <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 13px', borderRadius: R.cartao, border: `1px solid ${checkinRealizado ? C.sucessoBorda : C.line}`, background: checkinRealizado ? C.sucessoBg : C.white, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: checkinRealizado ? C.sucesso : C.ink }}>

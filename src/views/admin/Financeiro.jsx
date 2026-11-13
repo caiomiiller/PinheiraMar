@@ -79,7 +79,11 @@ export function Financeiro({ data, go }) {
   // número olhava para um conjunto diferente, uma reserva com um status
   // inesperado entrava na tabela mas não no total, e a participação
   // disparava para milhares de por cento.
-  const comReceita = filtradas.filter(r => r.status !== 'bloqueio');
+  // Cortesias (estadias oferecidas) ocupam as datas mas ficam FORA de todas as
+  // contas de dinheiro: receita, ticket médio, média de noites, por apartamento
+  // e por origem. Aparecem só como contagem (quadro por status e tabela).
+  const cortesias = filtradas.filter(r => r.status === 'cortesia');
+  const comReceita = filtradas.filter(r => r.status !== 'bloqueio' && r.status !== 'cortesia');
   const confirmadas = comReceita.filter(r => r.status === 'confirmado');
   const reservadas  = comReceita.filter(r => r.status === 'reservado');
   const pendentes   = comReceita.filter(r => r.status === 'pendente');
@@ -213,6 +217,7 @@ export function Financeiro({ data, go }) {
         <KPI label="Ticket médio" value={ticketMedio > 0 ? money(ticketMedio) : '—'} sub="por reserva" />
         <KPI label="Média de noites" value={mediaNoites} sub="por estadia" />
         <KPI label="Bloqueios" value={bloqueios.length} sub="no período" />
+        <KPI label="Cortesias" value={cortesias.length} sub="não contabilizadas" />
       </div>
 
       {/* gráfico de receita mensal (12 meses) */}
@@ -299,7 +304,7 @@ export function Financeiro({ data, go }) {
 
           <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 18, paddingTop: 14 }}>
             <h4 style={{ fontFamily: F.disp, fontSize: 15, margin: '0 0 10px', color: C.inkSoft }}>Reservas por status</h4>
-            {[['confirmado', 'Confirmadas'], ['reservado', 'Reservadas'], ['pendente', 'Pendentes'], ['bloqueio', 'Bloqueios']].map(([st, label]) => {
+            {[['confirmado', 'Confirmadas'], ['reservado', 'Reservadas'], ['pendente', 'Pendentes'], ['cortesia', 'Cortesias (sem valor)'], ['bloqueio', 'Bloqueios']].map(([st, label]) => {
               const n = filtradas.filter(r => r.status === st).length;
               return (
                 <div key={st} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -322,7 +327,7 @@ export function Financeiro({ data, go }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
           <span style={{ fontSize: 12, color: C.inkSoft }}>Status:</span>
           <button onClick={() => setResStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === 'todas' ? C.ocean : C.espuma, color: resStatusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
-          {['confirmado', 'reservado', 'pendente', 'bloqueio'].map(st => (
+          {['confirmado', 'reservado', 'pendente', 'cortesia', 'bloqueio'].map(st => (
             <button key={st} onClick={() => setResStatusFilter(st)}
               style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === st ? STATUS[st].fg : C.espuma, color: resStatusFilter === st ? C.white : C.inkSoft }}>
               {STATUS[st].label}
@@ -350,7 +355,7 @@ export function Financeiro({ data, go }) {
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmtShort(r.checkIn)}</td>
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmtShort(r.checkOut)}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>{nights(r.checkIn, r.checkOut)}</td>
-                  <td style={{ padding: '8px 10px', fontWeight: 700 }}>{money(r.total)}</td>
+                  <td style={{ padding: '8px 10px', fontWeight: 700 }}>{r.status === 'cortesia' ? <span style={{ color: C.inkSoft, fontWeight: 400 }}>—</span> : money(r.total)}</td>
                   <td style={{ padding: '8px 10px' }}><Badge status={r.status} /></td>
                 </tr>
               ))}

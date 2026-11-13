@@ -144,8 +144,8 @@ export function Dashboard({ data, go, openReservation, update }) {
             telemóvel empilham numa coluna à direita (.pm-dash-row-end) */}
         <div className="pm-dash-row-end" style={{ display: 'contents' }}>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{money(r.valorPago || 0)}</div>
-            <div style={{ fontSize: 11, color: C.inkSoft }}>de {money(r.total)}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: (Number(r.valorPago) || 0) > 0 ? C.ink : C.inkSoft }}>{r.status === 'cortesia' ? 'Cortesia' : money(r.valorPago || 0)}</div>
+            {r.status !== 'cortesia' && <div style={{ fontSize: 11, color: C.inkSoft }}>de {money(r.total)}</div>}
           </div>
           <Badge status={displayStatus(r)} />
         </div>
