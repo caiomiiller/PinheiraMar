@@ -80,7 +80,7 @@ export function parametrosEmail(grupo, residencial, { site } = {}) {
     residencial?.checkOutHora ? `check-out até ${residencial.checkOutHora}` : null,
   ].filter(Boolean).join(' · ');
   const logo = logoResidencial(residencial, site);
-  return {
+  const params = {
     email: r1.email,
     to_email: r1.email,
     to_name: r1.hospede || r1.nome || '',
@@ -112,6 +112,19 @@ export function parametrosEmail(grupo, residencial, { site } = {}) {
       : 'Recebemos sua reserva. Para garanti-la, falta o pagamento do sinal: vamos entrar em contato pelo WhatsApp ou por e-mail com as instruções.',
     horarios,
   };
+  // Cortesia (estadia oferecida): confirmada e sem nenhum valor — o e-mail não
+  // pode dizer "falta o pagamento do sinal" nem mostrar totais. O template é o
+  // mesmo; só mudam os textos e os valores.
+  if (grupo.every(g => g.reserva.status === 'cortesia')) {
+    return {
+      ...params,
+      titulo: 'Reserva confirmada!',
+      total_fmt: 'Cortesia', sinal_fmt: 'Sem cobrança', pago_fmt: 'Sem cobrança', restante_fmt: 'Sem cobrança',
+      rotulo_sinal: 'Valor a pagar', valor_sinal_fmt: 'Sem cobrança',
+      mensagem: 'Sua estadia está confirmada, cortesia da casa: não há nenhum valor a pagar.',
+    };
+  }
+  return params;
 }
 
 export async function enviarConfirmacao(grupo, residencial, opcoes = {}) {

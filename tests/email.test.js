@@ -21,6 +21,15 @@ describe('parametrosEmail', () => {
     expect(p.rotulo_sinal).toBe('Sinal a pagar (50%)');
     expect(p.mensagem).toMatch(/falta o pagamento do sinal/);
   });
+  it('cortesia → confirmada, sem sinal nem valores (nunca "falta o pagamento")', () => {
+    const p = parametrosEmail([{ reserva: reserva({ status: 'cortesia', total: 1000, sinal: 500, valorPago: 0 }), apt: apt('Apto 1') }], residencial);
+    expect(p.titulo).toBe('Reserva confirmada!');
+    expect(p.total_fmt).toBe('Cortesia');
+    expect(p.valor_sinal_fmt).toBe('Sem cobrança');
+    expect(p.restante_fmt).toBe('Sem cobrança');
+    expect(p.mensagem).not.toMatch(/sinal/);
+    expect(JSON.stringify(p)).not.toMatch(/R\$/);
+  });
   it('reserva conjunta: um e-mail com os dois apartamentos e o total combinado', () => {
     const p = parametrosEmail([
       { reserva: reserva({ total: 1200, sinal: 1100, valorPago: 1100, adultos: 4 }), apt: apt('Apto 1') },
