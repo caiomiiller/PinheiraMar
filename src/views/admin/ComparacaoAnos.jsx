@@ -36,20 +36,29 @@ const rotuloJanela = (a, b) => {
 // o mesmo dia/mês noutro ano (29/02 cai em 28/02 num ano que não é bissexto)
 const mesmoDiaNoAno = (d, ano) => new Date(ano, d.getMonth(), Math.min(d.getDate(), new Date(ano, d.getMonth() + 1, 0).getDate()));
 
-function Delta({ valor, sufixo = '' }) {
+function Delta({ valor, sufixo = '', titulo }) {
   if (!Number.isFinite(valor)) return null;
   const r = Math.round(valor);
   const cor = r > 0 ? C.sucesso : r < 0 ? C.erro : C.inkSoft;
-  return <span style={{ color: cor, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>{r > 0 ? '+' : ''}{r}{sufixo}</span>;
+  return <span title={titulo} style={{ color: cor, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>{r > 0 ? '+' : ''}{r}{sufixo}</span>;
 }
 
-function Indicador({ titulo, valor, comparado, delta, nota }) {
+// Mesma ordem da grade: à esquerda a comparação (ano anterior), à direita o
+// período; a diferença é sempre "da esquerda para a direita".
+function Indicador({ titulo, esquerda, direita, delta, nota }) {
+  const lado = (v) => (
+    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 5 }}>
+      <span style={{ fontSize: 21, fontWeight: 700, color: C.ink }}>{v.valor}</span>
+      <span style={{ fontSize: 12.5, color: C.inkSoft }}>{v.rotulo}</span>
+    </span>
+  );
   return (
     <Card style={{ padding: '12px 16px', borderRadius: R.cartao }}>
       <div style={{ fontSize: 12.5, color: C.inkSoft }}>{titulo}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-        <span style={{ fontSize: 21, fontWeight: 700, color: C.ink }}>{valor}</span>
-        <span style={{ fontSize: 13, color: C.inkSoft }}>{comparado}</span>
+        {lado(esquerda)}
+        <span style={{ fontSize: 13, color: C.inkSoft }}>vs</span>
+        {lado(direita)}
         {delta}
       </div>
       {nota && <div style={{ fontSize: 11.5, color: C.inkSoft, marginTop: 4 }}>{nota}</div>}
@@ -197,7 +206,8 @@ export function ComparacaoAnos({ data }) {
   };
   const escolherComparacao = ({ ano, mes }) => setInicioB(new Date(ano, mes, 1));
 
-  const rotuloB = String(inicioB.getFullYear());
+  const anoB = String(inicioB.getFullYear());
+  const anoA = String(inicioA.getFullYear());
   const navBtn = { height: 34, padding: '0 10px', border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.ink, fontSize: 13, fontWeight: 600 };
   const tituloLado = (dias, destaque) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 8px 6px', fontWeight: 700, fontSize: 15, color: C.ink, whiteSpace: 'nowrap' }}>
@@ -209,8 +219,9 @@ export function ComparacaoAnos({ data }) {
   return (
     <div>
       <Card style={{ padding: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        {/* mesma ordem da grade: comparação à esquerda, período à direita */}
+        <SeletorMes rotulo="Comparação" valor={{ ano: inicioB.getFullYear(), mes: inicioB.getMonth() }} onChange={escolherComparacao} anos={anos} />
         <SeletorMes rotulo="Período" valor={{ ano: inicioA.getFullYear(), mes: inicioA.getMonth() }} onChange={escolherPeriodo} anos={anos} />
-        <SeletorMes rotulo="Comparar com" valor={{ ano: inicioB.getFullYear(), mes: inicioB.getMonth() }} onChange={escolherComparacao} anos={anos} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
           <button type="button" onClick={() => setJuntos(j => !j)} aria-pressed={juntos}
             title={juntos ? 'As setas andam 7 dias nos dois períodos' : 'As setas andam 7 dias só no período principal'}
@@ -226,14 +237,19 @@ export function ComparacaoAnos({ data }) {
       </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 12 }}>
-        <Indicador titulo="Ocupação nos dias exibidos" valor={pct(kA.ocupacao)} comparado={`vs ${pct(kB.ocupacao)} em ${rotuloB}`}
-          delta={<Delta valor={(kA.ocupacao - kB.ocupacao) * 100} sufixo=" p.p." />} />
-        <Indicador titulo="Reservas nos dias exibidos" valor={kA.reservas} comparado={`vs ${kB.reservas}`}
+        <Indicador titulo="Ocupação nos dias exibidos"
+          esquerda={{ valor: pct(kB.ocupacao), rotulo: `em ${anoB}` }} direita={{ valor: pct(kA.ocupacao), rotulo: `em ${anoA}` }}
+          delta={<Delta valor={(kA.ocupacao - kB.ocupacao) * 100} sufixo=" p.p." titulo="pontos percentuais: diferença entre as duas taxas de ocupação" />}
+          nota="p.p. = pontos percentuais (diferença entre as duas porcentagens)." />
+        <Indicador titulo="Reservas nos dias exibidos"
+          esquerda={{ valor: kB.reservas, rotulo: anoB }} direita={{ valor: kA.reservas, rotulo: anoA }}
           delta={<Delta valor={kA.reservas - kB.reservas} />} />
-        <Indicador titulo="Noites vendidas" valor={kA.noitesVendidas} comparado={`vs ${kB.noitesVendidas}`}
+        <Indicador titulo="Noites vendidas"
+          esquerda={{ valor: kB.noitesVendidas, rotulo: anoB }} direita={{ valor: kA.noitesVendidas, rotulo: anoA }}
           delta={kB.noitesVendidas > 0 ? <Delta valor={(kA.noitesVendidas - kB.noitesVendidas) / kB.noitesVendidas * 100} sufixo="%" /> : null}
           nota="Sem cortesias." />
-        <Indicador titulo="Ritmo de reservas" valor={kA.ritmo} comparado={`feitas até ${ddmm(hojeISO)} · em ${inicioB.getFullYear()} eram ${kB.ritmo} até ${ddmm(corteB)}`}
+        <Indicador titulo="Ritmo de reservas (já feitas até a data)"
+          esquerda={{ valor: kB.ritmo, rotulo: `até ${ddmm(corteB)}/${corteB.slice(0, 4)}` }} direita={{ valor: kA.ritmo, rotulo: `até ${ddmm(hojeISO)}/${hojeISO.slice(0, 4)}` }}
           delta={<Delta valor={kA.ritmo - kB.ritmo} />}
           nota={kB.semData > 0 ? `${kB.semData} reserva(s) da comparação sem data de criação não entram.` : null} />
       </div>
