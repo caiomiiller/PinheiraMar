@@ -15,6 +15,7 @@ import { moverPorId } from '../../hooks/useReorder';
 import { enviarConfirmacaoReserva } from '../../lib/dadosAdmin';
 import { extrasObrigatorios, quantidadeTaxa } from '../../lib/precos';
 import { aplicarEdicaoReserva } from '../../lib/reservas';
+import { ComparacaoAnos } from './ComparacaoAnos';
 
 // A biblioteca do Excel é pesada (~400 KB): só é descarregada quando o
 // gestor exporta ou importa uma planilha.
@@ -464,8 +465,8 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
 
       <Card className="pm-res-toolbar" style={{ padding: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div className="pm-res-toggle" style={{ display: 'flex', background: C.espuma, borderRadius: R.cartao, padding: 3 }}>
-          {['calendario', 'lista'].map(v => (
-            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, background: view === v ? C.white : 'transparent', color: view === v ? C.ocean : C.inkSoft, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>{v === 'calendario' ? 'Calendário' : 'Lista'}</button>
+          {['calendario', 'lista', 'comparar'].map(v => (
+            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 16px', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, background: view === v ? C.white : 'transparent', color: view === v ? C.ocean : C.inkSoft, boxShadow: view === v ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>{v === 'calendario' ? 'Calendário' : v === 'lista' ? 'Lista' : 'Comparar anos'}</button>
           ))}
         </div>
 
@@ -474,7 +475,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             Funciona nas duas vistas: filtra a tabela na Lista, e mostra um
             dropdown de atalho para abrir a reserva diretamente a partir do
             Calendário. */}
-        <div style={{ position: 'relative' }}>
+        {view !== 'comparar' && <div style={{ position: 'relative' }}>
           <Search size={14} color={C.inkSoft} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
           <TextInput value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Pesquisar código, hóspede, apartamento…"
@@ -504,7 +505,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               </>}
             </div>
           )}
-        </div>
+        </div>}
         {view === 'calendario' && <>
           {/* ── mês/ano clicável com dropdown picker ── */}
           <div className="pm-res-monthpicker" style={{ position: 'relative', marginLeft: 8 }} ref={monthPickerRef}>
@@ -820,6 +821,9 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             }} />
         );
       })()}
+
+      {/* Comparar anos: análise visual SOMENTE LEITURA — recebe só `data`. */}
+      {view === 'comparar' && <ComparacaoAnos data={data} />}
 
       {view === 'lista' && (
         <Card style={{ overflow: 'hidden' }}>
