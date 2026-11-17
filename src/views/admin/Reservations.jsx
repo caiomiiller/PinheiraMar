@@ -1085,24 +1085,30 @@ export function ReservationForm({ data, initial, isNew, onSave, onRemove, onDupl
     !isNew && i.precoNoite != null && Math.round(Number(i.precoNoite)) !== suggested
   )); // depois disto, só true quando o gestor digita manualmente
 
-  // Sempre que o gestor MUDA apartamento, datas, estado ou hóspedes depois
-  // de a reserva já estar aberta: recalcula pelo valor de temporada do
-  // apartamento escolhido. Ignora se o gestor editou manualmente E não
-  // mudou o apartamento nem as datas. Este efeito dispara sempre também na
-  // primeira renderização (mesmo sem nada ter mudado) — em edição, esse
-  // primeiro disparo é ignorado, porque o valor inicial já foi tratado
-  // corretamente acima (ver comentário no useState de precoNoite).
+  // Quando o gestor MUDA apartamento, datas ou hóspedes depois de a reserva
+  // já estar aberta, a diária acompanha a tabela de temporada — MAS só
+  // enquanto ninguém a ajustou à mão. Uma diária negociada (digitada no
+  // campo, ou já gravada diferente da tabela) NUNCA é substituída por mexer
+  // noutro campo: nem estado, nem datas, nem apartamento, nem hóspedes. Só
+  // volta à tabela pelo link "repor" (a pedido do Caio, 2026-11-17: confirmar
+  // uma reserva repunha o valor de tabela — risco de cobrança errada).
+  // O efeito dispara também na primeira renderização; em edição esse disparo
+  // é ignorado (o valor inicial é o gravado, ver useState de precoNoite).
+  // Bloqueio não mexe no valor guardado: as contas já o tratam como zero, e
+  // ao sair do bloqueio a diária (manual ou de tabela) continua lá.
+  const ehBloqueio = status === 'bloqueio';
+  const precoEditedRef = useRef(precoEdited);
+  precoEditedRef.current = precoEdited;
   const skipFirstPriceReset = useRef(!isNew);
   useEffect(() => {
-    if (status === 'bloqueio') { setPrecoNoite(0); return; }
-    if (nights(ci, co) < 1) return;
     if (skipFirstPriceReset.current) { skipFirstPriceReset.current = false; return; }
+    if (ehBloqueio || nights(ci, co) < 1) return;
+    if (precoEditedRef.current) return; // ajuste manual: fica como está
     const a = data.apartamentos.find(x => x.id === aptId) || firstApt;
     const newBd = stayBreakdown(a, data.seasons, ci, co, adultos + criancas);
     setPrecoNoite(Math.round(newBd.total / Math.max(1, nights(ci, co))) || a.preco || 0);
-    setPrecoEdited(false); // reset: troca de apt/data/hóspedes cancela override manual
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aptId, ci, co, status, adultos, criancas]);
+  }, [aptId, ci, co, ehBloqueio, adultos, criancas]);
 
   // Estadia: fica a que está GRAVADA na reserva enquanto o gestor não mexer
   // no preço por noite, nas datas, no apartamento ou no estado. Antes era
