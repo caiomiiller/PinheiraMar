@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
-  Home, Users, X } from 'lucide-react';
+  Home, Users, X, Share2 } from 'lucide-react';
 import { F, fotoTopo, heroVersoes, LOGO_RESIDENCIAL, C, R } from '../../lib/constants';
 import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
 import { orcamentoApartamento } from '../../lib/precos';
 import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
 import { lerUltimaReserva } from '../../lib/dadosPublico';
+import { lerPesquisaDaUrl, montarLinkPesquisa, semParametrosPesquisa, compartilharLink } from '../../lib/linkPesquisa';
 import { IdiomaProvider, useIdioma } from '../../lib/i18n';
 import { PhotoTile, Modal } from '../../components/ui';
 import { buildScoped } from '../../lib/multiProperty';
@@ -96,6 +97,9 @@ function findCombo(availableApts, hosp) {
 export function PublicSite(props) {
   const idiomasAtivos = (props.data.residenciais[0]?.idiomas || []).filter(i => i.ativo);
   const [lang, setLang] = useState(() => {
+    // link compartilhado com &lang=es|en abre já nesse idioma
+    const daUrl = lerPesquisaDaUrl(window.location.search, { idiomas: idiomasAtivos.map(i => i.codigo) }).lang;
+    if (daUrl) return daUrl;
     const browser = navigator.language?.slice(0, 2);
     const match = idiomasAtivos.find(i => i.codigo === browser);
     return match ? match.codigo : 'pt';
@@ -116,9 +120,13 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   const ultimaNoite = useMemo(() => ultimaNoiteReservavel(data.seasons, hojeBR), [data.seasons, hojeBR]);
 
   /* ── state ── */
-  const [ci, setCi] = useState('');
-  const [co, setCo] = useState('');
-  const [hosp, setHosp] = useState(0);
+  // Link de pesquisa compartilhado (?entrada=&saida=&pessoas= — ver
+  // lib/linkPesquisa.js): o site abre já com a consulta preenchida.
+  const [pesquisaDoLink] = useState(() => lerPesquisaDaUrl(window.location.search, { hoje: hojeBR }));
+  const [ci, setCi] = useState(() => pesquisaDoLink.ci || '');
+  const [co, setCo] = useState(() => pesquisaDoLink.co || '');
+  const [hosp, setHosp] = useState(() => pesquisaDoLink.hosp || 0);
+  const [pesquisaCopiada, setPesquisaCopiada] = useState(false);
   const [booking, setBooking] = useState(null);
   const [done, setDone] = useState(null);
   // favoritos persistem no browser do visitante (localStorage) para não se
@@ -169,6 +177,28 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   const groupRefs = useRef({});
 
   const valid = ci && co && nights(ci, co) >= 1;
+
+  // Depois de ler o link: tira do endereço os parâmetros da pesquisa (o
+  // ?apto=, se houver, fica) e, sem apartamento, desliza até os resultados.
+  useEffect(() => {
+    let params;
+    try { params = new URLSearchParams(window.location.search); } catch { return; }
+    if (!['entrada', 'saida', 'pessoas', 'lang'].some(k => params.has(k))) return;
+    const limpo = semParametrosPesquisa(window.location.href);
+    if (limpo) { try { window.history.replaceState(window.history.state, '', limpo); } catch { /* ignora */ } }
+    if (pesquisaDoLink.ci && !params.get('apto')) {
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // "Compartilhar pesquisa": link com as datas e as pessoas desta consulta
+  const compartilharPesquisa = async () => {
+    const url = montarLinkPesquisa(window.location.origin + window.location.pathname, { ci, co, hosp: hosp || undefined, lang });
+    const texto = tr('ps_texto_pesquisa', fmtCurta(ci), fmtCurta(co), hosp ? tr('pessoas', hosp) : '');
+    const r = await compartilharLink({ url, titulo: 'Grupo PinheiraMar', texto });
+    if (r === 'copiado') { setPesquisaCopiada(true); setTimeout(() => setPesquisaCopiada(false), 2500); }
+  };
 
   // ── agrupa apartamentos, disponibilidade e sugestão de combinação por imóvel ──
   const groups = useMemo(() => data.residenciais.map(r => {
@@ -776,7 +806,11 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       </div>
 
       {/* ══ RESULTADOS — um bloco por imóvel, como um motor de reservas de hotel ══ */}
-      <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 40px', scrollMarginTop: 80 }}>
+      {/* scrollMarginTop: no computador o cabeçalho (73px) e a barra de filtros
+          (74px) ficam fixos no topo; com 80 o título dos resultados ("20 dez —
+          27 dez · 7 noites") ficava por baixo deles ao rolar até aqui. No
+          celular nada fica fixo e continua 80 (ver .pm-pubsite-main em App.jsx). */}
+      <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 40px', scrollMarginTop: 110 }}>
         {/* sem datas: uma frase só, em vez de um preço "a partir de" em cada
             cartão — e um toque nela abre logo o calendário */}
         {!valid && (
@@ -797,6 +831,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 <button onClick={() => { setCi(''); setCo(''); setHosp(0); }}
                   style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: GREY, background: 'none', border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 12px', cursor: 'pointer' }}>
                   <X size={12} /> {tr('ps_limpar_consulta')}
+                </button>
+                <button onClick={compartilharPesquisa} aria-live="polite"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: BLACK, background: 'none', border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 12px', cursor: 'pointer', fontFamily: F.sans }}>
+                  <Share2 size={12} /> {pesquisaCopiada ? tr('ap_link_copiado') : tr('ps_compartilhar_pesquisa')}
                 </button>
               </div>
               <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>{subtituloDisponibilidade}</div>

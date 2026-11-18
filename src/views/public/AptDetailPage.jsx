@@ -9,6 +9,7 @@ import { whatsappUrl, msgApartamento } from '../../lib/whatsapp';
 import { money, nights, ymd, today, addDays, isAvailable } from '../../lib/helpers';
 import { orcamentoReserva, regraNoites } from '../../lib/precos';
 import { useIdioma } from '../../lib/i18n';
+import { montarLinkPesquisa, compartilharLink } from '../../lib/linkPesquisa';
 import { PhotoTile, FotoInteira } from '../../components/ui';
 import { AvailabilityCalendar } from '../../components/AvailabilityCalendar';
 import { LinhasOrcamento } from '../../components/LinhasOrcamento';
@@ -188,10 +189,15 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
     onBook(apt, apt2 || null, useApt2 ? g1 : localHosp, useApt2 ? g2 : null);
   };
 
-  const compartilhar = () => {
-    const url = window.location.href;
-    if (navigator.share) { navigator.share({ title: apt.nome, url }).catch(() => {}); return; }
-    navigator.clipboard?.writeText(url); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000);
+  // O link leva o apartamento e, se escolhidas, as datas e as pessoas — quem
+  // o abre vê logo o calendário e o valor dessa estadia (lib/linkPesquisa.js)
+  const compartilhar = async () => {
+    const url = montarLinkPesquisa(window.location.origin + window.location.pathname, {
+      apto: apt.id, ci: localCi, co: localCo,
+      hosp: (hosp || localHosp > 1) ? localHosp : undefined, lang,
+    });
+    const r = await compartilharLink({ url, titulo: apt.nome, texto: apt.nome });
+    if (r === 'copiado') { setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); }
   };
   const alternarFavorito = (e) => { e?.stopPropagation?.(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); };
 

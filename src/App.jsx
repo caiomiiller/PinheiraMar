@@ -202,7 +202,7 @@ export default function App() {
       .pm-pubsite-lang{display:none!important;}
       .pm-destino-lang{display:flex!important;}
       .pm-pubsite-hero{display:none!important;}
-      .pm-pubsite-main{padding:32px 16px 24px!important;}
+      .pm-pubsite-main{padding:32px 16px 24px!important;scroll-margin-top:80px!important;}
       .pm-pubsite-group-head{gap:12px!important;flex-direction:column!important;align-items:center!important;text-align:center!important;border-bottom:none!important;margin-bottom:0!important;}
       
       .pm-pubsite-group-brand{font-size:19px!important;text-align:center!important;}
