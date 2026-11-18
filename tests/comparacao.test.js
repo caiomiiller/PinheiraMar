@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { periodoDoMes, noitesNoPeriodo, indicadoresPeriodo, corteEquivalente, ocupaDatas } from '../src/lib/comparacao.js';
+import { periodoDoMes, receitaPeriodo, noitesNoPeriodo, indicadoresPeriodo, corteEquivalente, ocupaDatas } from '../src/lib/comparacao.js';
 
 const apts = [{ id: 'a1' }, { id: 'a2' }];
 const r = (id, ci, co, extra = {}) => ({ id, apartamentoId: 'a1', checkIn: ci, checkOut: co, status: 'confirmado', criadoEm: '2026-10-01', ...extra });
@@ -43,6 +43,17 @@ describe('comparação de períodos (somente leitura)', () => {
     const k = indicadoresPeriodo({ reservas, apartamentos: apts, inicio: '2025-12-01', fim: '2026-01-01', corte });
     expect(k.ritmo).toBe(1);
     expect(k.semData).toBe(1);
+  });
+  it('receita do mês: critério do Financeiro (check-in no mês, sem cortesia/bloqueio/cancelada)', () => {
+    const reservas = [
+      r('1', '2026-12-01', '2026-12-04', { total: 1000 }),
+      r('2', '2026-12-30', '2027-01-04', { total: 2000 }),                 // check-in em dezembro: conta inteira
+      r('3', '2026-11-28', '2026-12-03', { total: 500 }),                  // check-in em novembro: não conta
+      r('4', '2026-12-10', '2026-12-12', { total: 700, status: 'cortesia' }),
+      r('5', '2026-12-10', '2026-12-12', { total: 800, status: 'cancelada' }),
+      r('6', '2026-12-15', '2026-12-18', { total: 300, status: 'pendente' }),
+    ];
+    expect(receitaPeriodo({ reservas, apartamentos: apts, inicio: '2026-12-01', fim: '2027-01-01' })).toBe(3300);
   });
   it('não altera as reservas recebidas', () => {
     const reservas = [r('1', '2026-12-01', '2026-12-04')];

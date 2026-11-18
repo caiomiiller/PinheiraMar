@@ -69,3 +69,20 @@ export function indicadoresPeriodo({ reservas = [], apartamentos = [], inicio, f
 export function corteEquivalente(hoje, inicioAtual, inicioComparado) {
   return ymd(addDays(parseYMD(hoje), -diasEntre(inicioComparado, inicioAtual)));
 }
+
+// Receita de um período pelo MESMO critério do Financeiro ("Receita total"):
+// soma o valor total das reservas com CHECK-IN dentro do período (a estadia
+// inteira conta no mês em que começa), sem canceladas, bloqueios, cortesias
+// e pedidos do site com prazo de pagamento vencido. Assim o card da
+// comparação bate com o Financeiro filtrado pelo mesmo mês.
+export function receitaPeriodo({ reservas = [], apartamentos = [], inicio, fim, agora = Date.now() }) {
+  const ids = new Set(apartamentos.map(a => a.id));
+  let total = 0;
+  for (const r of reservas) {
+    if (!r || !ids.has(r.apartamentoId)) continue;
+    if (r.status === 'cancelada' || r.status === 'bloqueio' || r.status === 'cortesia' || holdExpirado(r, agora)) continue;
+    if (!r.checkIn || r.checkIn < inicio || r.checkIn >= fim) continue;
+    total += Number(r.total) || 0;
+  }
+  return Math.round(total * 100) / 100;
+}

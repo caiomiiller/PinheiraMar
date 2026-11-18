@@ -122,6 +122,7 @@ export default function App() {
     .pm-show-sm{display:none;}
     @media(max-width:760px){
       .pm-show-sm{display:block!important;}
+      .pm-cmp-cards{grid-template-columns:1fr!important;}
       .pm-sidebar{display:none!important;}
       .pm-tabbar{display:flex!important;}
       .pm-admin-main{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important;}

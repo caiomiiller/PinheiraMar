@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight, Link2, Unlink, Eye } from 'lucide-react';
 import { C, R } from '../../lib/constants';
 import { parseYMD, ymd, today, addDays, holidaysOn, WD, fmtShort, holdExpirado } from '../../lib/helpers';
 import { Card, Select, STATUS, barBackground, displayStatus } from '../../components/ui';
-import { periodoDoMes, indicadoresPeriodo, corteEquivalente } from '../../lib/comparacao';
+import { periodoDoMes, indicadoresPeriodo, corteEquivalente, receitaPeriodo } from '../../lib/comparacao';
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -25,6 +25,7 @@ const FERIADO = 'rgba(62,124,177,.07)';
 const RESIDENCIAL_ICONE = { pinheiramar: '/logo-icon-pinheiramar.png', novoimovel: '/logo-icon-caminho.png' };
 
 const pct = (x) => `${Math.round(x * 100)}%`;
+const reais = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Math.round(v || 0));
 const ddmm = (s) => (s ? `${s.slice(8, 10)}/${s.slice(5, 7)}` : '');
 // "17 nov – 3 dez 2026" (ou "1 – 18 dez 2026")
 const rotuloJanela = (a, b) => {
@@ -46,22 +47,24 @@ function Delta({ valor, sufixo = '', titulo }) {
 // Mesma ordem da grade: à esquerda a comparação (ano anterior), à direita o
 // período; a diferença é sempre "da esquerda para a direita".
 function Indicador({ titulo, esquerda, direita, delta, nota }) {
-  const lado = (v) => (
-    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 5 }}>
-      <span style={{ fontSize: 21, fontWeight: 700, color: C.ink }}>{v.valor}</span>
-      <span style={{ fontSize: 12.5, color: C.inkSoft }}>{v.rotulo}</span>
-    </span>
+  // uma linha por ano (ano anterior em cima, período embaixo): com cinco cards
+  // na mesma linha, o "A vs B" corrido quebrava de formas diferentes em cada
+  // card; assim os números ficam sempre alinhados
+  const linha = (v, forte) => (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+      <span style={{ fontSize: 12.5, color: C.inkSoft, whiteSpace: 'nowrap' }}>{v.rotulo}</span>
+      <span style={{ fontSize: 19, fontWeight: 700, color: forte ? C.ink : C.inkSoft, whiteSpace: 'nowrap' }}>{v.valor}</span>
+    </div>
   );
   return (
-    <Card style={{ padding: '12px 16px', borderRadius: R.cartao }}>
-      <div style={{ fontSize: 12.5, color: C.inkSoft }}>{titulo}</div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-        {lado(esquerda)}
-        <span style={{ fontSize: 13, color: C.inkSoft }}>vs</span>
-        {lado(direita)}
+    <Card style={{ padding: '12px 16px', borderRadius: R.cartao, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 2 }}>{titulo}</div>
+      {linha(esquerda, false)}
+      {linha(direita, true)}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, borderTop: `1px solid ${C.line}`, paddingTop: 5, marginTop: 2, minHeight: 24 }}>
+        <span style={{ fontSize: 11.5, color: C.inkSoft }}>{nota || ''}</span>
         {delta}
       </div>
-      {nota && <div style={{ fontSize: 11.5, color: C.inkSoft, marginTop: 4 }}>{nota}</div>}
     </Card>
   );
 }
@@ -182,6 +185,8 @@ export function ComparacaoAnos({ data }) {
   const corteB = corteEquivalente(hojeISO, mesA.inicio, mesB.inicio);
   const kA = useMemo(() => indicadoresPeriodo({ reservas, apartamentos, inicio: mesA.inicio, fim: mesA.fim, corte: hojeISO }), [reservas, apartamentos, mesA.inicio, mesA.fim, hojeISO]);
   const kB = useMemo(() => indicadoresPeriodo({ reservas, apartamentos, inicio: mesB.inicio, fim: mesB.fim, corte: corteB }), [reservas, apartamentos, mesB.inicio, mesB.fim, corteB]);
+  const receitaA = useMemo(() => receitaPeriodo({ reservas, apartamentos, inicio: mesA.inicio, fim: mesA.fim }), [reservas, apartamentos, mesA.inicio, mesA.fim]);
+  const receitaB = useMemo(() => receitaPeriodo({ reservas, apartamentos, inicio: mesB.inicio, fim: mesB.fim }), [reservas, apartamentos, mesB.inicio, mesB.fim]);
 
   // reservas visíveis por apartamento, em cada período (mesma regra do
   // calendário: tudo menos canceladas e pedidos do site com prazo vencido)
@@ -246,11 +251,12 @@ export function ComparacaoAnos({ data }) {
       <div style={{ fontSize: 13, color: C.inkSoft, margin: '0 2px 8px' }}>
         Números do mês inteiro: <b style={{ color: C.ink }}>{MESES[inicioB.getMonth()].toLowerCase()} de {inicioB.getFullYear()}</b> vs <b style={{ color: C.ink }}>{MESES[inicioA.getMonth()].toLowerCase()} de {inicioA.getFullYear()}</b>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 12 }}>
+      {/* cinco cards numa só linha no computador (no celular, um por linha — ver .pm-cmp-cards em App.jsx) */}
+      <div className="pm-cmp-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 12, marginBottom: 12 }}>
         <Indicador titulo="Ocupação no mês"
-          esquerda={{ valor: pct(kB.ocupacao), rotulo: `em ${anoB}` }} direita={{ valor: pct(kA.ocupacao), rotulo: `em ${anoA}` }}
+          esquerda={{ valor: pct(kB.ocupacao), rotulo: anoB }} direita={{ valor: pct(kA.ocupacao), rotulo: anoA }}
           delta={<Delta valor={(kA.ocupacao - kB.ocupacao) * 100} sufixo=" p.p." titulo="pontos percentuais: diferença entre as duas taxas de ocupação" />}
-          nota="p.p. = pontos percentuais (diferença entre as duas porcentagens)." />
+          nota="p.p. = pontos percentuais" />
         <Indicador titulo="Reservas no mês"
           esquerda={{ valor: kB.reservas, rotulo: anoB }} direita={{ valor: kA.reservas, rotulo: anoA }}
           delta={<Delta valor={kA.reservas - kB.reservas} />} />
@@ -258,10 +264,14 @@ export function ComparacaoAnos({ data }) {
           esquerda={{ valor: kB.noitesVendidas, rotulo: anoB }} direita={{ valor: kA.noitesVendidas, rotulo: anoA }}
           delta={kB.noitesVendidas > 0 ? <Delta valor={(kA.noitesVendidas - kB.noitesVendidas) / kB.noitesVendidas * 100} sufixo="%" /> : null}
           nota="Sem cortesias." />
-        <Indicador titulo="Ritmo de reservas (já feitas até a data)"
+        <Indicador titulo="Receita no mês"
+          esquerda={{ valor: reais(receitaB), rotulo: anoB }} direita={{ valor: reais(receitaA), rotulo: anoA }}
+          delta={receitaB > 0 ? <Delta valor={(receitaA - receitaB) / receitaB * 100} sufixo="%" /> : null}
+          nota="Por check-in, como no Financeiro" />
+        <Indicador titulo="Ritmo de reservas"
           esquerda={{ valor: kB.ritmo, rotulo: `até ${ddmm(corteB)}/${corteB.slice(0, 4)}` }} direita={{ valor: kA.ritmo, rotulo: `até ${ddmm(hojeISO)}/${hojeISO.slice(0, 4)}` }}
           delta={<Delta valor={kA.ritmo - kB.ritmo} />}
-          nota={kB.semData > 0 ? `${kB.semData} reserva(s) da comparação sem data de criação não entram.` : null} />
+          nota={kB.semData > 0 ? `${kB.semData} sem data de criação ficam fora` : 'Já feitas até a data'} />
       </div>
 
       <div className="pm-show-sm" style={{ fontSize: 12.5, color: C.inkSoft, textAlign: 'center', padding: '4px 8px' }}>
