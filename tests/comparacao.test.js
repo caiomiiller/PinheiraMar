@@ -1,10 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { noitesNoPeriodo, indicadoresPeriodo, corteEquivalente, ocupaDatas } from '../src/lib/comparacao.js';
+import { periodoDoMes, noitesNoPeriodo, indicadoresPeriodo, corteEquivalente, ocupaDatas } from '../src/lib/comparacao.js';
 
 const apts = [{ id: 'a1' }, { id: 'a2' }];
 const r = (id, ci, co, extra = {}) => ({ id, apartamentoId: 'a1', checkIn: ci, checkOut: co, status: 'confirmado', criadoEm: '2026-10-01', ...extra });
 
 describe('comparação de períodos (somente leitura)', () => {
+  it('mês inteiro dos cards (inclui fevereiro bissexto e virada de ano)', () => {
+    expect(periodoDoMes(2026, 11)).toEqual({ inicio: '2026-12-01', fim: '2027-01-01', dias: 31 });
+    expect(periodoDoMes(2028, 1).dias).toBe(29);
+    expect(periodoDoMes(2025, 10)).toEqual({ inicio: '2025-11-01', fim: '2025-12-01', dias: 30 });
+  });
   it('conta só as noites dentro do período (reserva que atravessa o mês)', () => {
     expect(noitesNoPeriodo(r('x', '2026-11-28', '2026-12-03'), '2026-12-01', '2027-01-01')).toBe(2);
     expect(noitesNoPeriodo(r('x', '2026-12-30', '2027-01-04'), '2026-12-01', '2027-01-01')).toBe(2);

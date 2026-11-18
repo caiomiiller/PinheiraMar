@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight, Link2, Unlink, Eye } from 'lucide-react';
 import { C, R } from '../../lib/constants';
 import { parseYMD, ymd, today, addDays, holidaysOn, WD, fmtShort, holdExpirado } from '../../lib/helpers';
 import { Card, Select, STATUS, barBackground, displayStatus } from '../../components/ui';
-import { indicadoresPeriodo, corteEquivalente } from '../../lib/comparacao';
+import { periodoDoMes, indicadoresPeriodo, corteEquivalente } from '../../lib/comparacao';
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -174,9 +174,14 @@ export function ComparacaoAnos({ data }) {
     return out;
   }, [reservas]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const corteB = corteEquivalente(hojeISO, pA.inicio, pB.inicio);
-  const kA = useMemo(() => indicadoresPeriodo({ reservas, apartamentos, inicio: pA.inicio, fim: pA.fim, corte: hojeISO }), [reservas, apartamentos, pA.inicio, pA.fim, hojeISO]);
-  const kB = useMemo(() => indicadoresPeriodo({ reservas, apartamentos, inicio: pB.inicio, fim: pB.fim, corte: corteB }), [reservas, apartamentos, pB.inicio, pB.fim, corteB]);
+  // Os cards somam o MÊS INTEIRO escolhido em cada lado (o mês do 1º dia
+  // mostrado), não só os dias visíveis na grade — no celular, onde a grade
+  // não aparece, são o resumo do mês (a pedido do Caio, 2026-11-18).
+  const mesA = periodoDoMes(inicioA.getFullYear(), inicioA.getMonth());
+  const mesB = periodoDoMes(inicioB.getFullYear(), inicioB.getMonth());
+  const corteB = corteEquivalente(hojeISO, mesA.inicio, mesB.inicio);
+  const kA = useMemo(() => indicadoresPeriodo({ reservas, apartamentos, inicio: mesA.inicio, fim: mesA.fim, corte: hojeISO }), [reservas, apartamentos, mesA.inicio, mesA.fim, hojeISO]);
+  const kB = useMemo(() => indicadoresPeriodo({ reservas, apartamentos, inicio: mesB.inicio, fim: mesB.fim, corte: corteB }), [reservas, apartamentos, mesB.inicio, mesB.fim, corteB]);
 
   // reservas visíveis por apartamento, em cada período (mesma regra do
   // calendário: tudo menos canceladas e pedidos do site com prazo vencido)
@@ -206,8 +211,9 @@ export function ComparacaoAnos({ data }) {
   };
   const escolherComparacao = ({ ano, mes }) => setInicioB(new Date(ano, mes, 1));
 
-  const anoB = String(inicioB.getFullYear());
-  const anoA = String(inicioA.getFullYear());
+  // "dez/2025" — rótulo de cada lado nos cards
+  const anoB = `${MESES_CURTOS[inicioB.getMonth()]}/${inicioB.getFullYear()}`;
+  const anoA = `${MESES_CURTOS[inicioA.getMonth()]}/${inicioA.getFullYear()}`;
   const navBtn = { height: 34, padding: '0 10px', border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.ink, fontSize: 13, fontWeight: 600 };
   const tituloLado = (dias, destaque) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 8px 6px', fontWeight: 700, fontSize: 15, color: C.ink, whiteSpace: 'nowrap' }}>
@@ -222,7 +228,8 @@ export function ComparacaoAnos({ data }) {
         {/* mesma ordem da grade: comparação à esquerda, período à direita */}
         <SeletorMes rotulo="Comparação" valor={{ ano: inicioB.getFullYear(), mes: inicioB.getMonth() }} onChange={escolherComparacao} anos={anos} />
         <SeletorMes rotulo="Período" valor={{ ano: inicioA.getFullYear(), mes: inicioA.getMonth() }} onChange={escolherPeriodo} anos={anos} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+        {/* setas de 7 dias só servem à grade — no celular ficam escondidas */}
+        <div className="pm-hide-sm" style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
           <button type="button" onClick={() => setJuntos(j => !j)} aria-pressed={juntos}
             title={juntos ? 'As setas andam 7 dias nos dois períodos' : 'As setas andam 7 dias só no período principal'}
             style={{ ...navBtn, borderRadius: R.pilula, gap: 6, background: juntos ? C.sucessoBg : C.white, color: juntos ? C.sucesso : C.inkSoft, borderColor: juntos ? C.sucessoBorda : C.line }}>
@@ -236,15 +243,18 @@ export function ComparacaoAnos({ data }) {
         </div>
       </Card>
 
+      <div style={{ fontSize: 13, color: C.inkSoft, margin: '0 2px 8px' }}>
+        Números do mês inteiro: <b style={{ color: C.ink }}>{MESES[inicioB.getMonth()].toLowerCase()} de {inicioB.getFullYear()}</b> vs <b style={{ color: C.ink }}>{MESES[inicioA.getMonth()].toLowerCase()} de {inicioA.getFullYear()}</b>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 12 }}>
-        <Indicador titulo="Ocupação nos dias exibidos"
+        <Indicador titulo="Ocupação no mês"
           esquerda={{ valor: pct(kB.ocupacao), rotulo: `em ${anoB}` }} direita={{ valor: pct(kA.ocupacao), rotulo: `em ${anoA}` }}
           delta={<Delta valor={(kA.ocupacao - kB.ocupacao) * 100} sufixo=" p.p." titulo="pontos percentuais: diferença entre as duas taxas de ocupação" />}
           nota="p.p. = pontos percentuais (diferença entre as duas porcentagens)." />
-        <Indicador titulo="Reservas nos dias exibidos"
+        <Indicador titulo="Reservas no mês"
           esquerda={{ valor: kB.reservas, rotulo: anoB }} direita={{ valor: kA.reservas, rotulo: anoA }}
           delta={<Delta valor={kA.reservas - kB.reservas} />} />
-        <Indicador titulo="Noites vendidas"
+        <Indicador titulo="Noites vendidas no mês"
           esquerda={{ valor: kB.noitesVendidas, rotulo: anoB }} direita={{ valor: kA.noitesVendidas, rotulo: anoA }}
           delta={kB.noitesVendidas > 0 ? <Delta valor={(kA.noitesVendidas - kB.noitesVendidas) / kB.noitesVendidas * 100} sufixo="%" /> : null}
           nota="Sem cortesias." />
@@ -254,7 +264,10 @@ export function ComparacaoAnos({ data }) {
           nota={kB.semData > 0 ? `${kB.semData} reserva(s) da comparação sem data de criação não entram.` : null} />
       </div>
 
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="pm-show-sm" style={{ fontSize: 12.5, color: C.inkSoft, textAlign: 'center', padding: '4px 8px' }}>
+        No celular aparecem só os números do mês. A grade lado a lado fica no computador.
+      </div>
+      <Card className="pm-hide-sm" style={{ padding: 0, overflow: 'hidden' }}>
         <div ref={caixaRef} style={{ overflowX: 'auto' }}>
           <div style={{ minWidth: NAMEW + GAP + totalDias * colW }}>
             {/* títulos dos dois períodos */}

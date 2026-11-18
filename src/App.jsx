@@ -119,7 +119,9 @@ export default function App() {
     .pm-detail-gallery>div:nth-child(n+6){display:none;}
     .pm-detail-counter-mobile{display:none;}
     .pm-pubsite-hcats::-webkit-scrollbar{display:none;}
+    .pm-show-sm{display:none;}
     @media(max-width:760px){
+      .pm-show-sm{display:block!important;}
       .pm-sidebar{display:none!important;}
       .pm-tabbar{display:flex!important;}
       .pm-admin-main{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important;}

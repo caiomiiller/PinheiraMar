@@ -9,6 +9,14 @@ import { addDays, parseYMD, ymd, holdExpirado } from './helpers.js';
 const DIA = 86400000;
 const diasEntre = (a, b) => Math.round((parseYMD(b) - parseYMD(a)) / DIA);
 
+// Mês inteiro: 1º dia e 1º dia do mês seguinte (fim exclusivo) — é o que os
+// cards da comparação somam, independentemente dos dias visíveis na grade.
+export function periodoDoMes(ano, mes /* 0-11 */) {
+  const ini = new Date(ano, mes, 1);
+  const fim = new Date(ano, mes + 1, 1);
+  return { inicio: ymd(ini), fim: ymd(fim), dias: Math.round((fim - ini) / DIA) };
+}
+
 // Reservas que ocupam o apartamento: tudo menos canceladas, bloqueios e
 // pedidos do site cujo prazo de pagamento já expirou (as datas voltaram a
 // ficar livres). Cortesias ocupam, então entram.
