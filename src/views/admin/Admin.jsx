@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Receipt, FileText, Globe, ChevronDown, ChevronLeft, ChevronRight, Gift, Menu, X } from 'lucide-react';
-import { C, F, R, temaPainel } from '../../lib/constants';
+import { C, F, R, temaPainel, SIMBOLO_RESIDENCIAL } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 
 import { Dashboard } from './Dashboard';
@@ -44,6 +44,7 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
   const [tab, setTab] = useState('painel');
   const [residencialId, setResidencialId] = useState(initialResidencialId || data.residenciais[0].id);
   const residencial = data.residenciais.find(r => r.id === residencialId) || data.residenciais[0];
+  const simbolo = SIMBOLO_RESIDENCIAL[residencial?.id];
   // cor predominante do painel conforme o residencial escolhido (ver
   // TEMA_PAINEL em constants.js); a barra do topo, que vive em
   // PainelGestao.jsx, recebe-a por onTema
@@ -77,7 +78,13 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
       {/* sidebar (md+) */}
       <aside className="pm-sidebar" style={{ width: sidebarCollapsed ? 68 : 240, transition: 'width .16s ease', background: tema.fundo, color: tema.textoSec, flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 10px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
-          <div style={{ width: 34, height: 34, borderRadius: R.campo, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: C.white, flexShrink: 0 }}><Waves size={19} /></div>
+          {/* símbolo do residencial escolhido, num quadrado branco (as ondas
+              do Caminho do Mar sumiam sobre o fundo azul do próprio tema) */}
+          {simbolo
+            ? <div title={residencial.nome} style={{ width: 40, height: 40, borderRadius: R.campo, background: C.white, display: 'grid', placeItems: 'center', flexShrink: 0, padding: 5, boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,.18)' }}>
+                <img key={simbolo} src={simbolo} alt={residencial.nome} className="pm-pop" style={{ width: 30, height: 30, objectFit: 'contain', display: 'block' }} />
+              </div>
+            : <div style={{ width: 34, height: 34, borderRadius: R.campo, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: C.white, flexShrink: 0 }}><Waves size={19} /></div>}
           {!sidebarCollapsed && <div><div style={{ fontFamily: F.disp, fontSize: 17, color: C.white, lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>}
         </div>
 
@@ -142,7 +149,14 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
               padding: '10px 12px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.16)',
               borderRadius: R.cartao, color: C.white, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, textAlign: 'left',
             }}>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{residencial.nome}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+                {simbolo && (
+                  <span style={{ width: 26, height: 26, borderRadius: 6, background: C.white, display: 'grid', placeItems: 'center', padding: 3, boxSizing: 'border-box', flexShrink: 0 }}>
+                    <img src={simbolo} alt="" style={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }} />
+                  </span>
+                )}
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{residencial.nome}</span>
+              </span>
               <ChevronDown size={14} style={{ flexShrink: 0, transform: picker ? 'rotate(180deg)' : 'none' }} />
             </button>
             {picker && (
