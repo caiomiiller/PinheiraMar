@@ -53,6 +53,12 @@ export const LOGO_RESIDENCIAL = {
   pinheiramar: { src: '/brand/pinheiramar-horizontal.png', largura: 200 },
   novoimovel: { src: '/brand/caminho-horizontal.png', largura: 252 },
 };
+// Símbolo de cada residencial (sem o nome): no site, ao lado do nome de cada
+// residencial, e no painel de gestão, conforme o residencial escolhido.
+export const SIMBOLO_RESIDENCIAL = {
+  pinheiramar: '/brand/pinheiramar-simbolo.png',
+  novoimovel: '/brand/caminho-simbolo.png',
+};
 // Mostrado quando o site não consegue carregar os dados (aí não há o telefone do residencial à mão).
 export const TELEFONE_CONTATO = '(48) 98476-1800';
 

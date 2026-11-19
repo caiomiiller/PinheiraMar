@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { X, ChevronLeft, GripVertical, Minus, Plus, LogIn, LogOut } from 'lucide-react';
 import { C, F, R } from '../lib/constants';
 import { ymd, today } from '../lib/helpers';
@@ -34,9 +34,22 @@ export function Btn({ variant = 'primary', size = 'md', children, style, icon: I
 }
 
 export function Modal({ title, subtitle, onClose, onBack, headerActions, children, footer, wide, progress, rotuloVoltar = 'Voltar', rotuloFechar = 'Fechar' }) {
+  // Acessibilidade: o leitor de ecrã anuncia a janela pelo título, o foco
+  // entra na janela ao abrir e volta ao botão de origem ao fechar.
+  const tituloId = useId();
+  const cartaoRef = useRef(null);
+  // o elemento que tinha o foco antes de a janela abrir (lido no 1.º render)
+  const origemRef = useRef(typeof document !== 'undefined' ? document.activeElement : null);
+  useEffect(() => {
+    // se um campo de dentro já pediu o foco (autoFocus), não o tira de lá
+    if (cartaoRef.current && !cartaoRef.current.contains(document.activeElement)) cartaoRef.current.focus({ preventScroll: true });
+    const origem = origemRef.current;
+    return () => { if (origem && typeof origem.focus === 'function' && document.contains(origem)) origem.focus({ preventScroll: true }); };
+  }, []);
   return (
     <div onClick={onClose} className="pm-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(10,40,46,.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 14px', zIndex: 100, overflowY: 'auto', backdropFilter: 'blur(2px)' }}>
-      <div onClick={e => e.stopPropagation()} className="pm-pop pm-modal-card" style={{ background: C.white, borderRadius: R.modal, width: '100%', maxWidth: wide ? 760 : 520, boxShadow: '0 24px 70px rgba(10,40,46,.35)', overflow: 'hidden', marginTop: 12 }}>
+      <div ref={cartaoRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={tituloId}
+        onClick={e => e.stopPropagation()} className="pm-pop pm-modal-card" style={{ outline: 'none', background: C.white, borderRadius: R.modal, width: '100%', maxWidth: wide ? 760 : 520, boxShadow: '0 24px 70px rgba(10,40,46,.35)', overflow: 'hidden', marginTop: 12 }}>
         <div className="pm-modal-header" style={{ padding: '18px 22px', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
             {onBack && (
@@ -45,7 +58,7 @@ export function Modal({ title, subtitle, onClose, onBack, headerActions, childre
               </button>
             )}
             <div style={{ minWidth: 0 }}>
-              <h3 style={{ fontFamily: F.disp, fontSize: 22, color: C.ink, margin: 0, lineHeight: 1.1 }}>{title}</h3>
+              <h3 id={tituloId} style={{ fontFamily: F.disp, fontSize: 22, color: C.ink, margin: 0, lineHeight: 1.1 }}>{title}</h3>
               {subtitle && <p style={{ margin: '4px 0 0', fontSize: 13, color: C.inkSoft }}>{subtitle}</p>}
             </div>
           </div>

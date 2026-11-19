@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
   Home, Users, X, Share2 } from 'lucide-react';
-import { F, fotoTopo, heroVersoes, LOGO_RESIDENCIAL, C, R } from '../../lib/constants';
+import { F, fotoTopo, heroVersoes, LOGO_RESIDENCIAL, SIMBOLO_RESIDENCIAL, C, R } from '../../lib/constants';
 import { whatsappUrl, msgGeral } from '../../lib/whatsapp';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
 import { orcamentoApartamento } from '../../lib/precos';
@@ -42,7 +42,7 @@ const RESIDENCIAL_BRAND_TEXT = {
 
 // Só o símbolo da marca de cada residencial — a logo completa não cabe num
 // botão da barra de filtros, que trabalha com ícones de ~20px.
-const RESIDENCIAL_ICONS = { pinheiramar: '/brand/pinheiramar-simbolo.png', novoimovel: '/brand/caminho-simbolo.png' };
+const RESIDENCIAL_ICONS = SIMBOLO_RESIDENCIAL;
 
 // Nome curto (sem o prefixo "Residencial"), montado das mesmas partes que o
 // cabeçalho de cada grupo usa — assim a barra e o cabeçalho nunca divergem.
@@ -381,7 +381,13 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               diferentes) — capacidade passa a fazer parte da linha de detalhes,
               junto com piso/vista, ecoando o exemplo (título / detalhes / preço),
               a pedido do Caio, 2026-09-23. */}
-          <div className="pm-card-title-row" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</div>
+          {/* o título é um botão de verdade: quem navega pelo teclado (Tab +
+              Enter) ou com leitor de ecrã também abre o apartamento — o cartão
+              inteiro continua clicável com o rato/dedo */}
+          {available
+            ? <button type="button" onClick={e => { e.stopPropagation(); openDetail(apt); }} className="pm-card-title-row"
+                style={{ display: 'block', width: '100%', background: 'none', border: 'none', padding: 0, margin: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</button>
+            : <div className="pm-card-title-row" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</div>}
           <div style={{ fontSize: 14, color: GREY, marginTop: 3 }}>{dado(apt.piso)} · {dado(apt.vista)} · {tr('ps_ate_pessoas', apt.capacidade)}</div>
           {valid && !fits && (
             needsCombo

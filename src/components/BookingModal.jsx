@@ -34,7 +34,7 @@ const MENSAGEM_ERRO = {
   indisponivel: 'err_indisponivel', preco_mudou: 'err_preco_mudou', minimo_noites: 'err_minimo_noites', maximo_noites: 'err_maximo_noites',
   capacidade: 'err_capacidade', data_passada: 'err_datas', datas_invalidas: 'err_datas', datas_fechadas: 'err_datas_fechadas',
   estadia_longa: 'err_estadia_longa', apartamento_inexistente: 'err_generico', apartamentos_invalidos: 'err_generico',
-  muitas_pendentes: 'err_muitas_pendentes',
+  muitas_pendentes: 'err_muitas_pendentes', muitas_tentativas: 'err_generico',
 };
 
 export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirmed }) {

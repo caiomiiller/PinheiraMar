@@ -10,7 +10,8 @@
 //   • cria o link de pagamento com o domínio do próprio site.
 // Antes, tudo isto era feito no navegador e gravado por cima do banco.
 import { alterarEstado } from '../server/estado.js';
-import { corpoJSON, responder, baseDoSite } from '../server/http.js';
+import { corpoJSON, responder, baseDoSite, ipDoPedido } from '../server/http.js';
+import { excedeuLimiteIp, registarReservaIp } from '../server/limite.js';
 import { mpConfigurado, criarPreferencia } from '../server/mercadopago.js';
 import { enviarConfirmacao, registarEnvio } from '../server/email.js';
 import { migrarDados } from '../src/lib/migracoes.js';
@@ -60,6 +61,9 @@ export default async function handler(req, res) {
   const vh = validarHospede(pedido.hospede);
   if (!vh.ok) return responder(res, 422, { ok: false, erro: 'dados_hospede', campos: vh.erros });
 
+  const ip = ipDoPedido(req);
+  if (excedeuLimiteIp(ip)) return responder(res, 429, { ok: false, erro: 'muitas_tentativas' });
+
   const agora = Date.now();
   const agoraISO = new Date(agora).toISOString();
   const hoje = hojeISO(new Date(agora));
@@ -102,6 +106,7 @@ export default async function handler(req, res) {
     return responder(res, st, { ok: false, ...info });
   }
 
+  registarReservaIp(ip);
   const { m } = resultado;
   const ids = new Set(m.reservas.map(x => x.id));
   const aptos = m.orcamento.partes.map(p => p.apt);

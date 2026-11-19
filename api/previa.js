@@ -1,4 +1,5 @@
-// GET /?apto=<id> (reescrito para aqui no vercel.json): devolve o index.html
+// GET /?apto=<id> (reescrito para aqui pelo middleware.js, só para robôs de
+// prévia): devolve o index.html
 // do site com título, descrição e imagem do apartamento nas tags de prévia
 // (WhatsApp/Instagram/Facebook). Qualquer falha cai no index.html comum —
 // o link nunca deixa de abrir.

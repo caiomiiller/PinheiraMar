@@ -23,10 +23,13 @@ vi.mock('../server/email.js', () => ({
 }));
 const { default: handler } = await import('../api/reservar.js');
 
-function chamar(body) {
+const { limparLimitesIp, MAX_RESERVAS_POR_IP } = await import('../server/limite.js');
+
+function chamar(body, ip) {
   const res = { statusCode: 0, headers: {}, corpo: null,
     setHeader(k, v) { this.headers[k] = v; }, status(c) { this.statusCode = c; return this; }, json(o) { this.corpo = o; return this; } };
-  return handler({ method: 'POST', body, headers: { host: 'localhost:3000' } }, res).then(() => res);
+  const headers = { host: 'localhost:3000', ...(ip ? { 'x-forwarded-for': `${ip}, 10.0.0.1` } : {}) };
+  return handler({ method: 'POST', body, headers }, res).then(() => res);
 }
 const pedido = (extra = {}) => ({
   itens: [{ apartamentoId: 'a1', hospedes: 2 }], checkIn: '2027-01-10', checkOut: '2027-01-13',
@@ -38,6 +41,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-11-20T15:00:00Z'));
   banco.estado = estado(); banco.escritas = 0;
   mp.configurado = false; mp.chamadas = []; mail.envios = []; mail.registos = [];
+  limparLimitesIp();
 });
 afterEach(() => vi.useRealTimers());
 
@@ -141,5 +145,40 @@ describe('POST /api/reservar — casos da revisão', () => {
     expect(r.mpValorCobrado).toBeUndefined();
     expect(mail.envios[0][0].reserva.expiraEm).toBeUndefined();
     mp.pref = { ok: true, initPoint: 'https://mp.exemplo/checkout/1' };
+  });
+});
+
+describe('POST /api/reservar — limite por IP', () => {
+  const hosp = (i) => ({ nome: `Hóspede ${i}`, email: `h${i}@exemplo.com`, telefone: `(48) 98888-${String(1000 + i)}` });
+  const datas = (i) => ({ checkIn: `2027-02-${String(1 + i * 3).padStart(2, '0')}`, checkOut: `2027-02-${String(3 + i * 3).padStart(2, '0')}` });
+  it(`depois de ${MAX_RESERVAS_POR_IP} reservas gravadas no mesmo IP responde 429 sem tocar no banco`, async () => {
+    for (let i = 0; i < MAX_RESERVAS_POR_IP; i++) {
+      const res = await chamar(pedido({ ...datas(i), hospede: hosp(i) }), '203.0.113.7');
+      expect(res.statusCode).toBe(200);
+    }
+    const escritas = banco.escritas;
+    const res = await chamar(pedido({ ...datas(MAX_RESERVAS_POR_IP), hospede: hosp(90) }), '203.0.113.7');
+    expect(res.statusCode).toBe(429);
+    expect(res.corpo).toEqual({ ok: false, erro: 'muitas_tentativas' });
+    expect(banco.escritas).toBe(escritas);
+    // outro IP continua a conseguir reservar
+    const outro = await chamar(pedido({ ...datas(MAX_RESERVAS_POR_IP), hospede: hosp(91) }), '198.51.100.9');
+    expect(outro.statusCode).toBe(200);
+  });
+  it('tentativas falhadas (datas ocupadas, dados errados) não gastam o limite', async () => {
+    for (let i = 0; i < MAX_RESERVAS_POR_IP + 2; i++) {
+      const res = await chamar(pedido({ hospede: { nome: '', email: 'x', telefone: '' } }), '203.0.113.8');
+      expect(res.statusCode).toBe(422);
+    }
+    const res = await chamar(pedido(), '203.0.113.8');
+    expect(res.statusCode).toBe(200);
+  });
+  it('o limite vence depois da janela de 10 minutos', async () => {
+    for (let i = 0; i < MAX_RESERVAS_POR_IP; i++) {
+      await chamar(pedido({ ...datas(i), hospede: hosp(10 + i) }), '203.0.113.9');
+    }
+    expect((await chamar(pedido({ ...datas(MAX_RESERVAS_POR_IP), hospede: hosp(92) }), '203.0.113.9')).statusCode).toBe(429);
+    vi.setSystemTime(new Date('2026-11-20T15:11:00Z'));
+    expect((await chamar(pedido({ ...datas(MAX_RESERVAS_POR_IP), hospede: hosp(92) }), '203.0.113.9')).statusCode).toBe(200);
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import { Waves, RefreshCw, FlaskConical } from 'lucide-react';
 import { C, F, TELEFONE_CONTATO, R } from './lib/constants';
 import { PublicSite } from './views/public/PublicSite';
@@ -70,28 +70,37 @@ function SitePublico() {
   const [data, setData] = useState(null);
   const [erro, setErro] = useState(false);
 
+  // hora do último carregamento: evita pedir tudo de novo quando o visitante
+  // só troca de separador por alguns segundos
+  const ultimoRef = useRef(0);
+  const atualizar = useCallback(() => carregarPublico().then(d => { ultimoRef.current = Date.now(); setData(d); }), []);
+
   const carregar = useCallback(async () => {
     setErro(false);
-    try { setData(await carregarPublico()); }
+    try { await atualizar(); }
     catch (e) { console.warn('[site] não foi possível carregar os dados', e); setErro(true); }
-  }, []);
+  }, [atualizar]);
 
   useEffect(() => { limparCopiasAntigas(); carregar(); }, [carregar]);
 
-  // disponibilidade fresca ao voltar ao separador (ex.: depois de ir ao WhatsApp)
+  // disponibilidade fresca ao voltar ao separador (ex.: depois de ir ao
+  // WhatsApp), mas só se os dados já tiverem mais de 30 s
   useEffect(() => {
-    const aoVoltar = () => { if (document.visibilityState === 'visible') carregarPublico().then(setData).catch(() => {}); };
+    const aoVoltar = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - ultimoRef.current < 30000) return;
+      atualizar().catch(() => {});
+    };
     document.addEventListener('visibilitychange', aoVoltar);
     return () => document.removeEventListener('visibilitychange', aoVoltar);
-  }, []);
+  }, [atualizar]);
 
   // a reserva é feita no servidor; depois disso (ou se as datas/preço
   // mudaram entretanto) recarrega a disponibilidade
   const onReservar = useCallback(async (pedido) => {
     const r = await reservar(pedido);
-    if (r.ok || r.erro === 'indisponivel' || r.erro === 'preco_mudou') carregarPublico().then(setData).catch(() => {});
+    if (r.ok || r.erro === 'indisponivel' || r.erro === 'preco_mudou') atualizar().catch(() => {});
     return r;
-  }, []);
+  }, [atualizar]);
 
   if (SEM_CONFIG) return <Aviso titulo="Site em manutenção" texto={`Voltamos em instantes. Para reservar agora, fale conosco pelo WhatsApp ${TELEFONE_CONTATO}.`} />;
   if (!data && erro) return <Aviso titulo="Não foi possível carregar o site" texto={`Verifique a sua conexão e tente de novo. Se preferir, fale conosco pelo WhatsApp ${TELEFONE_CONTATO}.`} acao={carregar} />;
@@ -107,6 +116,7 @@ export default function App() {
        elemento largo (tabelas, grelhas) deve rolar dentro do seu próprio
        contentor, nunca "puxar" o corpo da página consigo */
     html, body{overflow-x:clip;}
+    button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px solid ${C.brisa};outline-offset:2px;}
     .pmf:focus{border-color:${C.brisa}!important;box-shadow:0 0 0 3px rgba(45,127,157,.16)!important;}
     .pm-pop{animation:pmpop .18s ease;}
     @keyframes pmpop{from{opacity:0;transform:translateY(8px) scale(.99);}to{opacity:1;transform:none;}}
