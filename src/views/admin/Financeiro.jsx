@@ -1,11 +1,24 @@
 import React, { useState } from 'react';
 import { C, F, R } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, fmtShort, holdExpirado } from '../../lib/helpers';
-import { Card, PageHead, Badge, Btn, DateInput, STATUS } from '../../components/ui';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card, PageHead, Badge, Btn, DateInput, Select, STATUS } from '../../components/ui';
+
+const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 export function Financeiro({ data, go }) {
   const t = today();
-  const [periodo, setPeriodo] = useState('all');
+  // Os relatórios interessam por MÊS (a pedido do Caio, 2026-11-19): abre no
+  // mês atual, com seletor de mês/ano. "Últimos 30/90 dias" saíram — eram
+  // janelas móveis que não batem com nenhum mês fechado.
+  const [periodo, setPeriodo] = useState('month');
+  const [mesSel, setMesSel] = useState(() => ({ ano: t.getFullYear(), mes: t.getMonth() }));
+  const moverMes = (delta) => setMesSel(({ ano, mes }) => { const d = new Date(ano, mes + delta, 1); return { ano: d.getFullYear(), mes: d.getMonth() }; });
+  const anosDisponiveis = (() => {
+    let min = t.getFullYear();
+    for (const r of data.reservas || []) { const y = Number(String(r.checkIn || '').slice(0, 4)); if (y >= 2000 && y < min) min = y; }
+    const out = []; for (let y = t.getFullYear() + 1; y >= min; y--) out.push(y); return out;
+  })();
   // período "Personalizado" — datas escolhidas livremente pelo utilizador
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -20,26 +33,16 @@ export function Financeiro({ data, go }) {
   };
 
   const PERIODOS = [
+    { id: 'month', label: 'Mês' },
+    { id: 'year', label: 'Ano' },
     { id: 'all',  label: 'Todo período' },
-    { id: 'year', label: 'Este ano' },
-    { id: 'month', label: 'Este mês' },
-    { id: '30d',  label: 'Últimos 30 dias' },
-    { id: '90d',  label: 'Últimos 90 dias' },
     { id: 'custom', label: 'Personalizado' },
   ];
   const inPeriodo = (r) => {
     const d = parseYMD(r.checkIn);
-    const y = t.getFullYear(), m = t.getMonth();
-    // "Últimos N dias" olha para trás a partir de hoje — check-in tem de estar
-    // entre (hoje - N dias) e hoje, inclusive. Sem o limite inferior (>= 0),
-    // qualquer reserva com check-in FUTURO entrava sempre (t - d ficava
-    // negativo, que é sempre <= 30/90), fazendo o filtro incluir reservas de
-    // daqui a meses em vez de só as dos últimos N dias.
-    const diffDias = (t - d) / (1000*60*60*24);
-    if (periodo === 'year')  return d.getFullYear() === y;
-    if (periodo === 'month') return d.getFullYear() === y && d.getMonth() === m;
-    if (periodo === '30d')   return diffDias >= 0 && diffDias <= 30;
-    if (periodo === '90d')   return diffDias >= 0 && diffDias <= 90;
+    // pela data de check-in, no mês (ou ano) escolhido no seletor
+    if (periodo === 'year')  return d.getFullYear() === mesSel.ano;
+    if (periodo === 'month') return d.getFullYear() === mesSel.ano && d.getMonth() === mesSel.mes;
     if (periodo === 'custom') {
       if (customFrom && d < parseYMD(customFrom)) return false;
       if (customTo && d > parseYMD(customTo)) return false;
@@ -70,7 +73,6 @@ export function Financeiro({ data, go }) {
     .filter(r => r.status !== 'cancelada' && !holdExpirado(r, agoraMs))
     .map(comoRealizada);
   const filtradas = reservasEfetivas.filter(inPeriodo);
-  const bloqueios = filtradas.filter(r => r.status === 'bloqueio');
 
   // Base única de tudo o que gera receita no período: as canceladas já
   // ficaram de fora acima, aqui saem os bloqueios (não são estadias nem
@@ -82,7 +84,6 @@ export function Financeiro({ data, go }) {
   // Cortesias (estadias oferecidas) ocupam as datas mas ficam FORA de todas as
   // contas de dinheiro: receita, ticket médio, média de noites, por apartamento
   // e por origem. Aparecem só como contagem (quadro por status e tabela).
-  const cortesias = filtradas.filter(r => r.status === 'cortesia');
   const comReceita = filtradas.filter(r => r.status !== 'bloqueio' && r.status !== 'cortesia');
   const confirmadas = comReceita.filter(r => r.status === 'confirmado');
   const reservadas  = comReceita.filter(r => r.status === 'reservado');
@@ -192,6 +193,26 @@ export function Financeiro({ data, go }) {
                 </button>
               ))}
             </div>
+            {(periodo === 'month' || periodo === 'year') && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button type="button" onClick={() => (periodo === 'month' ? moverMes(-1) : setMesSel(s => ({ ...s, ano: s.ano - 1 })))}
+                  aria-label={periodo === 'month' ? 'Mês anterior' : 'Ano anterior'}
+                  style={{ height: 32, width: 32, border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.white, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ink }}><ChevronLeft size={15} /></button>
+                {periodo === 'month' && (
+                  <Select aria-label="Mês" value={mesSel.mes} onChange={e => setMesSel(s => ({ ...s, mes: Number(e.target.value) }))} style={{ width: 'auto', height: 32, padding: '0 8px', fontSize: 12.5 }}>
+                    {MESES.map((nome, i) => <option key={nome} value={i}>{nome}</option>)}
+                  </Select>
+                )}
+                <Select aria-label="Ano" value={mesSel.ano} onChange={e => setMesSel(s => ({ ...s, ano: Number(e.target.value) }))} style={{ width: 'auto', height: 32, padding: '0 8px', fontSize: 12.5 }}>
+                  {anosDisponiveis.map(a => <option key={a} value={a}>{a}</option>)}
+                </Select>
+                <button type="button" onClick={() => (periodo === 'month' ? moverMes(1) : setMesSel(s => ({ ...s, ano: s.ano + 1 })))}
+                  aria-label={periodo === 'month' ? 'Próximo mês' : 'Próximo ano'}
+                  style={{ height: 32, width: 32, border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.white, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ink }}><ChevronRight size={15} /></button>
+                <button type="button" onClick={() => setMesSel({ ano: t.getFullYear(), mes: t.getMonth() })}
+                  style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.white, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.ink }}>Hoje</button>
+              </div>
+            )}
             {periodo === 'custom' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: C.inkSoft, fontWeight: 600 }}>
@@ -216,8 +237,6 @@ export function Financeiro({ data, go }) {
         <KPI label="Receita total" value={money(recTotal)} sub="confirmada + prevista" />
         <KPI label="Ticket médio" value={ticketMedio > 0 ? money(ticketMedio) : '—'} sub="por reserva" />
         <KPI label="Média de noites" value={mediaNoites} sub="por estadia" />
-        <KPI label="Bloqueios" value={bloqueios.length} sub="no período" />
-        <KPI label="Cortesias" value={cortesias.length} sub="não contabilizadas" />
       </div>
 
       {/* gráfico de receita mensal (12 meses) */}

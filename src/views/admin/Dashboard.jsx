@@ -8,7 +8,12 @@ export function Dashboard({ data, go, openReservation, update }) {
   const t = today();
   const hojeY = ymd(t);
   const agoraMs = Date.now();
-  const horizon = 30;
+  // Os indicadores do painel são do MÊS corrente (a pedido do Caio,
+  // 2026-11-19) — antes eram janelas móveis de 30 dias (para trás nas
+  // novas reservas, para a frente na ocupação), que não batiam com nenhum mês.
+  const inicioMes = new Date(t.getFullYear(), t.getMonth(), 1);
+  const diasMes = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+  const nomeMes = t.toLocaleDateString('pt-BR', { month: 'long' });
 
   // Uma reserva só conta enquanto for real: canceladas nunca contam, e uma
   // reserva do site à espera de pagamento cujo prazo já passou também não
@@ -24,10 +29,10 @@ export function Dashboard({ data, go, openReservation, update }) {
   // terminadas há anos, escondendo o que é preciso acompanhar esta semana.
   const ativasFuturas = estadias.filter(r => (r.checkOut || '') >= hojeY);
 
-  // Procura nova que entrou nos últimos 30 dias. A importação do sistema
+  // Procura nova que entrou neste mês (desde o dia 1). A importação do sistema
   // antigo fica de fora de propósito: é um arquivo carregado todo de uma vez,
   // não são reservas novas, e contá-las mostrava milhares no primeiro mês.
-  const desdeY = ymd(addDays(t, -horizon));
+  const desdeY = ymd(inicioMes);
   const novas = estadias.filter(r => r.origem !== 'Importado' && (r.criadoEm || '') >= desdeY);
 
   const aptsAtivos = data.apartamentos.filter(a => a.ativo);
@@ -40,16 +45,16 @@ export function Dashboard({ data, go, openReservation, update }) {
   let noitesVendidas = 0, noitesBloqueadas = 0;
   const porApt = aptsAtivos.map(a => {
     let vend = 0, bloq = 0;
-    for (let i = 0; i < horizon; i++) {
-      const d = addDays(t, i);
+    for (let i = 0; i < diasMes; i++) {
+      const d = addDays(inicioMes, i);
       if (cobre(estadias, a.id, d)) vend++;
       else if (cobre(bloqueios, a.id, d)) bloq++;
     }
     noitesVendidas += vend; noitesBloqueadas += bloq;
-    const disponiveis = horizon - bloq;
+    const disponiveis = diasMes - bloq;
     return { nome: a.nome, capacidade: a.capacidade || 0, n: vend, pct: disponiveis > 0 ? Math.round((vend / disponiveis) * 100) : 0 };
   });
-  const noitesDisponiveis = aptsAtivos.length * horizon - noitesBloqueadas;
+  const noitesDisponiveis = aptsAtivos.length * diasMes - noitesBloqueadas;
   const ocup = noitesDisponiveis > 0 ? Math.round((noitesVendidas / noitesDisponiveis) * 100) : 0;
 
   // Ordenado por lotação (e depois por nome): põe lado a lado os
@@ -90,8 +95,8 @@ export function Dashboard({ data, go, openReservation, update }) {
 
   const stats = [
     { label: 'Reservas ativas',   value: ativasFuturas.length,   icon: CalendarDays, sub: `${ativasFuturas.filter(r => r.status === 'pendente').length} pendentes · ${ativasFuturas.filter(r => r.status === 'reservado').length} reservadas`, click: () => go('reservas') },
-    { label: `Novas reservas (${horizon} dias)`, value: novas.length, icon: Users,  sub: novas.length ? `entraram desde ${fmtShort(desdeY)}` : 'nenhuma no período',                                  click: () => go('reservas') },
-    { label: `Ocupação (${horizon} dias)`, value: ocup + '%',     icon: Home,         sub: `${noitesVendidas} de ${noitesDisponiveis} noites à venda${noitesBloqueadas ? ` · ${noitesBloqueadas} bloqueadas` : ''}`, click: null },
+    { label: `Novas reservas em ${nomeMes}`, value: novas.length, icon: Users,  sub: novas.length ? `entraram desde ${fmtShort(desdeY)}` : 'nenhuma neste mês',                                  click: () => go('reservas') },
+    { label: `Ocupação em ${nomeMes}`, value: ocup + '%',     icon: Home,         sub: `${noitesVendidas} de ${noitesDisponiveis} noites à venda${noitesBloqueadas ? ` · ${noitesBloqueadas} bloqueadas` : ''}`, click: null },
     { label: 'Disponíveis hoje',  value: `${disponiveisHoje} / ${totalAtivos}`, icon: Building2, sub: `${totalAtivos - disponiveisHoje} ocupado(s) agora`,                                            click: () => go('reservas') },
     { label: 'Temporada atual',   value: season ? season.nome : 'Tarifa base', icon: Tag, sub: season ? `${fmtShort(season.inicio)} – ${fmtShort(season.fim)}` : '—',                                  click: () => go('temporadas') },
     { label: 'Total de reservas', value: estadias.length,        icon: Wallet,       sub: 'arquivo completo, desde sempre',                                                                            click: () => go('reservas') },
@@ -259,7 +264,7 @@ export function Dashboard({ data, go, openReservation, update }) {
       <Card style={{ padding: 20 }}>
         <div className="pm-dash-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h3 style={{ fontFamily: F.disp, fontSize: 18, margin: 0 }}>
-            Ocupação por apartamento <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· próx. {horizon} dias · por lotação</span>
+            Ocupação por apartamento <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 400 }}>· {nomeMes} · por lotação</span>
           </h3>
           <Btn size="sm" variant="ghost" onClick={() => go('financeiro')}>Relatório financeiro</Btn>
         </div>
