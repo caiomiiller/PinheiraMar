@@ -22,6 +22,18 @@ export const C = PALETA;
 // Cantos: só quatro valores — campo (8), botão/cartão (12), modal (16) e pílula (999).
 // Círculos continuam '50%'. Não escrever números soltos em borderRadius.
 export const R = { campo: 8, cartao: 12, modal: 16, pilula: 999 };
+
+// Cor predominante do painel de gestão por residencial (barra do topo, menu
+// lateral e barra inferior do celular) — a pedido do Caio, 2026-11-19, para se
+// saber de relance em que residencial se está a trabalhar. As duas cores das
+// pontas da faixa da marca: azul-marinho (PinheiraMar) e azul (Caminho do Mar).
+// No azul só o branco puro tem contraste suficiente (4,5:1), por isso os
+// textos secundários do menu ficam brancos nesse tema.
+export const TEMA_PAINEL = Object.freeze({
+  pinheiramar: { fundo: '#1B1C46', topo: '#14152F', textoSec: 'rgba(255,255,255,.78)', titulo: 'rgba(255,255,255,.72)', icone: '#2D7F9D' },
+  novoimovel:  { fundo: '#2D7F9D', topo: '#246A84', textoSec: '#FFFFFF', titulo: '#FFFFFF', icone: '#FFFFFF' },
+});
+export const temaPainel = (residencialId) => TEMA_PAINEL[residencialId] || TEMA_PAINEL.pinheiramar;
 export const F = {
   // uma só família em todo o grupo: Montserrat (carregada em index.html)
   disp: "'Montserrat','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",

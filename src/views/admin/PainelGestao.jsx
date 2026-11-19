@@ -107,6 +107,8 @@ export default function PainelGestao({ onVerSite }) {
 }
 
 function PainelComDados({ sessao, onVerSite, onSair }) {
+  // cor da barra do topo conforme o residencial escolhido no Admin (TEMA_PAINEL)
+  const [tema, setTema] = useState(null);
   const [base, setBase] = useState(null);          // cópia do servidor { data, versao, updatedAt }
   const [erroCarga, setErroCarga] = useState(null);
   const [fila, setFila] = useState([]);            // alterações por gravar
@@ -233,9 +235,9 @@ function PainelComDados({ sessao, onVerSite, onSair }) {
 
   return (
     <div>
-      <div style={{ background: C.oceanDeep, color: 'rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '7px 16px', fontSize: 13, flexWrap: 'wrap' }}>
+      <div style={{ background: tema?.topo || C.oceanDeep, color: tema?.textoSec === '#FFFFFF' ? C.white : 'rgba(255,255,255,.85)', transition: 'background .2s ease', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '7px 16px', fontSize: 13, flexWrap: 'wrap' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Waves size={15} color={C.brisa} />
+          <Waves size={15} color={tema?.icone || C.brisa} />
           <span style={{ fontWeight: 600, color: C.white }}>Painel de gestão</span>
           <span style={{ opacity: .7 }}>· {sessao?.user?.email}</span>
         </span>
@@ -248,7 +250,7 @@ function PainelComDados({ sessao, onVerSite, onSair }) {
           </button>
         </div>
       </div>
-      <Admin data={data} update={update} />
+      <Admin data={data} update={update} onTema={setTema} />
       <BarraSync sync={sync} pendentes={fila.length} onTentar={() => { setSync({ estado: 'gravando' }); processar(); }} onRecarregar={() => { const descartadas = filaRef.current; aplicarFila([]); descartadas.forEach(it => it.reject(Object.assign(new Error('descartada'), { codigo: 'descartada' }))); recarregar(); setSync({ estado: 'ok' }); }} />
     </div>
   );

@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LayoutDashboard, CalendarDays, Wallet, Tag, CreditCard, Settings, Waves, Home, Receipt, FileText, Globe, ChevronDown, ChevronLeft, ChevronRight, Gift, Menu, X } from 'lucide-react';
-import { C, F, R } from '../../lib/constants';
+import { C, F, R, temaPainel } from '../../lib/constants';
 import { buildScoped, mergeScopedBack } from '../../lib/multiProperty';
 
 import { Dashboard } from './Dashboard';
@@ -40,10 +40,15 @@ export const TABS = GRUPOS.flatMap(g => g.itens);
 // No celular: barra inferior com os três mais usados + "Mais" (o resto, nos mesmos grupos).
 const BARRA_CELULAR = ['painel', 'reservas', 'financeiro'];
 
-export function Admin({ data, update, initialResidencialId }) {
+export function Admin({ data, update, initialResidencialId, onTema }) {
   const [tab, setTab] = useState('painel');
   const [residencialId, setResidencialId] = useState(initialResidencialId || data.residenciais[0].id);
   const residencial = data.residenciais.find(r => r.id === residencialId) || data.residenciais[0];
+  // cor predominante do painel conforme o residencial escolhido (ver
+  // TEMA_PAINEL em constants.js); a barra do topo, que vive em
+  // PainelGestao.jsx, recebe-a por onTema
+  const tema = temaPainel(residencial.id);
+  useEffect(() => { onTema?.(tema); }, [tema, onTema]);
   const [picker, setPicker] = useState(false);
   const [maisAberto, setMaisAberto] = useState(false); // folha "Mais" da barra inferior (celular)
   const irPara = (id) => { setTab(id); setMaisAberto(false); };
@@ -70,7 +75,7 @@ export function Admin({ data, update, initialResidencialId }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: F.sans, color: C.ink, background: C.espuma }}>
       {/* sidebar (md+) */}
-      <aside className="pm-sidebar" style={{ width: sidebarCollapsed ? 68 : 240, transition: 'width .16s ease', background: C.ocean, color: 'rgba(255,255,255,.78)', flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <aside className="pm-sidebar" style={{ width: sidebarCollapsed ? 68 : 240, transition: 'width .16s ease', background: tema.fundo, color: tema.textoSec, flexShrink: 0, padding: '22px 14px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 10px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
           <div style={{ width: 34, height: 34, borderRadius: R.campo, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: C.white, flexShrink: 0 }}><Waves size={19} /></div>
           {!sidebarCollapsed && <div><div style={{ fontFamily: F.disp, fontSize: 17, color: C.white, lineHeight: 1 }}>Gestão</div><div style={{ fontSize: 10.5, letterSpacing: '.1em' }}>PAINEL</div></div>}
@@ -112,13 +117,13 @@ export function Admin({ data, update, initialResidencialId }) {
             <div key={g.titulo} style={{ marginTop: gi ? 14 : 0 }}>
               {sidebarCollapsed
                 ? (gi > 0 && <div aria-hidden style={{ height: 1, background: 'rgba(255,255,255,.16)', margin: '0 12px 12px' }} />)
-                : <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.72)', padding: '0 14px 6px' }}>{g.titulo}</div>}
+                : <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: tema.titulo, padding: '0 14px 6px' }}>{g.titulo}</div>}
               {g.itens.map(t => {
                 const on = tab === t.id;
                 return (
                   <button key={t.id} onClick={() => setTab(t.id)} title={sidebarCollapsed ? t.label : undefined} aria-current={on ? 'page' : undefined} style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'flex-start', gap: 11, padding: sidebarCollapsed ? '11px 0' : '10px 14px', marginBottom: 3,
-                    background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? C.white : 'rgba(255,255,255,.78)',
+                    background: on ? 'rgba(255,255,255,.13)' : 'transparent', color: on ? C.white : tema.textoSec,
                     border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontSize: 14, fontWeight: on ? 600 : 500, textAlign: 'left',
                   }}><t.icon size={18} /> {!sidebarCollapsed && t.label}</button>
                 );
@@ -131,7 +136,7 @@ export function Admin({ data, update, initialResidencialId }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* seletor de imóvel — telemóvel (a sidebar com o seletor fica oculta abaixo de 760px) */}
         {data.residenciais.length > 1 && (
-          <div className="pm-mobile-picker" style={{ display: 'none', position: 'relative', padding: '10px 14px', background: C.oceanDeep }}>
+          <div className="pm-mobile-picker" style={{ display: 'none', position: 'relative', padding: '10px 14px', background: tema.topo }}>
             <button onClick={() => setPicker(p => !p)} style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
               padding: '10px 12px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.16)',
@@ -154,7 +159,7 @@ export function Admin({ data, update, initialResidencialId }) {
         )}
         {/* celular: barra inferior fixa com Painel, Reservas, Financeiro e "Mais"
             (antes eram os 11 itens numa fileira que rolava para o lado) */}
-        <nav className="pm-tabbar" aria-label="Menu do painel" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 70, background: C.ocean, padding: '6px 6px calc(6px + env(safe-area-inset-bottom))', gap: 4, boxShadow: '0 -4px 18px rgba(10,20,30,.22)' }}>
+        <nav className="pm-tabbar" aria-label="Menu do painel" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 70, background: tema.fundo, padding: '6px 6px calc(6px + env(safe-area-inset-bottom))', gap: 4, boxShadow: '0 -4px 18px rgba(10,20,30,.22)' }}>
           {[...TABS.filter(t => BARRA_CELULAR.includes(t.id)), { id: '__mais', label: 'Mais', icon: maisAberto ? X : Menu }].map(t => {
             const mais = t.id === '__mais';
             const on = mais ? (maisAberto || !BARRA_CELULAR.includes(tab)) : (tab === t.id && !maisAberto);
