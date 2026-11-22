@@ -94,6 +94,21 @@ function findCombo(availableApts, hosp) {
 
 // O idioma escolhido fica num contexto (lib/i18n.jsx) para valer em TODAS as
 // telas do hóspede — detalhe, reserva, confirmação, calendário e destino.
+// Botão fixo de WhatsApp (canto inferior direito, em todas as telas do site
+// público) — só o ícone, a pedido do Caio, 2026-11-22. `sobe`: na página do
+// apartamento, no telemóvel, fica acima da barra fixa de reserva (ver App.jsx).
+function BotaoWhatsApp({ rotulo, sobe }) {
+  return (
+    <a href={whatsappUrl(msgGeral())} target="_blank" rel="noopener noreferrer" aria-label={rotulo} title={rotulo}
+      className={`pm-wa-flutuante${sobe ? ' pm-wa-sobe' : ''}`}>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+        <path d="M9.5 9.2c.2 1.6 2.6 4.1 4.3 4.5l1.2-1.1 1.6.9c-.3 1.1-1.2 1.6-2.2 1.5-2.6-.4-5.5-3.3-5.9-5.9-.1-1 .4-1.9 1.5-2.2l.9 1.6Z" fill="currentColor" stroke="none" />
+      </svg>
+    </a>
+  );
+}
+
 export function PublicSite(props) {
   const idiomasAtivos = (props.data.residenciais[0]?.idiomas || []).filter(i => i.ativo);
   const [lang, setLang] = useState(() => {
@@ -298,6 +313,22 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [data.apartamentos]);
+
+  // Busca grande na faixa principal (só no computador). Enquanto ela está à
+  // vista, a busca compacta do cabeçalho fica escondida (para não haver duas
+  // iguais); quando a faixa sai do ecrã, a do cabeçalho volta. No telemóvel a
+  // faixa não aparece, por isso isto fica sempre falso lá.
+  const heroBuscaRef = useRef(null);
+  const [buscaNoHero, setBuscaNoHero] = useState(false);
+  useEffect(() => {
+    const el = heroBuscaRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setBuscaNoHero(false); return undefined; }
+    const io = new IntersectionObserver(([e]) => setBuscaNoHero(e.isIntersecting), { rootMargin: '-73px 0px 0px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [detail]);
+  // ao trocar de busca (faixa <-> cabeçalho) fecha o calendário e as pessoas abertos
+  useEffect(() => { setCalOpen(false); setGuestOpen(false); }, [buscaNoHero]);
 
   /* ── tokens ── */
   // paleta do Grupo PinheiraMar: marinho (texto e ações), pedra (apoio)
@@ -529,6 +560,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           onReservar={onReservar}
           onConfirmed={info => { setBooking(null); setDone(d => d || { info }); }} />}
         {done && <ConfirmationModal info={done.info} paymentStatus={done.paymentStatus} onClose={() => { setDone(null); setBooking(null); setDetail(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
+        <BotaoWhatsApp rotulo={tr('ap_fale_whatsapp')} sobe />
       </>
     );
   }
@@ -561,6 +593,45 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     { key: 'cap6', n: 6, icone: (s) => <Users size={s} />, label: tr('cat_cap6') },
     { key: 'cap8', n: 8, curto: '8+', icone: (s) => <Users size={s} />, label: tr('cat_cap8') },
   ].map(c => (c.sep ? c : { ...c, nomeCompleto: c.label }));
+
+  // Calendário e seletor de pessoas da busca — os mesmos na busca do
+  // cabeçalho e na busca grande da faixa principal (só um aparece de cada vez).
+  const popCalendario = (extra = {}) => (
+    <>
+      <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+      <div className="pm-cal-pop" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '90vw', ...extra }} onClick={e => e.stopPropagation()}>
+        <AvailabilityCalendar ci={ci} co={co} ate={ultimaNoite}
+          onChange={(newCi, newCo) => {
+            setCi(newCi);
+            if (newCo && nights(newCi, newCo) < 1) setCo(''); else setCo(newCo);
+            if (newCi && newCo) setCalOpen(false);
+          }} />
+      </div>
+    </>
+  );
+  const popPessoas = (extra = {}) => (
+    <div style={{ position: 'absolute', top: '100%', marginTop: 8, ...extra, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.modal, padding: 20, zIndex: 100, minWidth: 240, boxShadow: '0 8px 32px rgba(0,0,0,.10)' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
+                      <span style={{ fontSize: 15, fontWeight: 600 }}>{tr('search_guests')}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <button aria-label={tr('m_menos_pessoa')} onClick={() => setHosp(h => Math.max(0,h-1))} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>−</button>
+                        <span style={{ fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{hosp || '—'}</span>
+                        <button aria-label={tr('m_mais_pessoa')} onClick={() => setHosp(h => h+1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>+</button>
+                      </div>
+                    </div>
+                    <button onClick={() => setGuestOpen(false)} style={{ width: '100%', padding: '11px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontWeight: 700, fontSize: 13, letterSpacing: '.05em' }}>{tr('search_confirm')}</button>
+                  </div>
+  );
+  // Na faixa principal o calendário abre por baixo do cartão: se não couber no
+  // ecrã, a página sobe o suficiente (sem esconder o cartão sob o cabeçalho).
+  const abrirNaFaixa = (qual) => {
+    if (qual === 'cal') { setGuestOpen(false); setCalOpen(o => !o); } else { setCalOpen(false); setGuestOpen(o => !o); }
+    const el = heroBuscaRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const falta = r.bottom + (qual === 'cal' ? 470 : 200) - window.innerHeight;
+    if (falta > 0) window.scrollBy({ top: Math.min(falta, Math.max(0, r.top - 90)), behavior: 'smooth' });
+  };
 
   // "Escolha as datas": abre o calendário da busca. No desktop ele abre no
   // topo fixo; no telemóvel a busca fica acima da lista, então sobe até ela.
@@ -602,7 +673,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             {/* barra em pílula, com o botão "Ver apartamentos" arredondado por dentro (caixas e
                 botões arredondados, a pedido do Caio). Sem overflow:hidden: o
                 calendário e o seletor de pessoas abrem por baixo dela. */}
-            <div style={{ display: 'flex', alignItems: 'stretch', height: 50, padding: 4, boxSizing: 'border-box', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, boxShadow: '0 2px 10px rgba(27,28,70,.06)', maxWidth: 740, width: '100%', position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'stretch', height: 50, padding: 4, boxSizing: 'border-box', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, boxShadow: '0 2px 10px rgba(27,28,70,.06)', maxWidth: 740, width: '100%', position: 'relative', visibility: buscaNoHero ? 'hidden' : 'visible', opacity: buscaNoHero ? 0 : 1, transition: 'opacity .2s ease' }}>
               <Seg label={tr('search_checkin')}>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => { setGuestOpen(false); setCalOpen(o => !o); }}>
@@ -615,37 +686,13 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                   <span style={{ color: co ? BLACK : C.inkSoft }}>{co ? fmtCurta(co) : tr('ps_selecionar_saida')}</span>
                 </div>
               </Seg>
-              {calOpen && (
-                <>
-                  <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
-                  <div className="pm-cal-pop" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
-                    <AvailabilityCalendar ci={ci} co={co} ate={ultimaNoite}
-                      onChange={(newCi, newCo) => {
-                        setCi(newCi);
-                        if (newCo && nights(newCi, newCo) < 1) setCo(''); else setCo(newCo);
-                        if (newCi && newCo) setCalOpen(false);
-                      }} />
-                  </div>
-                </>
-              )}
+              {calOpen && !buscaNoHero && popCalendario()}
               <Seg label={tr('search_who')} last>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => setGuestOpen(o => !o)}>
                   <span style={{ color: hosp ? BLACK : C.inkSoft }}>{hosp ? tr('search_guests_label', hosp) : tr('search_add_guests')}</span>
                 </div>
-                {guestOpen && (
-                  <div style={{ position: 'absolute', top: '100%', marginTop: 8, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.modal, padding: 20, zIndex: 100, minWidth: 240, boxShadow: '0 8px 32px rgba(0,0,0,.10)' }} onClick={e => e.stopPropagation()}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600 }}>{tr('search_guests')}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <button aria-label={tr('m_menos_pessoa')} onClick={() => setHosp(h => Math.max(0,h-1))} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>−</button>
-                        <span style={{ fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{hosp || '—'}</span>
-                        <button aria-label={tr('m_mais_pessoa')} onClick={() => setHosp(h => h+1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>+</button>
-                      </div>
-                    </div>
-                    <button onClick={() => setGuestOpen(false)} style={{ width: '100%', padding: '11px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontWeight: 700, fontSize: 13, letterSpacing: '.05em' }}>{tr('search_confirm')}</button>
-                  </div>
-                )}
+                {guestOpen && !buscaNoHero && popPessoas()}
               </Seg>
               <button onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
                 style={{ padding: '0 18px', background: BLACK, color: WHITE, border: 'none', borderRadius: R.pilula, cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
@@ -656,7 +703,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             {/* botão "Limpar consulta" ao lado do PROCURAR — mais visível do
                 que o X pequeno que ficava espremido dentro da barra, a
                 pedido do Caio, 2026-09. */}
-            {!!(ci || co || hosp) && (
+            {!!(ci || co || hosp) && !buscaNoHero && (
               <button onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, cursor: 'pointer', color: GREY, fontSize: 12.5, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
                 <X size={13} /> {tr('ps_limpar_consulta')}
@@ -751,7 +798,11 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
 
       {/* ══ HERO — escondido no telemóvel (ver App.jsx), onde ocupava a tela
              toda antes do hóspede ver a busca/resultados; fica só no desktop ══ */}
-      <section className="pm-pubsite-hero" style={{ position: 'relative', height: 'clamp(480px,68vh,720px)', overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
+      {/* 2026-11-22 (a pedido do Caio): título mais legível sobre um degradê
+             marinho à esquerda e a busca grande no centro da faixa, em vez de
+             só no cabeçalho. Sem overflow:hidden: o calendário e as pessoas
+             da busca abrem por baixo do cartão, por cima da página. */}
+      <section className="pm-pubsite-hero" style={{ position: 'relative', height: 'clamp(560px,78vh,760px)', display: 'flex', alignItems: 'flex-end' }}>
         {/* foto do topo ocupa toda a faixa (a pedido do Caio, 2026-11-08): aqui
             o corte em cima/em baixo é aceite, para a primeira impressão ser a
             foto de ponta a ponta; o enquadramento fica um pouco abaixo do
@@ -769,22 +820,49 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             </picture>
           );
         })()}
-        {/* escurece de baixo para cima e um pouco à esquerda, onde fica o texto */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.05) 0%, rgba(0,0,0,.15) 45%, rgba(0,0,0,.65) 100%), linear-gradient(to right, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) 55%)' }} />
-        <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 56px' }}>
-          {/* peso 300 (antes 200): o 200 ficava fino demais sobre a foto para o
-              público 50+ — a pedido do Caio, 2026-11-11. O degradê escuro fica. */}
-          <h1 style={{ fontSize: 'clamp(34px,4.6vw,62px)', fontWeight: 300, lineHeight: 1.08, margin: '0 0 16px', letterSpacing: '-.005em', color: C.white, maxWidth: 760 }}>
+        {/* marinho à esquerda (onde fica o texto) e um pouco em baixo (cartão da busca) */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(20,21,47,.82) 0%, rgba(27,28,70,.62) 34%, rgba(27,28,70,.12) 64%, rgba(0,0,0,0) 80%), linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(20,21,47,.45) 100%)' }} />
+        <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 44px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+            <Faixa height={3} width={34} tone="negativo" />
+            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.14em', color: C.white, textTransform: 'uppercase' }}>{tr('ps_hero_local')}</span>
+          </div>
+          <h1 style={{ fontSize: 'clamp(40px,4.4vw,60px)', fontWeight: 700, lineHeight: 1.08, margin: '0 0 18px', letterSpacing: '-.015em', color: C.white, maxWidth: 720, textShadow: '0 2px 18px rgba(0,0,0,.25)' }}>
             {tr('ps_hero_titulo_1')}<br />{tr('ps_hero_titulo_2')}
           </h1>
-          <Faixa height={4} width={220} tone="negativo" style={{ marginBottom: 22 }} />
-          <p style={{ fontSize: 16.5, color: 'rgba(255,255,255,.9)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 520 }}>
+          <p style={{ fontSize: 18, color: 'rgba(255,255,255,.94)', lineHeight: 1.6, margin: '0 0 34px', maxWidth: 560 }}>
             {tr('ps_hero_texto', data.residenciais.length)}
           </p>
-          <button onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            style={{ padding: '14px 32px', background: C.white, color: BLACK, border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-            {tr('ps_ver_apartamentos')}
-          </button>
+
+          {/* busca grande — os mesmos campos, textos e calendário da busca do cabeçalho */}
+          <div ref={heroBuscaRef} className="pm-hero-busca" style={{ position: 'relative', background: WHITE, borderRadius: R.modal, boxShadow: '0 18px 50px rgba(20,21,47,.30)', padding: '22px 24px', display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+            {[
+              { rotulo: tr('search_checkin'), valor: ci ? fmtCurta(ci) : '', vazio: tr('ps_selecionar_entrada'), abrir: () => abrirNaFaixa('cal'), icone: <CalendarDays size={18} color={GREY} /> },
+              { rotulo: tr('search_checkout'), valor: co ? fmtCurta(co) : '', vazio: tr('ps_selecionar_saida'), abrir: () => abrirNaFaixa('cal'), icone: <CalendarDays size={18} color={GREY} /> },
+              { rotulo: tr('search_who'), valor: hosp ? tr('search_guests_label', hosp) : '', vazio: tr('search_add_guests'), abrir: () => abrirNaFaixa('pessoas'), icone: <Users size={18} color={GREY} />, pessoas: true },
+            ].map(f => (
+              <div key={f.rotulo} style={{ flex: 1, minWidth: 0, position: f.pessoas ? 'relative' : 'static' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: BLACK, marginBottom: 8 }}>{f.rotulo}</div>
+                <button type="button" onClick={f.abrir} aria-label={`${f.rotulo}: ${f.valor || f.vazio}`}
+                  style={{ width: '100%', height: 54, border: `1px solid ${f.valor ? BLACK : '#D6D3CC'}`, borderRadius: R.cartao, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '0 16px', background: WHITE, cursor: 'pointer', fontFamily: F.sans, fontSize: 15.5, color: f.valor ? BLACK : C.inkSoft, fontWeight: f.valor ? 600 : 400, textAlign: 'left' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.valor || f.vazio}</span>
+                  {f.icone}
+                </button>
+                {f.pessoas && guestOpen && buscaNoHero && popPessoas({ left: 0, right: 'auto' })}
+              </div>
+            ))}
+            {calOpen && buscaNoHero && popCalendario({ left: 24 })}
+            <button type="button" onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+              style={{ flexShrink: 0, height: 54, padding: '0 30px', borderRadius: R.cartao, border: 'none', background: BRAND.vermelho, color: C.white, fontFamily: F.sans, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {tr('search_btn')}
+            </button>
+          </div>
+          {!!(ci || co || hosp) && (
+            <button type="button" onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
+              style={{ position: 'absolute', right: 32, bottom: 12, display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', color: C.white, cursor: 'pointer', fontFamily: F.sans, fontSize: 13, fontWeight: 700, textShadow: '0 1px 6px rgba(0,0,0,.5)' }}>
+              <X size={14} /> {tr('ps_limpar_consulta')}
+            </button>
+          )}
         </div>
       </section>
 
@@ -948,6 +1026,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             }} />
         </Modal>
       )}
+      <BotaoWhatsApp rotulo={tr('ap_fale_whatsapp')} />
     </div>
   );
 }
