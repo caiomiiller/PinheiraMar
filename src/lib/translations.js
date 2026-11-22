@@ -15,8 +15,8 @@ export const TRANSLATIONS = {
     search_guests_label: (n) => `${n} pessoa${n > 1 ? 's' : ''}`,
     search_add_guests: 'Quantas pessoas?',
     /* category pills */
-    cat1: 'Frente Mar', cat2: 'Todos',
-    cat_cap2: '2 pessoas', cat_cap4: '4 pessoas', cat_cap6: '6 pessoas', cat_cap8: '8 ou mais',
+    cat1: 'Frente para o mar', cat2: 'Todos',
+    cat_cap2: 'Para até 2 pessoas', cat_cap4: 'Para até 4 pessoas', cat_cap6: 'Para até 6 pessoas', cat_cap8: '8 ou mais pessoas',
   },
   es: {
     m_search_title: 'Encuentre su apartamento',
@@ -30,7 +30,7 @@ export const TRANSLATIONS = {
     search_guests_label: (n) => `${n} persona${n > 1 ? 's' : ''}`,
     search_add_guests: '¿Cuántas personas?',
     cat1: 'Frente al mar', cat2: 'Todos',
-    cat_cap2: '2 personas', cat_cap4: '4 personas', cat_cap6: '6 personas', cat_cap8: '8 o más',
+    cat_cap2: 'Para hasta 2 personas', cat_cap4: 'Para hasta 4 personas', cat_cap6: 'Para hasta 6 personas', cat_cap8: '8 o más personas',
   },
   en: {
     m_search_title: 'Find your apartment',
@@ -44,7 +44,7 @@ export const TRANSLATIONS = {
     search_guests_label: (n) => `${n} guest${n > 1 ? 's' : ''}`,
     search_add_guests: 'How many guests?',
     cat1: 'Oceanfront', cat2: 'All',
-    cat_cap2: '2 guests', cat_cap4: '4 guests', cat_cap6: '6 guests', cat_cap8: '8 or more',
+    cat_cap2: 'For up to 2 guests', cat_cap4: 'For up to 4 guests', cat_cap6: 'For up to 6 guests', cat_cap8: '8 or more guests',
   },
 };
 

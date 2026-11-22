@@ -130,30 +130,30 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
     return (
       <Modal {...modalNav} title={tr('bk_titulo_resumo')} subtitle={nomes}
         footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52, fontSize: 16 }} onClick={goNext}>{tr('bk_continuar')}</Btn>}>
-        <div style={{ fontSize: 15.5 }}>
+        <div style={{ fontSize: 17.5 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
             <div style={{ width: 72, height: 72, borderRadius: R.cartao, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={72} radius={R.cartao} /></div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 17 }}>{nomes}</div>
-              <div style={{ fontSize: 15, color: C.inkSoft, marginTop: 2 }}>{dado(apt.piso)} · {dado(apt.vista)}</div>
+              <div style={{ fontSize: 17, color: C.inkSoft, marginTop: 2 }}>{dado(apt.piso)} · {dado(apt.vista)}</div>
             </div>
           </div>
 
           <div style={row}>
             <div>
-              <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('bk_datas')}</div>
+              <div style={{ fontSize: 17, color: C.inkSoft }}>{tr('bk_datas')}</div>
               <div style={{ fontSize: 17, fontWeight: 700, marginTop: 2 }}>{fmtCurta(ci)} – {fmtCurta(co)}</div>
-              <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('noites', noites)}</div>
+              <div style={{ fontSize: 17, color: C.inkSoft }}>{tr('noites', noites)}</div>
             </div>
-            <button type="button" onClick={onClose} style={{ minHeight: 44, padding: '0 16px', border: `1px solid ${C.inativo}`, borderRadius: R.pilula, background: C.white, fontWeight: 700, fontSize: 15, cursor: 'pointer', color: C.ink }}>{tr('bk_alterar')}</button>
+            <button type="button" onClick={onClose} style={{ minHeight: 44, padding: '0 16px', border: `1px solid ${C.inativo}`, borderRadius: R.pilula, background: C.white, fontWeight: 700, fontSize: 17, cursor: 'pointer', color: C.ink }}>{tr('bk_alterar')}</button>
           </div>
 
           {!hasApt2 ? (
             <div style={row}>
               <div>
-                <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('bk_pessoas')}</div>
+                <div style={{ fontSize: 17, color: C.inkSoft }}>{tr('bk_pessoas')}</div>
                 <div style={{ fontSize: 17, fontWeight: 700, marginTop: 2 }}>{tr('pessoas', g)}</div>
-                <div style={{ fontSize: 14, color: C.inkSoft }}>{tr('bk_maximo', apt.capacidade)}</div>
+                <div style={{ fontSize: 16, color: C.inkSoft }}>{tr('bk_maximo', apt.capacidade)}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <BotaoContador tipo="menos" rotulo={tr('bk_menos_pessoa')} onClick={() => setG(v => Math.max(1, v - 1))} disabled={g <= 1} />
@@ -163,10 +163,10 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
             </div>
           ) : (
             <div style={{ ...row, alignItems: 'flex-start', flexDirection: 'column' }}>
-              <div style={{ fontSize: 15, color: C.inkSoft }}>{tr('bk_pessoas_por_apto')}</div>
+              <div style={{ fontSize: 17, color: C.inkSoft }}>{tr('bk_pessoas_por_apto')}</div>
               {[[apt, g, setG], [apt2, gB, setGB]].map(([a, val, set]) => (
                 <div key={a.id} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                  <div><div style={{ fontWeight: 700, fontSize: 16 }}>{a.nome}</div><div style={{ fontSize: 14, color: C.inkSoft }}>{tr('bk_maximo', a.capacidade)}</div></div>
+                  <div><div style={{ fontWeight: 700, fontSize: 16 }}>{a.nome}</div><div style={{ fontSize: 16, color: C.inkSoft }}>{tr('bk_maximo', a.capacidade)}</div></div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <BotaoContador tipo="menos" rotulo={tr('bk_menos_pessoa_em', a.nome)} onClick={() => set(v => Math.max(1, v - 1))} disabled={val <= 1} />
                     <b style={{ minWidth: 18, textAlign: 'center', fontSize: 18 }}>{val}</b>
@@ -178,9 +178,9 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
           )}
 
           <div style={{ padding: '16px 0', borderBottom: `1px solid ${C.line}` }}>
-            <div style={{ fontSize: 15, color: C.inkSoft }}>{hasApt2 ? tr('bk_total_combinado') : tr('bk_total')}</div>
+            <div style={{ fontSize: 17, color: C.inkSoft }}>{hasApt2 ? tr('bk_total_combinado') : tr('bk_total')}</div>
             <div style={{ fontSize: 26, fontWeight: 700, marginTop: 2 }}>{money(total)}</div>
-            <div style={{ marginTop: 10, fontSize: 15, color: C.ink, display: 'grid', gap: 10 }}>
+            <div style={{ marginTop: 10, fontSize: 17, color: C.ink, display: 'grid', gap: 10 }}>
               <LinhasOrcamento o={o1} titulo={hasApt2 ? apt.nome : null} />
               {o2 && <LinhasOrcamento o={o2} titulo={apt2.nome} />}
             </div>
@@ -190,10 +190,10 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 16.5, fontWeight: 700, color: C.acaoEscura }}>
               <span>{tr('bk_sinal_para_reservar', data.settings.sinalPct)}</span><span>{money(sinal)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 15, color: C.ink }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 17, color: C.ink }}>
               <span>{tr('bk_restante')}</span><span>{money(total - sinal)}</span>
             </div>
-            <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{pagarOnline ? tr('bk_nada_cobrado') : tr('bk_nada_cobrado_manual')}</div>
+            <div style={{ fontSize: 16, color: C.inkSoft, marginTop: 2 }}>{pagarOnline ? tr('bk_nada_cobrado') : tr('bk_nada_cobrado_manual')}</div>
           </div>
         </div>
       </Modal>
@@ -212,12 +212,12 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
               <div style={{ width: 48, height: 48, borderRadius: R.cartao, background: C.white, display: 'grid', placeItems: 'center' }}><IconeExtra nome={taxa.nome} /></div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 16 }}>{taxa.nome}</div>
-                <div style={{ fontSize: 14, color: C.inkSoft, marginTop: 2 }}>{money(taxa.preco)} {tr('bk_por_' + (taxa.por || 'reserva'))}</div>
+                <div style={{ fontSize: 16, color: C.inkSoft, marginTop: 2 }}>{money(taxa.preco)} {tr('bk_por_' + (taxa.por || 'reserva'))}</div>
                 {hasApt2 && qty > 0 && (
                   <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                     {['group', 'per_apt'].map(sc => (
                       <button type="button" key={sc} onClick={() => setExtrasScope(s => ({ ...s, [taxa.id]: sc }))}
-                        style={{ minHeight: 36, fontSize: 14, padding: '0 12px', borderRadius: R.pilula, cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${extrasScope[taxa.id] === sc ? C.ocean : C.inativo}`, background: extrasScope[taxa.id] === sc ? 'rgba(27,28,70,.07)' : C.white, color: C.ink }}>
+                        style={{ minHeight: 36, fontSize: 16, padding: '0 12px', borderRadius: R.pilula, cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${extrasScope[taxa.id] === sc ? C.ocean : C.inativo}`, background: extrasScope[taxa.id] === sc ? 'rgba(27,28,70,.07)' : C.white, color: C.ink }}>
                         {sc === 'group' ? <><Users size={15} /> {tr('bk_escopo_grupo')}</> : <><Home size={15} /> {tr('bk_escopo_apto')}</>}
                       </button>
                     ))}
@@ -240,7 +240,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
   // ── Passo: dados do hóspede ──────────────────────────────────────────────
   if (step === 'dados') {
     const avancar = () => { if (dadosOk.ok) { setErroCampos({}); goNext(); } else setErroCampos(dadosOk.erros); };
-    const erroDe = (c) => erroCampos[c] ? <div role="alert" style={{ color: C.erro, fontSize: 14, marginTop: 5 }}>{tr('bk_erro_' + c)}</div> : null;
+    const erroDe = (c) => erroCampos[c] ? <div role="alert" style={{ color: C.erro, fontSize: 16, marginTop: 5 }}>{tr('bk_erro_' + c)}</div> : null;
     return (
       <Modal {...modalNav} title={tr('bk_titulo_dados')} subtitle={nomes}
         footer={<Btn variant="primary" style={{ width: '100%', minHeight: 52, fontSize: 16 }} onClick={avancar}>{tr('bk_continuar')}</Btn>}>
@@ -260,7 +260,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
           {/* campo-isca anti-robôs (escondido de pessoas e de leitores de tela) */}
           <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={e => setWebsite(e.target.value)} name="website"
             style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
-          <p style={{ fontSize: 14, color: C.inkSoft, margin: 0, lineHeight: 1.5 }}>{tr('bk_privacidade')}{' '}<a href="/?politicas#privacidade" target="_blank" rel="noopener noreferrer" style={{ color: C.ocean, fontWeight: 600 }}>{tr('bk_privacidade_link')}</a></p>
+          <p style={{ fontSize: 16, color: C.inkSoft, margin: 0, lineHeight: 1.5 }}>{tr('bk_privacidade')}{' '}<a href="/?politicas#privacidade" target="_blank" rel="noopener noreferrer" style={{ color: C.ocean, fontWeight: 600 }}>{tr('bk_privacidade_link')}</a></p>
         </div>
       </Modal>
     );
@@ -271,12 +271,12 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
   return (
     <Modal {...modalNav} title={tr('bk_titulo_revisao')} subtitle={nomes}
       footer={<Btn variant="accent" disabled={paying} style={{ width: '100%', minHeight: 52, fontSize: 16, opacity: paying ? .6 : 1 }} onClick={handleConfirm}>{paying ? (pagarOnline ? tr('bk_processando') : tr('bk_processando_manual')) : (pagarOnline ? tr('bk_confirmar', money(sinal)) : tr('bk_confirmar_manual'))}</Btn>}>
-      <div style={{ fontSize: 15.5 }}>
+      <div style={{ fontSize: 17.5 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${C.line}`, marginBottom: 4 }}>
           <div style={{ width: 64, height: 64, borderRadius: R.cartao, overflow: 'hidden', flexShrink: 0 }}><PhotoTile apt={apt} h={64} radius={R.cartao} /></div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 16.5 }}>{nomes}</div>
-            <div style={{ fontSize: 14.5, color: C.inkSoft, marginTop: 2 }}>{dado(apt.piso)} · {dado(apt.vista)}</div>
+            <div style={{ fontSize: 16.5, color: C.inkSoft, marginTop: 2 }}>{dado(apt.piso)} · {dado(apt.vista)}</div>
           </div>
         </div>
 
@@ -289,7 +289,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
         <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 14.5, color: C.inkSoft, fontWeight: 600 }}>{hasApt2 ? tr('bk_total_combinado') : tr('bk_total')}</div>
+              <div style={{ fontSize: 16.5, color: C.inkSoft, fontWeight: 600 }}>{hasApt2 ? tr('bk_total_combinado') : tr('bk_total')}</div>
               <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{money(total)}</div>
             </div>
             <button type="button" onClick={() => setShowBreakdown(s => !s)} style={linkBtnStyle} aria-expanded={showBreakdown}>
@@ -297,7 +297,7 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
             </button>
           </div>
           {showBreakdown && (
-            <div style={{ marginTop: 12, fontSize: 15, color: C.ink, display: 'grid', gap: 10 }}>
+            <div style={{ marginTop: 12, fontSize: 17, color: C.ink, display: 'grid', gap: 10 }}>
               <LinhasOrcamento o={o1} titulo={hasApt2 ? apt.nome : null} />
               {o2 && <LinhasOrcamento o={o2} titulo={apt2.nome} />}
             </div>
@@ -305,12 +305,12 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
         </div>
 
         <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 15.5, fontWeight: 700, color: C.acaoEscura }}>{tr('bk_sinal_agora', data.settings.sinalPct)}</span>
+          <span style={{ fontSize: 17.5, fontWeight: 700, color: C.acaoEscura }}>{tr('bk_sinal_agora', data.settings.sinalPct)}</span>
           <span style={{ fontSize: 17, fontWeight: 700, color: C.acaoEscura }}>{money(sinal)}</span>
         </div>
         {/* prazo dito ao hóspede: 5 min a menos do que o link do Mercado Pago vale (ver helpers.js) */}
         {pagarOnline && (
-          <div style={{ padding: '12px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>
+          <div style={{ padding: '12px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 17, color: C.ink, lineHeight: 1.5 }}>
             <Clock size={17} style={{ flexShrink: 0, marginTop: 2 }} />
             <span>{tr('bk_datas_guardadas', MIN_PRAZO_INFORMADO)}</span>
           </div>
@@ -318,26 +318,26 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
 
         {cancelPol && (
           <div style={{ padding: '14px 0', borderBottom: `1px solid ${C.line}` }}>
-            <div style={{ fontWeight: 700, fontSize: 15.5, marginBottom: 4 }}>{cancelPol.titulo}</div>
-            <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.5 }}>
+            <div style={{ fontWeight: 700, fontSize: 17.5, marginBottom: 4 }}>{cancelPol.titulo}</div>
+            <div style={{ fontSize: 17, color: C.inkSoft, lineHeight: 1.5 }}>
               {regraCancelamento || tr('bk_cancelamento_resumo')}{' '}
               <button type="button" onClick={() => setShowPolicy(s => !s)} style={linkBtnStyle} aria-expanded={showPolicy}>{showPolicy ? tr('bk_ocultar') : tr('bk_ver_politica')}</button>
             </div>
-            {showPolicy && <div style={{ marginTop: 10, fontSize: 14.5, color: C.ink, whiteSpace: 'pre-wrap', background: C.espuma, borderRadius: R.cartao, padding: 12, lineHeight: 1.6 }}>{cancelPol.texto}</div>}
+            {showPolicy && <div style={{ marginTop: 10, fontSize: 16.5, color: C.ink, whiteSpace: 'pre-wrap', background: C.espuma, borderRadius: R.cartao, padding: 12, lineHeight: 1.6 }}>{cancelPol.texto}</div>}
           </div>
         )}
 
         {textoErro && (
-          <div role="alert" style={{ marginTop: 14, padding: '12px 14px', borderRadius: R.cartao, background: C.erroBg, border: `1px solid ${C.erroBorda}`, color: C.erro, fontSize: 15, lineHeight: 1.5, display: 'grid', gap: 8 }}>
+          <div role="alert" style={{ marginTop: 14, padding: '12px 14px', borderRadius: R.cartao, background: C.erroBg, border: `1px solid ${C.erroBorda}`, color: C.erro, fontSize: 17, lineHeight: 1.5, display: 'grid', gap: 8 }}>
             <span style={{ display: 'flex', gap: 8 }}><AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2 }} />{textoErro}</span>
             {erroEnvio.erro === 'indisponivel'
-              ? <button type="button" onClick={onClose} style={{ ...linkBtnStyle, fontSize: 15 }}>{tr('bk_escolher_outras_datas')}</button>
-              : <a href={whatsappUrl(msgErroReserva({ aptos: [apt.nome, apt2?.nome], ci, co }))} target="_blank" rel="noopener noreferrer" style={{ ...linkBtnStyle, fontSize: 15, textDecoration: 'none' }}><MessageCircle size={16} /> {tr('bk_falar_whatsapp')}</a>}
+              ? <button type="button" onClick={onClose} style={{ ...linkBtnStyle, fontSize: 17 }}>{tr('bk_escolher_outras_datas')}</button>
+              : <a href={whatsappUrl(msgErroReserva({ aptos: [apt.nome, apt2?.nome], ci, co }))} target="_blank" rel="noopener noreferrer" style={{ ...linkBtnStyle, fontSize: 17, textDecoration: 'none' }}><MessageCircle size={16} /> {tr('bk_falar_whatsapp')}</a>}
           </div>
         )}
 
-        {hasApt2 && <p style={{ fontSize: 14, color: C.inkSoft, marginTop: 12, marginBottom: 0, background: C.espuma, borderRadius: R.campo, padding: '8px 10px' }}>{tr('bk_duas_reservas')}</p>}
-        <p style={{ fontSize: 14, color: C.inkSoft, marginTop: 10, marginBottom: 0 }}>{tr('bk_sinal_confirma')}</p>
+        {hasApt2 && <p style={{ fontSize: 16, color: C.inkSoft, marginTop: 12, marginBottom: 0, background: C.espuma, borderRadius: R.campo, padding: '8px 10px' }}>{tr('bk_duas_reservas')}</p>}
+        <p style={{ fontSize: 16, color: C.inkSoft, marginTop: 10, marginBottom: 0 }}>{tr('bk_sinal_confirma')}</p>
       </div>
     </Modal>
   );
@@ -346,10 +346,10 @@ export function BookingModal({ sel, ci, co, data, onClose, onReservar, onConfirm
 function RevRow({ label, value }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '11px 0', borderBottom: `1px solid ${C.line}` }}>
-      <span style={{ fontSize: 15, color: C.inkSoft }}>{label}</span>
-      <span style={{ fontSize: 15.5, fontWeight: 700, textAlign: 'right', overflowWrap: 'anywhere' }}>{value}</span>
+      <span style={{ fontSize: 17, color: C.inkSoft }}>{label}</span>
+      <span style={{ fontSize: 17.5, fontWeight: 700, textAlign: 'right', overflowWrap: 'anywhere' }}>{value}</span>
     </div>
   );
 }
 
-const linkBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', color: C.ocean, fontWeight: 700, fontSize: 14.5, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 0', minHeight: 36 };
+const linkBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', color: C.ocean, fontWeight: 700, fontSize: 16.5, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 0', minHeight: 36 };

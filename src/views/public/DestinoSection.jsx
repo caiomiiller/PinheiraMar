@@ -39,7 +39,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
     { Icon: Bus, titulo: tr('ds_onibus'), texto: tr('ds_onibus_txt') },
     { Icon: MapPin, titulo: tr('ds_distancias'), texto: tr('ds_distancias_txt') },
   ];
-  const h3 = { fontSize: 28, fontWeight: 300, lineHeight: 1.2, margin: '0 0 10px', color: C.ink };
+  const h3 = { fontSize: 28, fontWeight: 500, lineHeight: 1.2, margin: '0 0 10px', color: C.ink };
   const par = { fontSize: 16, color: C.inkSoft, lineHeight: 1.75, margin: '0 0 18px' };
 
   return (
@@ -62,8 +62,8 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
             ))}
           </div>
         )}
-        <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: '.22em', textTransform: 'uppercase', opacity: .8, marginBottom: 14 }}>{tr('ps_hero_local')}</div>
-        <h2 style={{ fontFamily: F.disp, fontSize: 'clamp(30px,4.6vw,48px)', fontWeight: 200, margin: '0 auto 16px', lineHeight: 1.12, maxWidth: 720 }}>{tr('ds_titulo')}</h2>
+        <div style={{ fontSize: 16, fontWeight: 400, letterSpacing: '.22em', textTransform: 'uppercase', opacity: .8, marginBottom: 14 }}>{tr('ps_hero_local')}</div>
+        <h2 style={{ fontFamily: F.disp, fontSize: 'clamp(30px,4.6vw,48px)', fontWeight: 500, margin: '0 auto 16px', lineHeight: 1.12, maxWidth: 720 }}>{tr('ds_titulo')}</h2>
         <Faixa height={4} width={180} tone="negativo" style={{ margin: '0 auto 20px' }} />
         <p style={{ fontSize: 16.5, opacity: .9, maxWidth: 600, lineHeight: 1.65, margin: '0 auto' }}>{tr('ds_sub')}</p>
       </div>
@@ -95,7 +95,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
                 {motivos.map(([Icon, chave], i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: C.fundoSuave, borderRadius: R.cartao }}>
                     <Icon {...icone} style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: 15.5, color: C.ink, lineHeight: 1.5 }}>{tr(chave)}</span>
+                    <span style={{ fontSize: 17.5, color: C.ink, lineHeight: 1.5 }}>{tr(chave)}</span>
                   </div>
                 ))}
               </div>
@@ -116,15 +116,15 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
                     width="100%" height="240" style={{ border: 0, display: 'block' }}
                     loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
                 </div>
-                <p style={{ fontSize: 14, color: C.inkSoft, marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {tr('ds_enseada')}</p>
+                <p style={{ fontSize: 16, color: C.inkSoft, marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {tr('ds_enseada')}</p>
               </div>
               <div style={{ display: 'grid', gap: 16 }}>
                 {ATRATIVOS.filter(a => a.destaque).map(a => (
                   <div key={a.id} style={{ padding: '18px 20px', background: C.white, border: `1px solid ${C.line}`, borderRadius: R.cartao, borderLeft: `4px solid ${BRAND.marinho}` }}>
                     <div style={{ fontWeight: 600, fontSize: 17, marginBottom: 6, color: C.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {tr('ds_at_' + a.id)} <Star size={16} strokeWidth={1.5} color={BRAND.vermelho} aria-label={tr('ds_destaque')} />
+                      {tr('ds_at_' + a.id)} <Star size={16} strokeWidth={1.5} color={BRAND.marinho} aria-label={tr('ds_destaque')} />
                     </div>
-                    <div style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
+                    <div style={{ fontSize: 17.5, color: C.inkSoft, lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
                   </div>
                 ))}
               </div>
@@ -133,7 +133,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
               {ATRATIVOS.filter(a => !a.destaque).map(a => (
                 <div key={a.id} style={{ padding: '16px 18px', background: C.fundoSuave, border: `1px solid ${C.line}`, borderRadius: R.cartao }}>
                   <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, color: C.ink }}>{tr('ds_at_' + a.id)}</div>
-                  <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
+                  <div style={{ fontSize: 17, color: C.inkSoft, lineHeight: 1.6 }}>{tr('ds_at_' + a.id + '_txt')}</div>
                 </div>
               ))}
             </div>
@@ -151,7 +151,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
                     <it.Icon size={26} strokeWidth={1.5} color={BRAND.marinho} style={{ flexShrink: 0 }} />
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 5, color: C.ink }}>{it.titulo}</div>
-                      <div style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6 }}>{it.texto}</div>
+                      <div style={{ fontSize: 17, color: C.inkSoft, lineHeight: 1.6 }}>{it.texto}</div>
                     </div>
                   </div>
                 ))}
@@ -169,7 +169,7 @@ export function DestinoSection({ residenciais = [], lang, setLang, idiomasAtivos
                 {residenciais.map(r => {
                   const completo = [r.endereco, r.cidade].filter(Boolean).join(', ');
                   return (
-                    <div key={r.id} style={{ padding: '16px 18px', background: C.espuma, borderRadius: R.cartao, fontSize: 15.5, color: C.ink, lineHeight: 1.65 }}>
+                    <div key={r.id} style={{ padding: '16px 18px', background: C.espuma, borderRadius: R.cartao, fontSize: 17.5, color: C.ink, lineHeight: 1.65 }}>
                       <div style={{ fontWeight: 600, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={16} strokeWidth={1.5} /> {r.nome}</div>
                       {r.endereco}<br />{r.cidade}{r.cep ? ` · CEP ${r.cep}` : ''}
                       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8 }}>

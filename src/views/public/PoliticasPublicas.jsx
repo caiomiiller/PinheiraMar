@@ -33,7 +33,7 @@ function BlocoPolitica({ titulo, texto }) {
   return (
     <div style={{ marginBottom: 26 }}>
       <div style={{ fontFamily: F.disp, fontSize: 19, color: C.ocean, marginBottom: 10 }}>{titulo}</div>
-      <div style={{ fontSize: 14.5, lineHeight: 1.7, color: C.ink, whiteSpace: 'pre-wrap', background: C.fundoSuave, border: `1px solid ${C.line}`, borderRadius: R.cartao, padding: '16px 18px' }}>
+      <div style={{ fontSize: 16.5, lineHeight: 1.7, color: C.ink, whiteSpace: 'pre-wrap', background: C.fundoSuave, border: `1px solid ${C.line}`, borderRadius: R.cartao, padding: '16px 18px' }}>
         {texto}
       </div>
     </div>
@@ -48,12 +48,12 @@ function CartaoResidencial({ residencial }) {
   return (
     <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: R.modal, padding: '26px 24px', marginBottom: 22 }}>
       <div style={{ fontSize: 22, fontWeight: 600, color: C.ink, marginBottom: 4 }}>{residencial.nome}</div>
-      {residencial.endereco && <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 20 }}>{residencial.endereco}{residencial.cidade ? ` · ${residencial.cidade}` : ''}</div>}
+      {residencial.endereco && <div style={{ fontSize: 16, color: C.inkSoft, marginBottom: 20 }}>{residencial.endereco}{residencial.cidade ? ` · ${residencial.cidade}` : ''}</div>}
       <BlocoPolitica titulo={pol.reservas?.titulo || 'Termos e Políticas de Hospedagem'} texto={pol.reservas?.texto} />
       <BlocoPolitica titulo={pol.cancelamento?.titulo || 'Política de Cancelamento'} texto={pol.cancelamento?.texto} />
       {wa && (
         <a href={wa} target="_blank" rel="noopener noreferrer"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4, padding: '10px 16px', borderRadius: R.cartao, background: C.sucesso, color: C.white, fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4, padding: '10px 16px', borderRadius: R.cartao, background: C.sucesso, color: C.white, fontWeight: 600, fontSize: 16, textDecoration: 'none' }}>
           <MessageCircle size={17} /> Falar no WhatsApp
         </a>
       )}
@@ -65,11 +65,11 @@ function BlocoPrivacidade({ contato }) {
   return (
     <section id="privacidade" aria-labelledby="privacidade-titulo" style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: R.modal, padding: '26px 24px', marginBottom: 22, scrollMarginTop: 16 }}>
       <h2 id="privacidade-titulo" style={{ fontSize: 22, fontWeight: 600, color: C.ink, margin: '0 0 4px' }}>Política de Privacidade</h2>
-      <p style={{ fontSize: 13.5, color: C.inkSoft, margin: '0 0 20px', lineHeight: 1.6 }}>Como tratamos os dados pessoais de quem reserva conosco, conforme a Lei Geral de Proteção de Dados (LGPD).</p>
+      <p style={{ fontSize: 16, color: C.inkSoft, margin: '0 0 20px', lineHeight: 1.6 }}>Como tratamos os dados pessoais de quem reserva conosco, conforme a Lei Geral de Proteção de Dados (LGPD).</p>
       {secoesPrivacidade(contato).map(sec => (
         <div key={sec.id} style={{ marginBottom: 18 }}>
           <h3 style={{ fontFamily: F.disp, fontSize: 17, fontWeight: 400, color: C.ocean, margin: '0 0 6px' }}>{sec.titulo}</h3>
-          <p style={{ fontSize: 14.5, lineHeight: 1.7, color: C.ink, margin: 0 }}>{sec.texto}</p>
+          <p style={{ fontSize: 16.5, lineHeight: 1.7, color: C.ink, margin: 0 }}>{sec.texto}</p>
         </div>
       ))}
     </section>
@@ -110,8 +110,8 @@ export function PoliticasPublicas({ filtro }) {
         <div style={{ maxWidth: 420, textAlign: 'center', color: C.ink }}>
           <Waves size={32} color={C.brisa} />
           <h1 style={{ fontSize: 20, fontWeight: 500, margin: '12px 0 8px' }}>Não foi possível carregar</h1>
-          <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6 }}>Verifique a sua conexão e tente de novo.</p>
-          <button onClick={carregar} style={{ marginTop: 16, minHeight: 44, padding: '0 18px', border: 'none', borderRadius: R.cartao, background: C.ocean, color: C.white, fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: F.sans }}>
+          <p style={{ fontSize: 17, color: C.inkSoft, lineHeight: 1.6 }}>Verifique a sua conexão e tente de novo.</p>
+          <button onClick={carregar} style={{ marginTop: 16, minHeight: 44, padding: '0 18px', border: 'none', borderRadius: R.cartao, background: C.ocean, color: C.white, fontSize: 17, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: F.sans }}>
             <RefreshCw size={16} /> Tentar de novo
           </button>
         </div>
@@ -121,7 +121,7 @@ export function PoliticasPublicas({ filtro }) {
   if (!data) {
     return (
       <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: C.espuma, fontFamily: F.sans, color: C.inkSoft }}>
-        <div style={{ textAlign: 'center' }}><Waves size={30} color={C.brisa} /><div style={{ marginTop: 10, fontSize: 15 }}>Carregando…</div></div>
+        <div style={{ textAlign: 'center' }}><Waves size={30} color={C.brisa} /><div style={{ marginTop: 10, fontSize: 17 }}>Carregando…</div></div>
       </div>
     );
   }
@@ -138,10 +138,10 @@ export function PoliticasPublicas({ filtro }) {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 18px 56px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <Waves size={22} color={C.ocean} />
-          <div style={{ fontFamily: F.disp, fontSize: 15, letterSpacing: '.14em', textTransform: 'uppercase', color: C.ocean}}>Grupo PinheiraMar</div>
+          <div style={{ fontFamily: F.disp, fontSize: 17, letterSpacing: '.14em', textTransform: 'uppercase', color: C.ocean}}>Grupo PinheiraMar</div>
         </div>
         <h1 style={{ fontFamily: F.disp, fontSize: 30, fontWeight: 400, color: C.ink, margin: '4px 0 8px' }}>Políticas de Hospedagem, Cancelamento e Privacidade</h1>
-        <p style={{ fontSize: 15, color: C.inkSoft, marginBottom: 30, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 17, color: C.inkSoft, marginBottom: 30, lineHeight: 1.6 }}>
           Estes são os termos que valem para a sua reserva. Qualquer dúvida, fale connosco pelo WhatsApp.
         </p>
 
@@ -150,7 +150,7 @@ export function PoliticasPublicas({ filtro }) {
         <BlocoPrivacidade contato={{ email: (data.residenciais || []).find(r => r.email)?.email, telefone: (data.residenciais || []).find(r => r.telefone)?.telefone }} />
 
         <div style={{ textAlign: 'center', marginTop: 30 }}>
-          <button onClick={voltar} style={{ background: 'none', border: 'none', color: C.ocean, cursor: 'pointer', fontSize: 14.5, fontWeight: 600, fontFamily: F.sans }}>← Voltar ao site</button>
+          <button onClick={voltar} style={{ background: 'none', border: 'none', color: C.ocean, cursor: 'pointer', fontSize: 16.5, fontWeight: 600, fontFamily: F.sans }}>← Voltar ao site</button>
         </div>
       </div>
     </div>

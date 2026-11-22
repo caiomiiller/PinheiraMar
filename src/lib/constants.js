@@ -10,12 +10,15 @@ const PALETA = Object.freeze({
     // texto, linhas e fundos
     ink: '#1B1C46', inkSoft: '#6F6B64', white: '#FFFFFF',
     line: '#E2E0DB', bordaForte: '#8A8A8A', inativo: '#BBBBBB',
-    espuma: '#F2F1F5', fundoSuave: '#F8F8F6', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
+    // cinza claro único das áreas de apoio (identidade 2026-11-22: #F5F6F9)
+    espuma: '#F5F6F9', fundoSuave: '#F5F6F9', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
     // estados: sucesso · aviso · erro · informação (texto, fundo, borda)
     sucesso: '#156B4E', sucessoBg: '#E1F0EC', sucessoBorda: '#6EE7B7',
     aviso: '#7B5600', avisoBg: '#FFF4D6', avisoBorda: '#EBD9C0',
     erro: '#B42318', erroBg: '#FEF3F2', erroBorda: '#F0C6C6',
     info: '#1A4A7A', infoBg: '#EEF6FF', infoBorda: '#BDD9F8',
+    // verde só para o WhatsApp
+    whatsapp: '#1E9E57',
 });
 // Todas as cores de interface vêm daqui (C.<nome>) — não escrever #hex nos componentes.
 export const C = PALETA;
@@ -35,9 +38,10 @@ export const TEMA_PAINEL = Object.freeze({
 });
 export const temaPainel = (residencialId) => TEMA_PAINEL[residencialId] || TEMA_PAINEL.pinheiramar;
 export const F = {
-  // uma só família em todo o grupo: Montserrat (carregada em index.html)
-  disp: "'Montserrat','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
-  sans: "'Montserrat','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
+  // Manrope em todo o site e no painel (identidade 2026-11-22; carregada em
+  // index.html). A Montserrat fica só na assinatura do grupo (Brand.jsx).
+  disp: "'Manrope','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
+  sans: "'Manrope','Segoe UI',system-ui,-apple-system,Roboto,sans-serif",
 };
 
 // WhatsApp é o canal principal de contacto do site (substitui e-mail/telefone

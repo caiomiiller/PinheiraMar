@@ -89,7 +89,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
     <div style={{ border: `1px solid ${C.line}`, borderRadius: R.cartao, padding: '14px 14px 16px', background: C.white, fontFamily: F.sans }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
         <button type="button" onClick={goPrev} disabled={noPrimeiroMes} style={{ ...navBtnStyle, opacity: noPrimeiroMes ? .35 : 1 }} aria-label={tr('cal_mes_anterior')}><ChevronLeft size={18} /></button>
-        <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, textAlign: 'center' }} aria-live="polite">
+        <div style={{ fontSize: 17, fontWeight: 700, color: C.ink, textAlign: 'center' }} aria-live="polite">
           {escolhendoSaida ? tr('cal_escolha_saida') : (!selCi ? tr('cal_escolha_entrada') : `${fmtCurta(ymd(selCi))} → ${fmtCurta(ymd(rangeEnd))}`)}
         </div>
         <button type="button" onClick={goNext} disabled={noUltimoMes} style={{ ...navBtnStyle, opacity: noUltimoMes ? .35 : 1 }} aria-label={tr('cal_proximo_mes')}><ChevronRight size={18} /></button>
@@ -97,9 +97,9 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
         {monthsToShow.map(({ y, m }) => (
           <div key={`${y}-${m}`} style={{ flex: '1 1 230px', minWidth: 230 }}>
-            <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, textTransform: 'capitalize' }}>{nomeMes(y, m)}</div>
+            <div style={{ textAlign: 'center', fontSize: 17, fontWeight: 700, color: C.ink, marginBottom: 6, textTransform: 'capitalize' }}>{nomeMes(y, m)}</div>
             <div className="pm-cal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: '2px 6px', marginBottom: 2 }}>
-              {semana.map((w, i) => <div key={i} style={{ textAlign: 'center', fontSize: 12.5, color: C.inkSoft, fontWeight: 700, textTransform: 'capitalize' }}>{w}</div>)}
+              {semana.map((w, i) => <div key={i} style={{ textAlign: 'center', fontSize: 14, color: C.inkSoft, fontWeight: 700, textTransform: 'capitalize' }}>{w}</div>)}
             </div>
             <div className="pm-cal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: '2px 6px' }}>
               {buildMonthCells(y, m).map((d, i) => {
@@ -129,7 +129,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
                     title={blocked ? tr('cal_ocupado') : fechado ? tr('cal_fechado') : soSaidaVisivel ? tr('cal_so_saida') : undefined}
                     style={{
                       aspectRatio: '1', minHeight: 40, border: 'none', borderRadius: '50%', padding: 0,
-                      fontSize: 14, cursor: (disabled || soSaidaVisivel) ? 'default' : 'pointer', fontFamily: F.sans,
+                      fontSize: 16, cursor: (disabled || soSaidaVisivel) ? 'default' : 'pointer', fontFamily: F.sans,
                       background: (isStart || isEnd) ? C.ocean : (within ? C.espuma : baseBg),
                       color: (isStart || isEnd) ? C.white : (disabled ? C.bordaForte : C.ink),
                       textDecoration: blocked ? 'line-through' : 'none',
@@ -141,13 +141,13 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
           </div>
         ))}
       </div>
-      {noUltimoMes && ate && <div style={{ marginTop: 10, fontSize: 14, color: C.inkSoft }}>{tr('cal_abertas_ate', fmtCurta(ate))}</div>}
+      {noUltimoMes && ate && <div style={{ marginTop: 10, fontSize: 16, color: C.inkSoft }}>{tr('cal_abertas_ate', fmtCurta(ate))}</div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}` }}>
-        <button type="button" onClick={() => onChange('', '')} style={{ background: 'none', border: 'none', textDecoration: 'underline', fontSize: 14.5, color: C.ink, cursor: 'pointer', minHeight: 40, padding: 0 }}>
+        <button type="button" onClick={() => onChange('', '')} style={{ background: 'none', border: 'none', textDecoration: 'underline', fontSize: 16.5, color: C.ink, cursor: 'pointer', minHeight: 40, padding: 0 }}>
           {tr('cal_desmarcar')}
         </button>
         {apt && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13.5, color: C.inkSoft }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 16, color: C.inkSoft }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 11, height: 11, borderRadius: '50%', background: DIA_DISPONIVEL, border: `1px solid ${C.line}`, display: 'inline-block' }} /> {tr('cal_legenda_livre')}
             </span>

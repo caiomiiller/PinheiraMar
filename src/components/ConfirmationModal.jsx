@@ -65,29 +65,29 @@ export function ConfirmationModal({ info, paymentStatus, onClose }) {
             <div style={{ width: 60, height: 60, borderRadius: '50%', background: failed ? C.erroBg : (pending ? C.avisoBg : 'rgba(27,28,70,.07)'), display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}>
               {failed ? <AlertCircle size={30} color={C.erro} /> : pending ? <Clock size={30} color={C.aviso} /> : <Check size={30} color={C.ocean} />}
             </div>
-            <p style={{ margin: 0, color: C.inkSoft, fontSize: 15 }}>{tr('cf_seu_codigo')}</p>
+            <p style={{ margin: 0, color: C.inkSoft, fontSize: 17 }}>{tr('cf_seu_codigo')}</p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap', margin: '4px 0 18px' }}>
               <div style={{ fontFamily: F.disp, fontSize: 30, letterSpacing: '.06em', color: C.ocean }}>{r1.codigo}</div>
               <button type="button" onClick={copiarCodigo}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 14px', borderRadius: R.cartao, border: `1px solid ${copiado ? C.sucesso : C.line}`, background: C.white, color: copiado ? C.sucesso : C.ink, fontFamily: F.sans, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, padding: '0 14px', borderRadius: R.cartao, border: `1px solid ${copiado ? C.sucesso : C.line}`, background: C.white, color: copiado ? C.sucesso : C.ink, fontFamily: F.sans, fontSize: 17, fontWeight: 600, cursor: 'pointer' }}>
                 {copiado ? <Check size={17} /> : <Copy size={17} />}
                 <span aria-live="polite">{copiado ? tr('cf_codigo_copiado') : tr('cf_copiar_codigo')}</span>
               </button>
             </div>
           </div>
-          <div style={{ background: C.espuma, borderRadius: R.cartao, padding: 16, fontSize: 15.5, display: 'grid', gap: 10 }}>
+          <div style={{ background: C.espuma, borderRadius: R.cartao, padding: 16, fontSize: 17.5, display: 'grid', gap: 10 }}>
             <Row k={info.aptos?.length > 1 ? tr('cf_apartamentos') : tr('cf_apartamento')} v={aptos} />
             <Row k={tr('cf_estadia')} v={`${fmtCurta(r1.checkIn)} → ${fmtCurta(r1.checkOut)} · ${tr('noites', nights(r1.checkIn, r1.checkOut))}`} />
             <Row k={tr('cf_hospede')} v={r1.hospede} />
             <Row k={info.aptos?.length > 1 ? tr('bk_total_combinado') : tr('bk_total')} v={money(info.total)} strong />
             <Row k={paid ? tr('cf_sinal_pago', info.sinalPct) : tr('cf_sinal_a_pagar', info.sinalPct)} v={money(info.sinal)} accent />
           </div>
-          <p style={{ fontSize: 15, color: C.inkSoft, marginTop: 16, marginBottom: 0, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 17, color: C.inkSoft, marginTop: 16, marginBottom: 0, lineHeight: 1.6 }}>
             {failed ? tr('cf_texto_falhou') : paid ? tr('cf_texto_pago', r1.email) : pending ? tr('cf_texto_aguardando', r1.email) : tr('cf_texto_manual', r1.email)}
           </p>
-          {repagar && <p style={{ fontSize: 15, color: C.ink, margin: '10px 0 0', lineHeight: 1.6, fontWeight: 600 }}>{tr('cf_pagar_ate', horaLimite)}</p>}
+          {repagar && <p style={{ fontSize: 17, color: C.ink, margin: '10px 0 0', lineHeight: 1.6, fontWeight: 600 }}>{tr('cf_pagar_ate', horaLimite)}</p>}
           {(failed || !paymentStatus) && (
-            <a href={whatsappUrl(msgReserva({ codigo: r1.codigo, aptos: (info.aptos || []).map(a => a.nome), ci: r1.checkIn, co: r1.checkOut, falhou: failed }))} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, color: C.ocean, fontWeight: 700, fontSize: 15.5, textDecoration: 'none' }}>
+            <a href={whatsappUrl(msgReserva({ codigo: r1.codigo, aptos: (info.aptos || []).map(a => a.nome), ci: r1.checkIn, co: r1.checkOut, falhou: failed }))} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, color: C.ocean, fontWeight: 700, fontSize: 17.5, textDecoration: 'none' }}>
               <MessageCircle size={18} /> {tr('bk_falar_whatsapp')}
             </a>
           )}

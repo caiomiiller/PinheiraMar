@@ -118,7 +118,7 @@ export default function App() {
     html, body{overflow-x:clip;}
     button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px solid ${C.brisa};outline-offset:2px;}
     /* botão fixo de WhatsApp do site público (só o ícone) — abaixo das janelas (z 100) */
-    .pm-wa-flutuante{position:fixed;right:24px;bottom:24px;z-index:90;width:60px;height:60px;border-radius:50%;background:#1F8F55;color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px rgba(20,21,47,.28);transition:transform .15s ease;}
+    .pm-wa-flutuante{position:fixed;right:24px;bottom:24px;z-index:90;width:60px;height:60px;border-radius:50%;background:${C.whatsapp};color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px rgba(20,21,47,.28);transition:transform .15s ease;}
     .pm-wa-flutuante:hover{transform:scale(1.06);}
     .pmf:focus{border-color:${C.brisa}!important;box-shadow:0 0 0 3px rgba(45,127,157,.16)!important;}
     .pm-pop{animation:pmpop .18s ease;}
@@ -205,7 +205,6 @@ export default function App() {
       .pm-pubsite-header-row{justify-content:center!important;}
       .pm-pubsite-brand{height:56px!important;}
       .pm-pubsite-hcats{display:flex!important;}
-      .pm-datas-preco{display:none!important;}
       .pm-pubsite-catbar{display:none!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}

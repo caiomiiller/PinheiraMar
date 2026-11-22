@@ -345,11 +345,11 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       {/* 11.5px e tracking mais solto que antes (10px/.12em): versalete
           condensada nesse tamanho é o pior caso de legibilidade para
           presbiopia — público 40+ */}
-      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: GREY }}>{label}</div>
+      <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: GREY }}>{label}</div>
       {children}
     </div>
   );
-  const segInput = { border: 'none', outline: 'none', background: 'transparent', fontFamily: F.sans, fontSize: 14, color: BLACK, width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
+  const segInput = { border: 'none', outline: 'none', background: 'transparent', fontFamily: F.sans, fontSize: 15, color: BLACK, width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
 
   /* ── cartão de data grande (busca mobile em ecrã cheio) — abre o calendário de disponibilidade visual ── */
   const DateCard = ({ label, value, onClick, compact, placeholder }) => {
@@ -357,7 +357,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     return (
       <div>
         {/* rótulo legível (sem maiúsculas miúdas) — público 50+ */}
-        <div style={{ fontSize: 14, fontWeight: 700, color: BRAND.marinho, marginBottom: 8 }}>{label}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: BRAND.marinho, marginBottom: 8 }}>{label}</div>
         <button onClick={onClick} style={{ width: '100%', minHeight: 60, textAlign: 'left', position: 'relative', border: `1.5px solid ${value ? BLACK : C.inativo}`, borderRadius: R.cartao, padding: compact ? '12px' : '14px 16px', background: WHITE, cursor: 'pointer', fontFamily: F.sans }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
             {parts ? (
@@ -369,7 +369,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 </div>
               </div>
             ) : (
-              <span style={{ fontSize: 15, color: BRAND.pedra }}>{placeholder || tr('m_pick_date')}</span>
+              <span style={{ fontSize: 17, color: BRAND.pedra }}>{placeholder || tr('m_pick_date')}</span>
             )}
             <CalendarDays size={compact ? 18 : 20} color={GREY} style={{ flexShrink: 0 }} />
           </div>
@@ -394,14 +394,14 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           <button onClick={e => { e.stopPropagation(); setLiked(l => ({ ...l, [apt.id]: !l[apt.id] })); }}
             aria-label={liked[apt.id] ? tr('ps_desfavoritar', apt.nome) : tr('ps_favoritar', apt.nome)} aria-pressed={!!liked[apt.id]}
             style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,.86)', border: 'none', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', backdropFilter: 'blur(4px)' }}>
-            <Heart size={18} fill={liked[apt.id] ? BRAND.vermelho : 'none'} color={liked[apt.id] ? BRAND.vermelho : GREY} strokeWidth={1.8} />
+            <Heart size={18} fill={liked[apt.id] ? BRAND.marinho : 'none'} color={liked[apt.id] ? BRAND.marinho : GREY} strokeWidth={1.8} />
           </button>
           {!available && (
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.55)', display: 'grid', placeItems: 'center' }}>
               <button onClick={e => { e.stopPropagation(); setCalCi(''); setCalCo(''); setCalApt(apt); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: WHITE, padding: '8px 16px', border: `1px solid ${BORDER}`, borderRadius: R.cartao, cursor: 'pointer', fontFamily: F.sans }}>
-                <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.06em', color: GREY, textTransform: 'uppercase' }}>{tr('ps_indisponivel')}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: ACCENT }}>{tr('ps_ver_datas_livres')}</span>
+                <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '.06em', color: GREY, textTransform: 'uppercase' }}>{tr('ps_indisponivel')}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: ACCENT }}>{tr('ps_ver_datas_livres')}</span>
               </button>
             </div>
           )}
@@ -417,13 +417,13 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               inteiro continua clicável com o rato/dedo */}
           {available
             ? <button type="button" onClick={e => { e.stopPropagation(); openDetail(apt); }} className="pm-card-title-row"
-                style={{ display: 'block', width: '100%', background: 'none', border: 'none', padding: 0, margin: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</button>
-            : <div className="pm-card-title-row" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</div>}
-          <div style={{ fontSize: 14, color: GREY, marginTop: 3 }}>{dado(apt.piso)} · {dado(apt.vista)} · {tr('ps_ate_pessoas', apt.capacidade)}</div>
+                style={{ display: 'block', width: '100%', background: 'none', border: 'none', padding: 0, margin: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', fontSize: 17, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</button>
+            : <div className="pm-card-title-row" style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</div>}
+          <div style={{ fontSize: 16, color: GREY, marginTop: 3 }}>{dado(apt.piso)} · {dado(apt.vista)} · {tr('ps_ate_pessoas', apt.capacidade)}</div>
           {valid && !fits && (
             needsCombo
-              ? <div style={{ fontSize: 13.5, color: GREY, fontWeight: 600, marginTop: 6 }}>{tr('ps_combinar_obrigatorio', hosp)}</div>
-              : <div style={{ fontSize: 13.5, color: ACCENT, fontWeight: 600, marginTop: 5 }}>{tr('ps_combinar')}</div>
+              ? <div style={{ fontSize: 16, color: GREY, fontWeight: 600, marginTop: 6 }}>{tr('ps_combinar_obrigatorio', hosp)}</div>
+              : <div style={{ fontSize: 16, color: ACCENT, fontWeight: 600, marginTop: 5 }}>{tr('ps_combinar')}</div>
           )}
           {/* com datas: o TOTAL da estadia, já com as taxas obrigatórias — o
               mesmo valor da página do apartamento e do servidor (sem a
@@ -436,9 +436,9 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             <div style={{ marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 19, fontWeight: 700, color: BLACK }}>{money(orc.total)}</span>
-                <span style={{ fontSize: 14, color: GREY }}>{tr('ps_total')}</span>
+                <span style={{ fontSize: 16, color: GREY }}>{tr('ps_total')}</span>
               </div>
-              <div style={{ fontSize: 14, color: GREY, marginTop: 2 }}>{tr('noites', orc.noites)}{orc.taxasTotal > 0 ? ` · ${tr('ps_taxas_incluidas')}` : ''}</div>
+              <div style={{ fontSize: 16, color: GREY, marginTop: 2 }}>{tr('noites', orc.noites)}{orc.taxasTotal > 0 ? ` · ${tr('ps_taxas_incluidas')}` : ''}</div>
             </div>
           )}
         </div>
@@ -504,9 +504,9 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             style={{ width: RESIDENCIAL_LOGO_W[r.id] || 220, height: 'auto', maxWidth: '100%', flexShrink: 0, display: 'block' }}
             onError={e => { e.target.style.display = 'none'; }} />
           <div className="pm-pubsite-group-info" style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div className="pm-pubsite-group-region" style={{ fontSize: 14.5, color: GREY, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {dado(r.regiaoLabel)}</div>
+            <div className="pm-pubsite-group-region" style={{ fontSize: 16.5, color: GREY, display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={15} strokeWidth={1.5} /> {dado(r.regiaoLabel)}</div>
           </div>
-          <div className="pm-pubsite-group-count" style={{ fontSize: 12.5, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
+          <div className="pm-pubsite-group-count" style={{ fontSize: 14, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase', flexShrink: 0 }}>{countLabel}</div>
         </div>
         {/* indicador de residencial: o segmento deste residencial aceso, os outros a 15% */}
         <Faixa height={3} lit={FAIXA_INDEX[r.id] ?? null} style={{ marginBottom: 28 }} />
@@ -516,7 +516,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         {!invert && valid && needsCombo && combo && (
           <div className="pm-pubsite-combo" style={{ border: `1px solid ${BORDER}`, borderRadius: R.modal, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 18, alignItems: 'flex-start' }}>
             <Users size={18} color={GREY} style={{ flexShrink: 0, marginTop: 2 }} />
-            <div style={{ fontSize: 14, color: BLACK, lineHeight: 1.65 }}>
+            <div style={{ fontSize: 16, color: BLACK, lineHeight: 1.65 }}>
               <b>{tr('ps_combo_titulo', hosp, r.nome)}</b>
               {combo.enough
                 ? <> {tr('ps_combo_sugestao')} <b>{combo.pick.map(a => `${a.nome} (${tr('pessoas', a.capacidade)})`).join(' + ')}</b> — {tr('ps_combo_capacidade', combo.cap)}{combo.pick.length > 2 ? ` ${tr('ps_combo_tres')}` : ''}</>
@@ -525,7 +525,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                   {combo.pick.map(a => (
                     <button key={a.id} onClick={() => openDetail(a)}
-                      style={{ background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, minHeight: 44, padding: '0 16px', fontSize: 14, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em', textTransform: 'uppercase' }}>
+                      style={{ background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, minHeight: 44, padding: '0 16px', fontSize: 16, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em', textTransform: 'uppercase' }}>
                       {tr('ps_ver_apto', a.nome)}
                     </button>
                   ))}
@@ -613,34 +613,25 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   const popPessoas = (extra = {}) => (
     <div style={{ position: 'absolute', top: '100%', marginTop: 8, ...extra, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.modal, padding: 20, zIndex: 100, minWidth: 240, boxShadow: '0 8px 32px rgba(0,0,0,.10)' }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600 }}>{tr('search_guests')}</span>
+                      <span style={{ fontSize: 17, fontWeight: 600 }}>{tr('search_guests')}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                         <button aria-label={tr('m_menos_pessoa')} onClick={() => setHosp(h => Math.max(0,h-1))} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>−</button>
                         <span style={{ fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{hosp || '—'}</span>
                         <button aria-label={tr('m_mais_pessoa')} onClick={() => setHosp(h => h+1)} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 16 }}>+</button>
                       </div>
                     </div>
-                    <button onClick={() => setGuestOpen(false)} style={{ width: '100%', padding: '11px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontWeight: 700, fontSize: 13, letterSpacing: '.05em' }}>{tr('search_confirm')}</button>
+                    <button onClick={() => setGuestOpen(false)} style={{ width: '100%', padding: '11px 0', background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontWeight: 700, fontSize: 16, letterSpacing: '.05em' }}>{tr('search_confirm')}</button>
                   </div>
   );
   // Na faixa principal o calendário abre por baixo do cartão: se não couber no
   // ecrã, a página sobe o suficiente (sem esconder o cartão sob o cabeçalho).
-  const abrirNaFaixa = (qual) => {
-    if (qual === 'cal') { setGuestOpen(false); setCalOpen(o => !o); } else { setCalOpen(false); setGuestOpen(o => !o); }
+  const abrirNaFaixa = (qual, forcar = false) => {
+    if (qual === 'cal') { setGuestOpen(false); setCalOpen(o => (forcar ? true : !o)); } else { setCalOpen(false); setGuestOpen(o => !o); }
     const el = heroBuscaRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     const falta = r.bottom + (qual === 'cal' ? 470 : 200) - window.innerHeight;
     if (falta > 0) window.scrollBy({ top: Math.min(falta, Math.max(0, r.top - 90)), behavior: 'smooth' });
-  };
-
-  // "Escolha as datas": abre o calendário da busca. No desktop ele abre no
-  // topo fixo; no telemóvel a busca fica acima da lista, então sobe até ela.
-  const abrirCalendario = () => {
-    setGuestOpen(false);
-    setCalOpen(true);
-    const el = searchInlineRef.current;
-    if (el && getComputedStyle(el).display !== 'none') el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // No telemóvel os filtros ficam no topo e a lista bem mais abaixo (depois
@@ -674,7 +665,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             {/* barra em pílula, com o botão "Ver apartamentos" arredondado por dentro (caixas e
                 botões arredondados, a pedido do Caio). Sem overflow:hidden: o
                 calendário e o seletor de pessoas abrem por baixo dela. */}
-            <div style={{ display: 'flex', alignItems: 'stretch', height: 50, padding: 4, boxSizing: 'border-box', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, boxShadow: '0 2px 10px rgba(27,28,70,.06)', maxWidth: 740, width: '100%', position: 'relative', visibility: buscaNoHero ? 'hidden' : 'visible', opacity: buscaNoHero ? 0 : 1, transition: 'opacity .2s ease' }}>
+            <div style={{ display: 'flex', alignItems: 'stretch', height: 50, padding: 4, boxSizing: 'border-box', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, boxShadow: '0 2px 10px rgba(27,28,70,.06)', maxWidth: 820, width: '100%', position: 'relative', visibility: buscaNoHero ? 'hidden' : 'visible', opacity: buscaNoHero ? 0 : 1, transition: 'opacity .2s ease' }}>
               <Seg label={tr('search_checkin')}>
                 <div style={{ ...segInput, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   onClick={() => { setGuestOpen(false); setCalOpen(o => !o); }}>
@@ -695,9 +686,11 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 </div>
                 {guestOpen && !buscaNoHero && popPessoas()}
               </Seg>
-              <button onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-                style={{ padding: '0 18px', background: BLACK, color: WHITE, border: 'none', borderRadius: R.pilula, cursor: 'pointer', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                {tr('search_btn').toUpperCase()}
+              {/* como no telemóvel: sem datas o botão abre o calendário
+                  ("Consultar datas e valores"); com datas leva à lista */}
+              <button onClick={() => { setGuestOpen(false); if (valid) { setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else setCalOpen(true); }}
+                style={{ padding: '0 18px', background: BLACK, color: WHITE, border: 'none', borderRadius: R.pilula, cursor: 'pointer', fontSize: 16, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                {(valid ? tr('search_btn') : tr('ps_datas_para_preco')).toUpperCase()}
               </button>
             </div>
 
@@ -706,7 +699,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 pedido do Caio, 2026-09. */}
             {!!(ci || co || hosp) && !buscaNoHero && (
               <button onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, cursor: 'pointer', color: GREY, fontSize: 12.5, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, cursor: 'pointer', color: GREY, fontSize: 14, fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
                 <X size={13} /> {tr('ps_limpar_consulta')}
               </button>
             )}
@@ -737,7 +730,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           <div style={{ fontSize: 20, fontWeight: 500 }}>{tr('m_search_title')}</div>
           {!!(ci || co || hosp) && (
             <button onClick={() => { setCi(''); setCo(''); setHosp(0); setCalOpen(false); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, fontSize: 14, fontWeight: 700, color: BRAND.marinho, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, cursor: 'pointer', padding: '0 14px' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, fontSize: 16, fontWeight: 700, color: BRAND.marinho, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, cursor: 'pointer', padding: '0 14px' }}>
               <X size={15} /> {tr('m_clear')}
             </button>
           )}
@@ -756,7 +749,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               }} />
           )}
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: BRAND.marinho, marginBottom: 8 }}>{tr('m_people')}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: BRAND.marinho, marginBottom: 8 }}>{tr('m_people')}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 64, padding: '8px 12px 8px 16px', border: `1.5px solid ${hosp ? BLACK : C.inativo}`, borderRadius: R.cartao }}>
               <span style={{ fontSize: 16, fontWeight: hosp ? 700 : 400, color: hosp ? BLACK : BRAND.pedra }}>{hosp ? tr('m_people_n', hosp) : tr('m_people_none')}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -813,7 +806,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         <div className="pm-pubsite-hero-inner" style={{ position: 'relative', maxWidth: 1280, width: '100%', margin: '0 auto', padding: '0 32px 44px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
             <Faixa height={3} width={34} tone="negativo" />
-            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.14em', color: C.white, textTransform: 'uppercase' }}>{tr('ps_hero_local')}</span>
+            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '.14em', color: C.white, textTransform: 'uppercase' }}>{tr('ps_hero_local')}</span>
           </div>
           <h1 style={{ fontSize: 'clamp(40px,4.4vw,60px)', fontWeight: 700, lineHeight: 1.08, margin: '0 0 18px', letterSpacing: '-.015em', color: C.white, maxWidth: 720, textShadow: '0 2px 18px rgba(0,0,0,.25)' }}>
             {tr('ps_hero_titulo_1')}<br />{tr('ps_hero_titulo_2')}
@@ -830,9 +823,9 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               { rotulo: tr('search_who'), valor: hosp ? tr('search_guests_label', hosp) : '', vazio: tr('search_add_guests'), abrir: () => abrirNaFaixa('pessoas'), icone: <Users size={18} color={GREY} />, pessoas: true },
             ].map(f => (
               <div key={f.rotulo} style={{ flex: 1, minWidth: 0, position: f.pessoas ? 'relative' : 'static' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: BLACK, marginBottom: 8 }}>{f.rotulo}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: BLACK, marginBottom: 8 }}>{f.rotulo}</div>
                 <button type="button" onClick={f.abrir} aria-label={`${f.rotulo}: ${f.valor || f.vazio}`}
-                  style={{ width: '100%', height: 54, border: `1px solid ${f.valor ? BLACK : '#D6D3CC'}`, borderRadius: R.cartao, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '0 16px', background: WHITE, cursor: 'pointer', fontFamily: F.sans, fontSize: 15.5, color: f.valor ? BLACK : C.inkSoft, fontWeight: f.valor ? 600 : 400, textAlign: 'left' }}>
+                  style={{ width: '100%', height: 54, border: `1px solid ${f.valor ? BLACK : '#D6D3CC'}`, borderRadius: R.cartao, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '0 16px', background: WHITE, cursor: 'pointer', fontFamily: F.sans, fontSize: 17.5, color: f.valor ? BLACK : C.inkSoft, fontWeight: f.valor ? 600 : 400, textAlign: 'left' }}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.valor || f.vazio}</span>
                   {f.icone}
                 </button>
@@ -840,14 +833,15 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               </div>
             ))}
             {calOpen && buscaNoHero && popCalendario({ left: 24 })}
-            <button type="button" onClick={() => { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-              style={{ flexShrink: 0, height: 54, padding: '0 30px', borderRadius: R.cartao, border: 'none', background: BRAND.vermelho, color: C.white, fontFamily: F.sans, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              {tr('search_btn')}
+            {/* sem datas: "Consultar datas e valores" abre o calendário; com datas: "Ver apartamentos" */}
+            <button type="button" onClick={() => { if (valid) { setGuestOpen(false); setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else abrirNaFaixa('cal', true); }}
+              style={{ flexShrink: 0, height: 54, padding: '0 30px', borderRadius: R.cartao, border: 'none', background: BLACK, color: C.white, fontFamily: F.sans, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {valid ? tr('search_btn') : tr('ps_datas_para_preco')}
             </button>
           </div>
           {!!(ci || co || hosp) && (
             <button type="button" onClick={() => { setCi(''); setCo(''); setHosp(0); setGuestOpen(false); setCalOpen(false); }}
-              style={{ position: 'absolute', right: 32, bottom: 12, display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', color: C.white, cursor: 'pointer', fontFamily: F.sans, fontSize: 13, fontWeight: 700, textShadow: '0 1px 6px rgba(0,0,0,.5)' }}>
+              style={{ position: 'absolute', right: 32, bottom: 12, display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', color: C.white, cursor: 'pointer', fontFamily: F.sans, fontSize: 16, fontWeight: 700, textShadow: '0 1px 6px rgba(0,0,0,.5)' }}>
               <X size={14} /> {tr('ps_limpar_consulta')}
             </button>
           )}
@@ -863,14 +857,14 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             const on = activeCategory === cat.key;
             return (
               <button key={String(cat.key)} className="pm-cat-btn" data-active={on ? 'true' : 'false'} onClick={() => setActiveCategory(on ? null : cat.key)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 20px', border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 600, color: on ? BLACK : GREY, borderBottom: on ? `2px solid ${BLACK}` : '2px solid transparent', transition: 'all .15s' }}>
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 20px', border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0, fontSize: 13.5, fontWeight: 600, color: on ? BLACK : GREY, borderBottom: on ? `2px solid ${BLACK}` : '2px solid transparent', transition: 'all .15s' }}>
                 <span style={{ color: on ? BLACK : GREY }}>{cat.icone(16)}</span>
                 {cat.label}
               </button>
             );
           })}
           {activeCategory && (
-            <button onClick={() => setActiveCategory(null)} style={{ marginLeft: 'auto', alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '6px 12px', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, cursor: 'pointer', color: GREY, flexShrink: 0 }}>
+            <button onClick={() => setActiveCategory(null)} style={{ marginLeft: 'auto', alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 16, padding: '6px 12px', border: `1px solid ${BORDER}`, borderRadius: R.pilula, background: WHITE, cursor: 'pointer', color: GREY, flexShrink: 0 }}>
               <X size={14} aria-hidden="true" /> {tr('ps_limpar_filtro')}
             </button>
           )}
@@ -896,46 +890,33 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               return (
                 <button key={String(cat.key)} type="button" onClick={() => escolherCategoriaTopo(on ? null : cat.key)}
                   aria-label={cat.nomeCompleto} title={cat.nomeCompleto} aria-pressed={on}
-                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, minWidth: 48, padding: cat.n ? '0 14px 0 12px' : (comTexto ? '0 14px' : '0 12px'), flexShrink: 0, borderRadius: R.pilula, border: `1px solid ${on ? 'rgba(27,28,70,.45)' : BORDER}`, background: on ? 'rgba(27,28,70,.08)' : WHITE, color: on ? BLACK : GREY, cursor: 'pointer', fontFamily: F.sans, fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, minWidth: 48, padding: cat.n ? '0 14px 0 12px' : (comTexto ? '0 14px' : '0 12px'), flexShrink: 0, borderRadius: R.pilula, border: `1px solid ${on ? 'rgba(27,28,70,.45)' : BORDER}`, background: on ? 'rgba(27,28,70,.08)' : WHITE, color: on ? BLACK : GREY, cursor: 'pointer', fontFamily: F.sans, fontSize: 17, fontWeight: 700, whiteSpace: 'nowrap' }}>
                   {cat.icone(20)}{cat.n ? <span aria-hidden>{cat.curto || cat.n}</span> : null}{comTexto ? <span aria-hidden>{cat.label}</span> : null}
                 </button>
               );
             })}
           </nav>
 
-        {/* sem datas: uma frase só, em vez de um preço "a partir de" em cada
-            cartão — e um toque nela abre logo o calendário. No telemóvel esta
-            caixa passa para dentro da busca (no lugar do botão). */}
-        {!valid && (
-          <div className="pm-datas-preco" style={{ marginBottom: 40 }}>
-            <button type="button" onClick={abrirCalendario}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 10, maxWidth: '100%', minHeight: 48, padding: '12px 18px', background: LIGHT, border: `1px solid ${BORDER}`, borderRadius: R.cartao, cursor: 'pointer', fontFamily: F.sans, color: BLACK, textAlign: 'left' }}>
-              <CalendarDays size={19} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.4 }}>{tr('ps_datas_para_preco')}</span>
-              <ChevronRight size={17} style={{ flexShrink: 0 }} />
-            </button>
-          </div>
-        )}
         {valid && (
           <div style={{ marginBottom: 44, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 300, letterSpacing: 0, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 26, fontWeight: 500, letterSpacing: 0, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 {fmtCurta(ci)} — {fmtCurta(co)} · {tr('noites', nights(ci, co))}{hosp ? ` · ${tr('pessoas', hosp)}` : ''}
                 <button onClick={() => { setCi(''); setCo(''); setHosp(0); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: GREY, background: 'none', border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 12px', cursor: 'pointer' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13.5, fontWeight: 700, color: GREY, background: 'none', border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 12px', cursor: 'pointer' }}>
                   <X size={12} /> {tr('ps_limpar_consulta')}
                 </button>
                 <button onClick={compartilharPesquisa} aria-live="polite"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: BLACK, background: 'none', border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 12px', cursor: 'pointer', fontFamily: F.sans }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 700, color: BLACK, background: 'none', border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 12px', cursor: 'pointer', fontFamily: F.sans }}>
                   <Share2 size={12} /> {pesquisaCopiada ? tr('ap_link_copiado') : tr('ps_compartilhar_pesquisa')}
                 </button>
               </div>
-              <div style={{ fontSize: 14, color: GREY, marginTop: 4 }}>{subtituloDisponibilidade}</div>
+              <div style={{ fontSize: 16, color: GREY, marginTop: 4 }}>{subtituloDisponibilidade}</div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: GREY, flexShrink: 0 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, color: GREY, flexShrink: 0 }}>
               {tr('ps_ordenar')}
               <select value={sortMode} onChange={e => setSortMode(e.target.value)}
-                style={{ border: `1px solid ${BORDER}`, borderRadius: R.cartao, padding: '7px 10px', fontSize: 13, fontFamily: F.sans, color: BLACK, background: WHITE, cursor: 'pointer' }}>
+                style={{ border: `1px solid ${BORDER}`, borderRadius: R.cartao, padding: '7px 10px', fontSize: 16, fontFamily: F.sans, color: BLACK, background: WHITE, cursor: 'pointer' }}>
                 <option value="default">{tr('ps_ordem_recomendados')}</option>
                 <option value="price_asc">{tr('ps_ordem_menor')}</option>
                 <option value="price_desc">{tr('ps_ordem_maior')}</option>
@@ -968,10 +949,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             <div style={{ marginTop: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 10 }}>
                 <div aria-hidden style={{ flex: 1, height: 1, background: BORDER }} />
-                <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY, whiteSpace: 'nowrap' }}>{tr('ps_outros_apartamentos')}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY, whiteSpace: 'nowrap' }}>{tr('ps_outros_apartamentos')}</div>
                 <div aria-hidden style={{ flex: 1, height: 1, background: BORDER }} />
               </div>
-              <div style={{ fontSize: 14, color: GREY, textAlign: 'center', marginBottom: 36 }}>{tr('ps_outros_apartamentos_desc')}</div>
+              <div style={{ fontSize: 16, color: GREY, textAlign: 'center', marginBottom: 36 }}>{tr('ps_outros_apartamentos_desc')}</div>
               {groups.map(g => <PropertyGroup key={`outros-${g.residencial.id}`} g={g} invert last={g.residencial.id === idUltimoOutro} />)}
             </div>
           );
@@ -986,12 +967,12 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         <div className="pm-pubsite-footer-grid" style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 40 }}>
           <div>
             <GroupLogo variant="principal" size={26} />
-            <div style={{ fontSize: 15, color: GREY, marginTop: 18, lineHeight: 1.6 }}>{tr('ps_essencia')}</div>
+            <div style={{ fontSize: 17, color: GREY, marginTop: 18, lineHeight: 1.6 }}>{tr('ps_essencia')}</div>
           </div>
           {data.residenciais.map(r => (
             <div key={r.id}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: BLACK, marginBottom: 10 }}>{r.nome}</div>
-              <div style={{ fontSize: 14, color: GREY, lineHeight: 1.9 }}>
+              <div style={{ fontSize: 17, fontWeight: 500, color: BLACK, marginBottom: 10 }}>{r.nome}</div>
+              <div style={{ fontSize: 16, color: GREY, lineHeight: 1.9 }}>
                 <div>{r.endereco}</div>
                 <div>{r.cidade}</div>
                 <a href={whatsappUrl(msgGeral(r.nome))} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, color: C.sucesso, fontWeight: 600, textDecoration: 'none' }}>
@@ -1001,8 +982,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             </div>
           ))}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>{tr('ps_horarios')}</div>
-            <div style={{ fontSize: 15, color: GREY, lineHeight: 1.9 }}>
+            <div style={{ fontSize: 16, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>{tr('ps_horarios')}</div>
+            <div style={{ fontSize: 17, color: GREY, lineHeight: 1.9 }}>
               {data.residenciais.map(r => (
                 <div key={r.id} style={{ marginBottom: data.residenciais.length > 1 ? 6 : 0 }}>
                   {data.residenciais.length > 1 && <div style={{ color: BLACK }}>{nomeCurtoResidencial(r)}</div>}
@@ -1013,10 +994,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             </div>
           </div>
         </div>
-        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 13, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase' }}>
+        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 32px', textAlign: 'center', fontSize: 16, color: GREY, letterSpacing: '.12em', textTransform: 'uppercase' }}>
           © {new Date().getFullYear()} Grupo PinheiraMar
           {/* links das políticas e da privacidade (LGPD) */}
-          <nav aria-label={tr('ps_rodape_politicas')} style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 24, marginTop: 4, letterSpacing: 0, textTransform: 'none', fontSize: 14 }}>
+          <nav aria-label={tr('ps_rodape_politicas')} style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 24, marginTop: 4, letterSpacing: 0, textTransform: 'none', fontSize: 16 }}>
             <a href="/?politicas" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: BLACK, textDecoration: 'underline' }}>{tr('ps_rodape_politicas')}</a>
             <a href="/?politicas#privacidade" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: BLACK, textDecoration: 'underline' }}>{tr('ps_rodape_privacidade')}</a>
           </nav>
