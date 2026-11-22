@@ -599,7 +599,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   const popCalendario = (extra = {}) => (
     <>
       <div onClick={() => setCalOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
-      <div className="pm-cal-pop" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 460, maxWidth: '90vw', ...extra }} onClick={e => e.stopPropagation()}>
+      {/* 640 px: os dois meses cabem lado a lado (cada um precisa de ~230) */}
+      <div className="pm-cal-pop" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 100, width: 640, maxWidth: '90vw', ...extra }} onClick={e => e.stopPropagation()}>
         <AvailabilityCalendar ci={ci} co={co} ate={ultimaNoite}
           onChange={(newCi, newCo) => {
             setCi(newCi);
@@ -711,30 +712,6 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             )}
           </div>
 
-          {/* telemóvel: os filtros sobem para o cabeçalho, só com ícones (o nome
-              vai no aria-label/title) e com rolagem para o lado quando não
-              cabem — a pedido do Caio, 2026-09. No desktop ficam na faixa de
-              baixo, com o nome.
-              TESTE (2026-09-26, a pedido do Caio): tirado o nome visível do
-              filtro por residencial no telemóvel também — fica só ícone,
-              como os outros. Antes disto tinha nome porque "ondas" sozinho
-              é ambíguo com o filtro de Frente Mar; ao reverter, restaurar
-              `const comTexto = catIsResidencial(cat.key);`. */}
-          <nav className="pm-pubsite-hcats" aria-label={tr('ps_filtros')}
-            style={{ display: 'none', flex: 1, minWidth: 0, alignItems: 'center', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', padding: '2px 0' }}>
-            {categorias.map((cat, i) => {
-              if (cat.sep) return <div key={`sep${i}`} aria-hidden style={{ alignSelf: 'center', width: 1, height: 24, background: BORDER, flexShrink: 0 }} />;
-              const on = activeCategory === cat.key;
-              const comTexto = false; // teste: sempre só ícone (era catIsResidencial(cat.key))
-              return (
-                <button key={String(cat.key)} type="button" onClick={() => escolherCategoriaTopo(on ? null : cat.key)}
-                  aria-label={cat.nomeCompleto} title={cat.nomeCompleto} aria-pressed={on}
-                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, minWidth: 48, padding: cat.n ? '0 14px 0 12px' : (comTexto ? '0 14px' : '0 12px'), flexShrink: 0, borderRadius: R.pilula, border: `1px solid ${on ? 'rgba(27,28,70,.45)' : BORDER}`, background: on ? 'rgba(27,28,70,.08)' : WHITE, color: on ? BLACK : GREY, cursor: 'pointer', fontFamily: F.sans, fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                  {cat.icone(20)}{cat.n ? <span aria-hidden>{cat.curto || cat.n}</span> : null}{comTexto ? <span aria-hidden>{cat.label}</span> : null}
-                </button>
-              );
-            })}
-          </nav>
 
           {/* idioma — canto superior direito do cabeçalho, só no desktop
               (no telemóvel esta barra fica escondida por CSS: lá o seletor de
@@ -789,10 +766,21 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               </div>
             </div>
           </div>
-          <button onClick={() => { setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-            style={{ width: '100%', minHeight: 56, background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>
-            {tr('m_see_available')}
-          </button>
+          {/* sem datas: a caixa "Escolha as datas para ver valores" abre o
+              calendário; com datas, o botão leva à lista com os preços */}
+          {valid ? (
+            <button onClick={() => { setCalOpen(false); resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+              style={{ width: '100%', minHeight: 56, background: BLACK, color: WHITE, border: 'none', borderRadius: R.cartao, fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>
+              {tr('m_see_available')}
+            </button>
+          ) : (
+            <button type="button" onClick={() => setCalOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 56, padding: '12px 18px', background: BLACK, border: 'none', borderRadius: R.cartao, cursor: 'pointer', fontFamily: F.sans, color: WHITE, textAlign: 'left' }}>
+              <CalendarDays size={19} style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1, fontSize: 16, fontWeight: 700, lineHeight: 1.4 }}>{tr('ps_datas_para_preco')}</span>
+              <ChevronRight size={17} style={{ flexShrink: 0 }} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -895,10 +883,31 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           27 dez · 7 noites") ficava por baixo deles ao rolar até aqui. No
           celular nada fica fixo e continua 80 (ver .pm-pubsite-main em App.jsx). */}
       <main ref={resultsRef} className="pm-pubsite-main" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 32px 40px', scrollMarginTop: 110 }}>
+        {/* telemóvel: filtros (só ícones, com rolagem para o lado) logo acima
+            da lista — antes ficavam no cabeçalho, que passou a ter a logo do
+            grupo (a pedido do Caio, 2026-11-22). No computador ficam na faixa
+            fixa por baixo do topo, com o nome. */}
+          <nav className="pm-pubsite-hcats" aria-label={tr('ps_filtros')}
+            style={{ display: 'none', minWidth: 0, margin: '0 0 28px', alignItems: 'center', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', padding: '2px 0' }}>
+            {categorias.map((cat, i) => {
+              if (cat.sep) return <div key={`sep${i}`} aria-hidden style={{ alignSelf: 'center', width: 1, height: 24, background: BORDER, flexShrink: 0 }} />;
+              const on = activeCategory === cat.key;
+              const comTexto = false; // teste: sempre só ícone (era catIsResidencial(cat.key))
+              return (
+                <button key={String(cat.key)} type="button" onClick={() => escolherCategoriaTopo(on ? null : cat.key)}
+                  aria-label={cat.nomeCompleto} title={cat.nomeCompleto} aria-pressed={on}
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, minWidth: 48, padding: cat.n ? '0 14px 0 12px' : (comTexto ? '0 14px' : '0 12px'), flexShrink: 0, borderRadius: R.pilula, border: `1px solid ${on ? 'rgba(27,28,70,.45)' : BORDER}`, background: on ? 'rgba(27,28,70,.08)' : WHITE, color: on ? BLACK : GREY, cursor: 'pointer', fontFamily: F.sans, fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                  {cat.icone(20)}{cat.n ? <span aria-hidden>{cat.curto || cat.n}</span> : null}{comTexto ? <span aria-hidden>{cat.label}</span> : null}
+                </button>
+              );
+            })}
+          </nav>
+
         {/* sem datas: uma frase só, em vez de um preço "a partir de" em cada
-            cartão — e um toque nela abre logo o calendário */}
+            cartão — e um toque nela abre logo o calendário. No telemóvel esta
+            caixa passa para dentro da busca (no lugar do botão). */}
         {!valid && (
-          <div style={{ marginBottom: 40 }}>
+          <div className="pm-datas-preco" style={{ marginBottom: 40 }}>
             <button type="button" onClick={abrirCalendario}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 10, maxWidth: '100%', minHeight: 48, padding: '12px 18px', background: LIGHT, border: `1px solid ${BORDER}`, borderRadius: R.cartao, cursor: 'pointer', fontFamily: F.sans, color: BLACK, textAlign: 'left' }}>
               <CalendarDays size={19} style={{ flexShrink: 0 }} />

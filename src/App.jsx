@@ -198,11 +198,14 @@ export default function App() {
          desktop continua fixo. */
       .pm-pubsite-header{position:static!important;}
       .pm-pubsite-header-row{padding:10px 16px!important;gap:10px!important;height:auto!important;justify-content:space-between!important;position:relative!important;}
-      /* sem logo no cabeçalho do telemóvel: lá ficam os filtros (só ícones,
-         com rolagem para o lado) e a faixa de categorias de baixo some — a
-         pedido do Caio, 2026-09. A marca continua no rodapé. */
-      .pm-pubsite-brand{display:none!important;}
+      /* cabeçalho do telemóvel: a logo do grupo, ao centro (2026-11-22, a
+         pedido do Caio). Os filtros (só ícones, com rolagem para o lado)
+         ficam logo acima da lista de apartamentos, no lugar da caixa
+         "Escolha as datas", que passou para dentro da busca. */
+      .pm-pubsite-header-row{justify-content:center!important;}
+      .pm-pubsite-brand{height:56px!important;}
       .pm-pubsite-hcats{display:flex!important;}
+      .pm-datas-preco{display:none!important;}
       .pm-pubsite-catbar{display:none!important;}
       .pm-pubsite-search-desktop{display:none!important;}
       .pm-pubsite-search-inline{display:block!important;}
