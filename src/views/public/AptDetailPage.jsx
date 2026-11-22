@@ -3,8 +3,8 @@ import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Users,
   AlertCircle, CalendarDays, Check, Waves, Star, MapPin, Home,
   MessageCircle, X, Share2, DoorOpen, Utensils, SquareParking, Flame, Snowflake,
   Sun, Clock, VolumeX, PawPrint, CigaretteOff, ShoppingBag, Minus, Plus } from 'lucide-react';
-import { Faixa, BRAND } from '../../components/Brand';
-import { C, F, GOOGLE_RATING, R } from '../../lib/constants';
+import { Faixa, FAIXA_INDEX, BRAND } from '../../components/Brand';
+import { C, F, GOOGLE_RATING, R, SIMBOLO_RESIDENCIAL } from '../../lib/constants';
 import { whatsappUrl, msgApartamento } from '../../lib/whatsapp';
 import { money, nights, ymd, today, addDays, isAvailable } from '../../lib/helpers';
 import { orcamentoReserva, regraNoites } from '../../lib/precos';
@@ -232,6 +232,24 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
 
         {/* title + badges */}
         <div className="pm-detail-title-block" style={{ marginBottom: 18 }}>
+          {/* de que residencial é este apartamento (a pedido do Caio, 2026-11-22):
+              símbolo + nome + faixa com a cor do residencial acesa */}
+          {(() => {
+            const res = (data.residenciais || []).find(r => r.id === apt.residencialId);
+            if (!res) return null;
+            const simb = SIMBOLO_RESIDENCIAL[res.id];
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 12px' }}>
+                {simb && (
+                  <span style={{ width: 38, height: 38, borderRadius: 10, background: C.espuma, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <img src={simb} alt="" style={{ width: 25, height: 25, objectFit: 'contain', display: 'block' }} />
+                  </span>
+                )}
+                <span style={{ fontSize: 16, fontWeight: 700, color: BRAND.marinho }}>{res.nome}</span>
+                <Faixa height={3} width={50} lit={FAIXA_INDEX[res.id] ?? null} style={{ marginLeft: 4 }} />
+              </div>
+            );
+          })()}
           <h1 style={{ fontSize: 30, fontWeight: 500, margin: '0 0 8px', letterSpacing: 0, lineHeight: 1.2 }}>{lang === 'pt' ? (apt.tipo || apt.nome) : [apt.nome, dado(apt.piso), dado(apt.vista)].filter(Boolean).join(' · ')}</h1>
           {/* resumo rápido, como no Airbnb: o que o cliente quer saber primeiro */}
           <div className="pm-detail-facts" style={{ fontSize: 17.5, color: C.ink, margin: '0 0 8px' }}>
