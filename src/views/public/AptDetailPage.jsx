@@ -280,15 +280,16 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
               <button onClick={alternarFavorito} aria-label={liked[apt.id] ? tr('ap_salvo') : tr('ap_salvar')} aria-pressed={!!liked[apt.id]} style={floatBtn}><Heart size={18} fill={liked[apt.id] ? BRAND.marinho : 'none'} color={liked[apt.id] ? BRAND.marinho : C.ink} /></button>
             </div>
           </div>
-          {/* fotos inteiras, sem cortar nem deformar (ver FotoInteira em ui.jsx) */}
+          {/* quadro de fotos: cada foto enche o seu espaço (corta as bordas, como no
+              Airbnb); a galeria de ecrã inteiro mostra a foto inteira */}
           {fotos.length >= 3 ? (
             <div ref={galleryRef} onScroll={onGalleryScroll} className="pm-detail-gallery" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '240px 180px', gap: 4 }}>
               <div style={{ gridRow: '1 / 3', position: 'relative', overflow: 'hidden', cursor: 'pointer' }} onClick={() => openLightbox(0)}>
-                <FotoInteira src={fotos[0]} alt={tr('ap_foto_n', 1, apt.nome)} fetchPriority="high" />
+                <FotoInteira src={fotos[0]} alt={tr('ap_foto_n', 1, apt.nome)} fetchPriority="high" preencher />
               </div>
               {fotos.slice(1).map((f, i) => (
                 <div key={i} style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }} onClick={() => openLightbox(i + 1)}>
-                  <FotoInteira src={f} alt={tr('ap_foto_n', i + 2, apt.nome)} loading="lazy" />
+                  <FotoInteira src={f} alt={tr('ap_foto_n', i + 2, apt.nome)} loading="lazy" preencher />
                 </div>
               ))}
               {fotos.length === 0 && <PhotoTile apt={apt} h={420} radius={0} rotulo={dado(apt.vista)} />}

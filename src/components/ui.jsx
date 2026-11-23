@@ -182,18 +182,24 @@ export const CheckoutBadge = ({ compact }) => (
 // `miniatura`: cartões pequenos pedem a versão de 640 px (3 a 5 vezes menor).
 // O fundo desfocado usa sempre a de 640 px — fica desfocado de qualquer maneira.
 const comoWebp = (src, miniatura) => (FOTOS_OTIMIZADAS.has(src) ? src.replace(/\.jpg$/i, miniatura ? '-640.webp' : '.webp') : null);
-export function FotoInteira({ src, alt = '', loading, fetchPriority, onError, miniatura = false }) {
+// `preencher` (2026-11-23, a pedido do Caio, como no Airbnb): a foto enche a
+// moldura e corta as bordas (object-fit: cover), sem o fundo desfocado. Usado
+// no quadro de fotos da página do apartamento e nos cartões; a galeria de
+// ecrã inteiro continua a mostrar a foto inteira.
+export function FotoInteira({ src, alt = '', loading, fetchPriority, onError, miniatura = false, preencher = false }) {
   const webp = comoWebp(src, miniatura);
   const fundo = comoWebp(src, true) || src;
   const foto = (
     <img src={src} alt={alt} loading={loading} decoding="async" fetchpriority={fetchPriority}
-      style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+      style={{ position: 'relative', width: '100%', height: '100%', objectFit: preencher ? 'cover' : 'contain', display: 'block' }}
       onError={e => { const box = e.currentTarget.closest('[data-foto-inteira]'); if (box) box.style.display = 'none'; onError?.(e); }} />
   );
   return (
     <div data-foto-inteira style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: C.line }}>
-      <img src={fundo} alt="" aria-hidden="true" loading={loading} decoding="async"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(18px) brightness(.88)', transform: 'scale(1.15)' }} />
+      {!preencher && (
+        <img src={fundo} alt="" aria-hidden="true" loading={loading} decoding="async"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(18px) brightness(.88)', transform: 'scale(1.15)' }} />
+      )}
       {webp
         ? <picture style={{ display: 'contents' }}><source type="image/webp" srcSet={webp} />{foto}</picture>
         : foto}
@@ -212,9 +218,9 @@ export function PhotoTile({ apt, h = 184, radius = 12, rotulo }) {
     // para miniaturas pequenas — com background-image ficavam com um ar
     // "esborratado"/pixelado nos cartões pequenos, apesar de as mesmas
     // fotos abrirem nítidas em tamanho grande (galeria/lightbox).
-    // foto inteira, sem cortar nem deformar (ver FotoInteira)
+    // a foto enche o cartão (corta as bordas, como no Airbnb — ver FotoInteira)
     return <div style={{ height: h, borderRadius: radius, overflow: 'hidden', position: 'relative' }}>
-      <FotoInteira src={apt.foto} alt={apt.nome || ''} loading="lazy" miniatura />
+      <FotoInteira src={apt.foto} alt={apt.nome || ''} loading="lazy" miniatura preencher />
       {etiqueta && <span style={tilePill}>{etiqueta}</span>}
     </div>;
   }
