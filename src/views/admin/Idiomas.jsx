@@ -76,7 +76,7 @@ export function IdiomasView({ data, update }) {
             {/* toggle ativo/inativo */}
             <div onClick={() => toggle(lang.codigo)}
               style={{ width: 46, height: 26, borderRadius: R.pilula, background: lang.ativo ? C.brisa : C.line, cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
-              <div style={{ position: 'absolute', top: 3, left: lang.ativo ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: C.white, boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+              <div style={{ position: 'absolute', top: 3, left: lang.ativo ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: C.superficie, boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
             </div>
 
             <button onClick={() => setEditando(lang)} style={iconBtn} title="Editar"><Pencil size={15} /></button>
@@ -85,7 +85,7 @@ export function IdiomasView({ data, update }) {
         ))}
 
         {outros.length === 0 && (
-          <div style={{ padding: '20px 16px', color: C.inkSoft, fontSize: 14, textAlign: 'center', background: C.white, borderRadius: R.cartao, border: `1px dashed ${C.line}` }}>
+          <div style={{ padding: '20px 16px', color: C.inkSoft, fontSize: 14, textAlign: 'center', background: C.superficie, borderRadius: R.cartao, border: `1px dashed ${C.line}` }}>
             Nenhum idioma adicional configurado. Clique em <b>Adicionar</b> para disponibilizar o site em mais idiomas.
           </div>
         )}

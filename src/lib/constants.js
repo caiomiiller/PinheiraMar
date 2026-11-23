@@ -3,12 +3,16 @@
 // ações, noite para fundos escuros, pedra para texto de apoio (ver Brand.jsx).
 // Os dois residenciais usam a mesma paleta; a cor própria de cada um
 // (vermelho / azul) entra só nas peças da marca.
-const PALETA = Object.freeze({
+const PALETA_CLARA = Object.freeze({
     // marca
     ocean: '#1B1C46', oceanDeep: '#14152F', brisa: '#2D7F9D',
     acao: '#1B1C46', acaoEscura: '#14152F',            // botões e ações (hoje = marinho)
     // texto, linhas e fundos
     ink: '#1B1C46', inkSoft: '#6F6B64', white: '#FFFFFF',
+    // fundo de cartões, janelas e campos ("branco" como superfície). `white`
+    // fica só para texto/ícones sobre cor (botões marinho, faixas) — no tema
+    // escuro a superfície escurece e esse texto continua branco.
+    superficie: '#FFFFFF',
     line: '#E2E0DB', bordaForte: '#8A8A8A', inativo: '#BBBBBB',
     // cinza claro único das áreas de apoio (identidade 2026-11-22: #F5F6F9)
     espuma: '#F5F6F9', fundoSuave: '#F5F6F9', areia: '#EDE3D3', areiaSoft: '#F6F1EA',
@@ -20,8 +24,47 @@ const PALETA = Object.freeze({
     // verde só para o WhatsApp
     whatsapp: '#1E9E57',
 });
-// Todas as cores de interface vêm daqui (C.<nome>) — não escrever #hex nos componentes.
-export const C = PALETA;
+// Tema escuro do painel de gestão (opcional, escolhido no topo do painel —
+// 2026-11-23, a pedido do Caio). O site público é sempre claro.
+const PALETA_ESCURA = Object.freeze({
+    ocean: '#1B1C46', oceanDeep: '#0E0F22', brisa: '#4FA6C6',
+    acao: '#2D7F9D', acaoEscura: '#7CC0DA',
+    ink: '#E8E9F3', inkSoft: '#A3A6C2', white: '#FFFFFF',
+    superficie: '#1B1D36',
+    line: '#2E3156', bordaForte: '#6E7196', inativo: '#4E527A',
+    espuma: '#13142A', fundoSuave: '#202243', areia: '#3A3426', areiaSoft: '#28241B',
+    sucesso: '#6FD6AC', sucessoBg: '#12362A', sucessoBorda: '#2E8F6C',
+    aviso: '#F2C462', avisoBg: '#3A2E10', avisoBorda: '#6B5520',
+    erro: '#F4877C', erroBg: '#3D1A1C', erroBorda: '#8A3A3A',
+    info: '#8CC4F5', infoBg: '#13263D', infoBorda: '#2A4D75',
+    whatsapp: '#1E9E57',
+});
+// Todas as cores de interface vêm daqui (C.<nome>) — não escrever #hex nos
+// componentes. C é lido na hora de desenhar; aplicarPaleta() troca os valores
+// (claro/escuro) e o painel desenha-se de novo.
+export const C = { ...PALETA_CLARA };
+let escuroAtivo = false;
+export const temaEscuroAtivo = () => escuroAtivo;
+// Objetos de estilo criados fora dos componentes (ex.: inputStyle, STATUS):
+// objetoTema(() => ({ ... C.x ... })) devolve um objeto que é refeito quando
+// a paleta muda, para não ficar com as cores do tema anterior.
+const objetosTema = [];
+export function objetoTema(fazer) {
+  const o = fazer();
+  objetosTema.push([o, fazer]);
+  return o;
+}
+export function aplicarPaleta(escuro) {
+  const novo = !!escuro;
+  if (novo === escuroAtivo) return;
+  escuroAtivo = novo;
+  Object.assign(C, novo ? PALETA_ESCURA : PALETA_CLARA);
+  for (const [o, fazer] of objetosTema) {
+    for (const k of Object.keys(o)) delete o[k];
+    Object.assign(o, fazer());
+  }
+  try { document.documentElement.toggleAttribute('data-tema-escuro', novo); } catch { /* sem DOM (testes) */ }
+}
 // Cantos: só quatro valores — campo (8), botão/cartão (12), modal (16) e pílula (999).
 // Círculos continuam '50%'. Não escrever números soltos em borderRadius.
 export const R = { campo: 8, cartao: 12, modal: 16, pilula: 999 };
@@ -36,7 +79,14 @@ export const TEMA_PAINEL = Object.freeze({
   pinheiramar: { fundo: '#1B1C46', topo: '#14152F', textoSec: 'rgba(255,255,255,.78)', titulo: 'rgba(255,255,255,.72)', icone: '#2D7F9D' },
   novoimovel:  { fundo: '#2D7F9D', topo: '#246A84', textoSec: '#FFFFFF', titulo: '#FFFFFF', icone: '#FFFFFF' },
 });
-export const temaPainel = (residencialId) => TEMA_PAINEL[residencialId] || TEMA_PAINEL.pinheiramar;
+const TEMA_PAINEL_ESCURO = Object.freeze({
+  pinheiramar: { fundo: '#14152F', topo: '#0E0F22', textoSec: 'rgba(255,255,255,.78)', titulo: 'rgba(255,255,255,.66)', icone: '#4FA6C6' },
+  novoimovel:  { fundo: '#1E5A70', topo: '#174A5C', textoSec: '#FFFFFF', titulo: '#FFFFFF', icone: '#FFFFFF' },
+});
+export const temaPainel = (residencialId) => {
+  const t = escuroAtivo ? TEMA_PAINEL_ESCURO : TEMA_PAINEL;
+  return t[residencialId] || t.pinheiramar;
+};
 export const F = {
   // Manrope em todo o site e no painel (identidade 2026-11-22; carregada em
   // index.html). A Montserrat fica só na assinatura do grupo (Brand.jsx).

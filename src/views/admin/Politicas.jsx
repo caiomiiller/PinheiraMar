@@ -146,7 +146,7 @@ export function PoliticasView({ data, update }) {
           <span style={{ fontSize: 12.5, color: C.inkSoft }}>Como ficará visível para o hóspede no site</span>
         </div>
         {[
-          { pol: reservas, accent: C.ocean },
+          { pol: reservas, accent: C.ink },
           { pol: cancelamento, accent: C.acaoEscura },
         ].map(({ pol, accent }) => (
           <div key={pol.titulo} style={{ marginBottom: 22, padding: '18px 20px', background: C.espuma, borderRadius: R.cartao, border: `1px solid ${C.line}` }}>

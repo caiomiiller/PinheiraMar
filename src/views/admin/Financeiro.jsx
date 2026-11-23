@@ -188,7 +188,7 @@ export function Financeiro({ data, go }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', background: C.espuma, borderRadius: R.cartao, padding: 3 }}>
               {PERIODOS.map(p => (
-                <button key={p.id} onClick={() => selectPeriodo(p.id)} style={{ padding: '7px 12px', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: periodo === p.id ? C.white : 'transparent', color: periodo === p.id ? C.ocean : C.inkSoft, boxShadow: periodo === p.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none', whiteSpace: 'nowrap' }}>
+                <button key={p.id} onClick={() => selectPeriodo(p.id)} style={{ padding: '7px 12px', border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: periodo === p.id ? C.superficie : 'transparent', color: periodo === p.id ? C.ink : C.inkSoft, boxShadow: periodo === p.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none', whiteSpace: 'nowrap' }}>
                   {p.label}
                 </button>
               ))}
@@ -197,7 +197,7 @@ export function Financeiro({ data, go }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button type="button" onClick={() => (periodo === 'month' ? moverMes(-1) : setMesSel(s => ({ ...s, ano: s.ano - 1 })))}
                   aria-label={periodo === 'month' ? 'Mês anterior' : 'Ano anterior'}
-                  style={{ height: 32, width: 32, border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.white, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ink }}><ChevronLeft size={15} /></button>
+                  style={{ height: 32, width: 32, border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.superficie, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ink }}><ChevronLeft size={15} /></button>
                 {periodo === 'month' && (
                   <Select aria-label="Mês" value={mesSel.mes} onChange={e => setMesSel(s => ({ ...s, mes: Number(e.target.value) }))} style={{ width: 'auto', height: 32, padding: '0 8px', fontSize: 12.5 }}>
                     {MESES.map((nome, i) => <option key={nome} value={i}>{nome}</option>)}
@@ -208,9 +208,9 @@ export function Financeiro({ data, go }) {
                 </Select>
                 <button type="button" onClick={() => (periodo === 'month' ? moverMes(1) : setMesSel(s => ({ ...s, ano: s.ano + 1 })))}
                   aria-label={periodo === 'month' ? 'Próximo mês' : 'Próximo ano'}
-                  style={{ height: 32, width: 32, border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.white, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ink }}><ChevronRight size={15} /></button>
+                  style={{ height: 32, width: 32, border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.superficie, cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ink }}><ChevronRight size={15} /></button>
                 <button type="button" onClick={() => setMesSel({ ano: t.getFullYear(), mes: t.getMonth() })}
-                  style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.white, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.ink }}>Hoje</button>
+                  style={{ height: 32, padding: '0 10px', border: `1px solid ${C.line}`, borderRadius: R.campo, background: C.superficie, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.ink }}>Hoje</button>
               </div>
             )}
             {periodo === 'custom' && (
@@ -246,7 +246,7 @@ export function Financeiro({ data, go }) {
           {porMes.map((m, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 42 }}>
               <div style={{ fontSize: 10.5, color: C.inkSoft, marginBottom: 3, whiteSpace: 'nowrap' }}>{m.v > 0 ? money(m.v).replace('R$\u00a0', '') : ''}</div>
-              <div title={money(m.v)} style={{ width: '100%', borderRadius: '8px 8px 0 0', background: m.v > 0 ? `linear-gradient(180deg,${C.brisa},${C.ocean})` : C.espuma, height: `${Math.max(4, Math.round((m.v / maxMes) * 100))}px`, minHeight: 4, transition: 'height .3s' }} />
+              <div title={money(m.v)} style={{ width: '100%', borderRadius: '8px 8px 0 0', background: m.v > 0 ? `linear-gradient(180deg,${C.brisa},${C.ink})` : C.espuma, height: `${Math.max(4, Math.round((m.v / maxMes) * 100))}px`, minHeight: 4, transition: 'height .3s' }} />
               <div style={{ fontSize: 10, color: C.inkSoft, marginTop: 4, textTransform: 'uppercase' }}>{m.label}</div>
             </div>
           ))}
@@ -279,7 +279,7 @@ export function Financeiro({ data, go }) {
                     <td style={{ padding: '9px 10px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
                         <div style={{ width: 64, height: 7, background: C.espuma, borderRadius: R.campo, overflow: 'hidden' }}>
-                          <div style={{ width: `${recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.brisa},${C.ocean})`, borderRadius: R.campo }} />
+                          <div style={{ width: `${recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%`, height: '100%', background: `linear-gradient(90deg,${C.brisa},${C.ink})`, borderRadius: R.campo }} />
                         </div>
                         <span style={{ fontSize: 12, color: C.inkSoft, minWidth: 30, textAlign: 'right' }}>{recTotal > 0 ? Math.round((p.receita / recTotal) * 100) : 0}%</span>
                       </div>
@@ -345,7 +345,7 @@ export function Financeiro({ data, go }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
           <span style={{ fontSize: 12, color: C.inkSoft }}>Status:</span>
-          <button onClick={() => setResStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === 'todas' ? C.ocean : C.espuma, color: resStatusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
+          <button onClick={() => setResStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === 'todas' ? C.acao : C.espuma, color: resStatusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
           {['confirmado', 'reservado', 'pendente', 'cortesia', 'bloqueio'].map(st => (
             <button key={st} onClick={() => setResStatusFilter(st)}
               style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === st ? STATUS[st].fg : C.espuma, color: resStatusFilter === st ? C.white : C.inkSoft }}>

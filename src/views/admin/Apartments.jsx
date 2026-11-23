@@ -405,7 +405,7 @@ export function ApartmentForm({ initial, isNew, residencial, onSave, onClose }) 
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 13, color: C.inkSoft }}>Mostrar mapa de localização</span>
               <div onClick={() => setMostrarMapa(m => !m)} style={{ width: 42, height: 24, borderRadius: R.cartao, background: mostrarMapa ? C.brisa : C.line, cursor: 'pointer', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
-                <div style={{ position: 'absolute', top: 3, left: mostrarMapa ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: C.white, boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                <div style={{ position: 'absolute', top: 3, left: mostrarMapa ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: C.superficie, boxShadow: '0 1px 4px rgba(0,0,0,.2)', transition: 'left .2s' }} />
               </div>
             </div>
             <Field label="Cidade, Estado, País" hint="ⓘ">

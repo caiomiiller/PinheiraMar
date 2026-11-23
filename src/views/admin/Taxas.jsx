@@ -31,7 +31,7 @@ export function TaxasView({ data, update }) {
         sub="Taxas obrigatórias ou opcionais apresentadas ao hóspede durante a reserva · arraste para ordenar."
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Adicionar</Btn>} />
 
-      <div style={{ display: 'grid', gap: 0, background: C.white, borderRadius: R.modal, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gap: 0, background: C.superficie, borderRadius: R.modal, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
         {taxas.length === 0 && (
           <div style={{ padding: '28px 20px', textAlign: 'center', color: C.inkSoft, fontSize: 14 }}>
             Nenhuma taxa configurada. Clique em <b>Adicionar</b> para criar a primeira.
@@ -41,7 +41,7 @@ export function TaxasView({ data, update }) {
           <div key={tx.id} {...dnd.zone(idx)} className="pm-taxa-row" style={{ display: 'flex', alignItems: 'center', gap: 14, rowGap: 8, flexWrap: 'wrap', padding: '16px 20px', borderBottom: idx < taxas.length - 1 ? `1px solid ${C.line}` : 'none', ...dnd.deco(idx) }}>
             <DragGrip {...dnd.grip(idx)} />
             <div className="pm-taxa-name" style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: 15, color: C.ocean, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.nome}</div>
+              <div style={{ fontWeight: 600, fontSize: 15, color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.nome}</div>
             </div>
             <div className="pm-taxa-price" style={{ fontWeight: 700, fontSize: 14, color: C.ink, minWidth: 64, textAlign: 'right' }}>{money(tx.preco)}</div>
             <div className="pm-taxa-tipo" style={{ minWidth: 90, textAlign: 'center' }}>

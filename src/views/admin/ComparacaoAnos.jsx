@@ -219,7 +219,7 @@ export function ComparacaoAnos({ data }) {
   // "dez/2025" — rótulo de cada lado nos cards
   const anoB = `${MESES_CURTOS[inicioB.getMonth()]}/${inicioB.getFullYear()}`;
   const anoA = `${MESES_CURTOS[inicioA.getMonth()]}/${inicioA.getFullYear()}`;
-  const navBtn = { height: 34, padding: '0 10px', border: `1px solid ${C.line}`, background: C.white, cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.ink, fontSize: 13, fontWeight: 600 };
+  const navBtn = { height: 34, padding: '0 10px', border: `1px solid ${C.line}`, background: C.superficie, cursor: 'pointer', display: 'flex', alignItems: 'center', color: C.ink, fontSize: 13, fontWeight: 600 };
   const tituloLado = (dias, destaque) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 8px 6px', fontWeight: 700, fontSize: 15, color: C.ink, whiteSpace: 'nowrap' }}>
       {rotuloJanela(dias[0], dias[dias.length - 1])}
@@ -237,7 +237,7 @@ export function ComparacaoAnos({ data }) {
         <div className="pm-hide-sm" style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
           <button type="button" onClick={() => setJuntos(j => !j)} aria-pressed={juntos}
             title={juntos ? 'As setas andam 7 dias nos dois períodos' : 'As setas andam 7 dias só no período principal'}
-            style={{ ...navBtn, borderRadius: R.pilula, gap: 6, background: juntos ? C.sucessoBg : C.white, color: juntos ? C.sucesso : C.inkSoft, borderColor: juntos ? C.sucessoBorda : C.line }}>
+            style={{ ...navBtn, borderRadius: R.pilula, gap: 6, background: juntos ? C.sucessoBg : C.superficie, color: juntos ? C.sucesso : C.inkSoft, borderColor: juntos ? C.sucessoBorda : C.line }}>
             {juntos ? <Link2 size={15} /> : <Unlink size={15} />} {juntos ? 'Navegar juntos' : 'Separados'}
           </button>
           <div style={{ display: 'flex' }}>
@@ -299,7 +299,7 @@ export function ComparacaoAnos({ data }) {
               const lista = porApto.get(apt.id);
               return (
                 <div key={apt.id} style={{ display: 'flex', borderBottom: `1px solid ${C.line}` }}>
-                  <div style={{ width: NAMEW, flexShrink: 0, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6, position: 'sticky', left: 0, background: C.white, zIndex: 2, borderRight: `1px solid ${C.line}` }}>
+                  <div style={{ width: NAMEW, flexShrink: 0, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6, position: 'sticky', left: 0, background: C.superficie, zIndex: 2, borderRight: `1px solid ${C.line}` }}>
                     <span style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>{apt.nome}</span>
                     {icone && <img src={icone} alt="" title={res.nome} style={{ width: 16, height: 16, objectFit: 'contain' }} onError={e => { e.target.style.display = 'none'; }} />}
                     <span style={{ fontSize: 11, color: C.inkSoft }}>{apt.capacidade}p</span>

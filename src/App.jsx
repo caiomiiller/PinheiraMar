@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import { Waves, RefreshCw, FlaskConical } from 'lucide-react';
-import { C, F, TELEFONE_CONTATO, R } from './lib/constants';
+import { C, F, TELEFONE_CONTATO, R, aplicarPaleta } from './lib/constants';
 import { PublicSite } from './views/public/PublicSite';
 import { PoliticasPublicas } from './views/public/PoliticasPublicas';
 import { carregarPublico, reservar, limparCopiasAntigas } from './lib/dadosPublico';
@@ -110,6 +110,9 @@ function SitePublico() {
 
 export default function App() {
   const [mode, setMode] = useState(modoFromURL);   // 'site' | 'admin'
+  // o site público é sempre claro: ao sair do painel (que pode estar no tema
+  // escuro) volta a paleta clara ANTES de desenhar o site
+  if (mode !== 'admin') aplicarPaleta(false);
 
   const css = `
     /* nunca deixar a página inteira deslocar-se na horizontal — qualquer

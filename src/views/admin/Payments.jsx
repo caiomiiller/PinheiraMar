@@ -104,7 +104,7 @@ export function PaymentsView({ data, update }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
           {[
             { step: '1', title: 'Crie uma conta Business', desc: 'Abra uma conta no Mercado Pago em mercadopago.com.br. Use CNPJ para ter acesso à API completa e melhores taxas.', cor: C.brisa },
-            { step: '2', title: 'Obtenha o Access Token', desc: 'Em "Credenciais" no painel do Mercado Pago, copie o Access Token de produção e cadastre-o na Vercel (Settings → Environment Variables) como MP_ACCESS_TOKEN. Nunca o escreva aqui no painel nem o envie por e-mail.', cor: C.ocean },
+            { step: '2', title: 'Obtenha o Access Token', desc: 'Em "Credenciais" no painel do Mercado Pago, copie o Access Token de produção e cadastre-o na Vercel (Settings → Environment Variables) como MP_ACCESS_TOKEN. Nunca o escreva aqui no painel nem o envie por e-mail.', cor: C.acao },
             { step: '3', title: 'Webhook', desc: 'Não é preciso configurar: cada link de pagamento já informa ao Mercado Pago o endereço de aviso do site (/api/mp-webhook), que confere o pagamento e confirma a reserva.', cor: C.acao },
             { step: '4', title: 'Fluxo no motor de reservas', desc: 'Reserva criada no site → link de pagamento do sinal → hóspede paga → o aviso do Mercado Pago confirma → a reserva passa a "Reservado" e o hóspede recebe o e-mail.', cor: '#7C3AED' },
           ].map(s => (

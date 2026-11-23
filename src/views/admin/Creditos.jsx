@@ -45,7 +45,7 @@ export function CreditosView({ data, update }) {
         sub={`Registo manual de créditos/vouchers (ex.: por cancelamento de reserva).${creditos.length ? ` ${money(totalAberto)} em aberto.` : ''}`}
         action={<Btn icon={Plus} onClick={() => setEditing('new')}>Adicionar</Btn>} />
 
-      <div style={{ background: C.white, borderRadius: R.modal, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
+      <div style={{ background: C.superficie, borderRadius: R.modal, border: `1px solid ${C.line}`, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <div style={{ minWidth: 680 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.9fr 1.1fr 1.6fr 108px 92px', gap: 12, padding: '10px 20px', background: C.espuma, borderBottom: `1px solid ${C.line}`, fontSize: 12, fontWeight: 700, color: C.inkSoft }}>
@@ -58,7 +58,7 @@ export function CreditosView({ data, update }) {
             )}
             {ordenados.map((c, idx) => (
               <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.9fr 1.1fr 1.6fr 108px 92px', gap: 12, alignItems: 'center', padding: '14px 20px', borderBottom: idx < ordenados.length - 1 ? `1px solid ${C.line}` : 'none', opacity: c.utilizado ? .6 : 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: C.ocean, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.hospede}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: C.ink, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.hospede}</div>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{money(c.valor)}</div>
                 <div style={{ fontSize: 12.5, color: C.inkSoft, lineHeight: 1.4 }}>
                   {fmtShort(c.criadoEm)}{c.validade ? <><br />válido até {fmtShort(c.validade)}</> : null}

@@ -199,7 +199,7 @@ export function Dashboard({ data, go, openReservation, update }) {
                   <b>{r.codigo}</b> · {r.hospede || '—'} · {aptName(r.apartamentoId)}
                 </button>
                 <button onClick={() => update?.(prev => ({ ...prev, reservas: prev.reservas.map(x => x.id === r.id ? { ...x, conflitoDatas: false } : x) }))}
-                  style={{ flexShrink: 0, background: C.white, border: `1px solid ${C.avisoBorda}`, borderRadius: R.pilula, padding: '6px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: C.aviso, fontFamily: F.sans }}>
+                  style={{ flexShrink: 0, background: C.superficie, border: `1px solid ${C.avisoBorda}`, borderRadius: R.pilula, padding: '6px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: C.aviso, fontFamily: F.sans }}>
                   Marcar como resolvido
                 </button>
               </div>
@@ -275,7 +275,7 @@ export function Dashboard({ data, go, openReservation, update }) {
                 {p.nome}{p.capacidade ? <span style={{ opacity: .65 }}> · {p.capacidade}p</span> : null}
               </div>
               <div style={{ flex: 1, height: 10, background: C.espuma, borderRadius: R.campo, overflow: 'hidden' }}>
-                <div style={{ width: `${p.pct}%`, height: '100%', borderRadius: R.campo, background: p.pct >= 70 ? `linear-gradient(90deg,${C.acao},${C.acaoEscura})` : `linear-gradient(90deg,${C.brisa},${C.ocean})` }} />
+                <div style={{ width: `${p.pct}%`, height: '100%', borderRadius: R.campo, background: p.pct >= 70 ? `linear-gradient(90deg,${C.acao},${C.acaoEscura})` : `linear-gradient(90deg,${C.brisa},${C.ink})` }} />
               </div>
               <div style={{ width: 36, fontSize: 12.5, textAlign: 'right', color: C.inkSoft, flexShrink: 0 }}>{p.pct}%</div>
             </div>

@@ -5,7 +5,7 @@
 // tentar de novo; nada é "gravado só neste dispositivo" em silêncio.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Waves, Home, LogOut, RefreshCw, AlertTriangle, Check, Eye, EyeOff, Upload } from 'lucide-react';
-import { C, F, R } from '../../lib/constants';
+import { C, F, R, objetoTema } from '../../lib/constants';
 import { Admin } from './Admin';
 import { ConfirmDialog } from '../../components/ui';
 import {
@@ -25,10 +25,10 @@ function Tela({ children }) {
   return <div style={{ minHeight: '100vh', background: C.oceanDeep, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F.sans, padding: 24 }}>{children}</div>;
 }
 function Cartao({ children }) {
-  return <div className="pm-pop" style={{ background: C.white, borderRadius: R.modal, padding: '36px 32px', width: '100%', maxWidth: 400, boxShadow: '0 32px 80px rgba(0,0,0,.36)' }}>{children}</div>;
+  return <div className="pm-pop" style={{ background: C.superficie, borderRadius: R.modal, padding: '36px 32px', width: '100%', maxWidth: 400, boxShadow: '0 32px 80px rgba(0,0,0,.36)' }}>{children}</div>;
 }
-const campo = { width: '100%', boxSizing: 'border-box', padding: '13px 14px', fontSize: 16, border: `1.5px solid ${C.line}`, borderRadius: R.cartao, outline: 'none', fontFamily: F.sans, color: C.ink, background: C.white };
-const botao = { width: '100%', minHeight: 50, background: C.ocean, color: C.white, border: 'none', borderRadius: R.cartao, fontWeight: 600, fontSize: 16, cursor: 'pointer', fontFamily: F.sans };
+const campo = objetoTema(() => ({ width: '100%', boxSizing: 'border-box', padding: '13px 14px', fontSize: 16, border: `1.5px solid ${C.line}`, borderRadius: R.cartao, outline: 'none', fontFamily: F.sans, color: C.ink, background: C.superficie }));
+const botao = objetoTema(() => ({ width: '100%', minHeight: 50, background: C.acao, color: C.white, border: 'none', borderRadius: R.cartao, fontWeight: 600, fontSize: 16, cursor: 'pointer', fontFamily: F.sans }));
 
 export function LoginScreen({ onEntrar }) {
   const [email, setEmail] = useState('');
@@ -227,7 +227,7 @@ function PainelComDados({ sessao, onVerSite, onSair }) {
           : 'Verifique a conexão e tente de novo. Nada foi alterado.'}>
         <button onClick={recarregar} style={botao}><RefreshCw size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Tentar de novo</button>
         {semAcesso && <RestaurarBancoVazio onFeito={recarregar} />}
-        <button onClick={onSair} style={{ ...botao, background: C.white, color: C.ink, border: `1.5px solid ${C.line}` }}>Sair</button>
+        <button onClick={onSair} style={{ ...botao, background: C.superficie, color: C.ink, border: `1.5px solid ${C.line}` }}>Sair</button>
       </AvisoPainel>
     );
   }
@@ -262,7 +262,7 @@ function BarraSync({ sync, pendentes, onTentar, onRecarregar }) {
   return (
     <div role="status" aria-live="polite" style={{
       position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 200, maxWidth: 560, margin: '0 auto',
-      background: erro ? C.erroBg : C.white, border: `1px solid ${erro ? C.erroBorda : C.line}`, borderRadius: R.cartao,
+      background: erro ? C.erroBg : C.superficie, border: `1px solid ${erro ? C.erroBorda : C.line}`, borderRadius: R.cartao,
       boxShadow: '0 10px 30px rgba(0,0,0,.16)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, fontFamily: F.sans, fontSize: 14.5, color: C.ink,
     }}>
       {erro ? <AlertTriangle size={20} color={C.erro} style={{ flexShrink: 0 }} /> : <RefreshCw size={18} className="pm-girar" style={{ flexShrink: 0 }} />}
@@ -271,8 +271,8 @@ function BarraSync({ sync, pendentes, onTentar, onRecarregar }) {
           ? (MENSAGENS_ERRO[sync.codigo] || `Não foi possível salvar ${pendentes > 1 ? `${pendentes} alterações` : 'a última alteração'} — verifique a conexão.`)
           : `Salvando${pendentes > 1 ? ` ${pendentes} alterações` : ''}…`}
       </div>
-      {erro && pendentes > 0 && <button onClick={onTentar} style={{ minHeight: 40, padding: '0 14px', borderRadius: R.cartao, border: 'none', background: C.ocean, color: C.white, fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }}>Tentar de novo</button>}
-      {erro && <button onClick={onRecarregar} style={{ minHeight: 40, padding: '0 12px', borderRadius: R.cartao, border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }} title="Descarta o que não foi salvo e recarrega os dados do servidor">Recarregar</button>}
+      {erro && pendentes > 0 && <button onClick={onTentar} style={{ minHeight: 40, padding: '0 14px', borderRadius: R.cartao, border: 'none', background: C.acao, color: C.white, fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }}>Tentar de novo</button>}
+      {erro && <button onClick={onRecarregar} style={{ minHeight: 40, padding: '0 12px', borderRadius: R.cartao, border: `1px solid ${C.line}`, background: C.superficie, color: C.ink, fontWeight: 600, cursor: 'pointer', fontFamily: F.sans }} title="Descarta o que não foi salvo e recarrega os dados do servidor">Recarregar</button>}
     </div>
   );
 }
@@ -305,7 +305,7 @@ function RestaurarBancoVazio({ onFeito }) {
   return (
     <>
       <input ref={ref} type="file" accept="application/json,.json" onChange={escolher} style={{ display: 'none' }} />
-      <button onClick={() => ref.current?.click()} style={{ ...botao, background: C.white, color: C.ink, border: `1.5px solid ${C.line}` }}><Upload size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Banco vazio? Restaurar backup</button>
+      <button onClick={() => ref.current?.click()} style={{ ...botao, background: C.superficie, color: C.ink, border: `1.5px solid ${C.line}` }}><Upload size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Banco vazio? Restaurar backup</button>
       {msg && <div style={{ fontSize: 14, color: msg.ok ? C.sucesso : C.erro }}>{msg.ok && <Check size={14} />} {msg.t}</div>}
       {pendente && (
         <ConfirmDialog

@@ -1,12 +1,12 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { X, ChevronLeft, GripVertical, Minus, Plus, LogIn, LogOut } from 'lucide-react';
-import { C, F, R } from '../lib/constants';
+import { C, F, R, objetoTema } from '../lib/constants';
 import { ymd, today } from '../lib/helpers';
 import { FOTOS_OTIMIZADAS } from '../lib/fotosOtimizadas';
 
 // 16 px: abaixo disso o iPhone dá zoom sozinho ao tocar no campo (e é mais
 // legível para o público 50+).
-const inputStyle = { width: '100%', padding: '11px 12px', borderRadius: R.cartao, border: `1px solid ${C.line}`, background: C.white, color: C.ink, fontSize: '16px', outline: 'none', fontFamily: F.sans, boxSizing: 'border-box' };
+const inputStyle = objetoTema(() => ({ width: '100%', padding: '11px 12px', borderRadius: R.cartao, border: `1px solid ${C.line}`, background: C.superficie, color: C.ink, fontSize: '16px', outline: 'none', fontFamily: F.sans, boxSizing: 'border-box' }));
 
 export const TextInput = (p) => <input {...p} className="pmf" style={{ ...inputStyle, ...(p.style || {}) }} />;
 export const DateInput = (p) => <input type="date" {...p} className="pmf" style={{ ...inputStyle, ...(p.style || {}) }} />;
@@ -18,9 +18,9 @@ export function Btn({ variant = 'primary', size = 'md', children, style, icon: I
   const base = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.sans, fontWeight: 600, borderRadius: R.cartao, cursor: 'pointer', border: '1px solid transparent', transition: 'all .15s ease', whiteSpace: 'nowrap' };
   const sizes = { sm: { padding: '7px 12px', fontSize: 13 }, md: { padding: '10px 16px', fontSize: 14 }, lg: { padding: '13px 22px', fontSize: 15 } };
   const variants = {
-    primary: { background: C.ocean, color: C.white },
+    primary: { background: C.acao, color: C.white },
     accent: { background: C.acao, color: C.white },
-    ghost: { background: 'transparent', color: C.ocean, border: `1px solid ${C.line}` },
+    ghost: { background: 'transparent', color: C.ink, border: `1px solid ${C.line}` },
     soft: { background: C.areiaSoft, color: C.ink, border: `1px solid ${C.areia}` },
     danger: { background: 'transparent', color: C.erro, border: `1px solid ${C.erroBorda}` },
   };
@@ -49,7 +49,7 @@ export function Modal({ title, subtitle, onClose, onBack, headerActions, childre
   return (
     <div onClick={onClose} className="pm-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(10,40,46,.45)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 14px', zIndex: 100, overflowY: 'auto', backdropFilter: 'blur(2px)' }}>
       <div ref={cartaoRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={tituloId}
-        onClick={e => e.stopPropagation()} className="pm-pop pm-modal-card" style={{ outline: 'none', background: C.white, borderRadius: R.modal, width: '100%', maxWidth: wide ? 760 : 520, boxShadow: '0 24px 70px rgba(10,40,46,.35)', overflow: 'hidden', marginTop: 12 }}>
+        onClick={e => e.stopPropagation()} className="pm-pop pm-modal-card" style={{ outline: 'none', background: C.superficie, borderRadius: R.modal, width: '100%', maxWidth: wide ? 760 : 520, boxShadow: '0 24px 70px rgba(10,40,46,.35)', overflow: 'hidden', marginTop: 12 }}>
         <div className="pm-modal-header" style={{ padding: '18px 22px', borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
             {onBack && (
@@ -107,7 +107,7 @@ export const Field = ({ label, children, hint, required }) => (
 //   check-out  (vermelho)       — estadia terminada (ver displayStatus)
 // Cancelada e check-out tinham exatamente a mesma cor; a pedido do Caio
 // (2026-11-11) o vermelho fica para a estadia terminada e a cancelada passa a roxo.
-export const STATUS = {
+export const STATUS = objetoTema(() => ({
   pendente: { label: 'Pendente', bg: '#EDEFEF', fg: '#5C6B6A', bar: '#AEB8B7' },
   reservado: { label: 'Reservado', bg: C.avisoBg, fg: C.aviso, bar: '#E0A23A' },
   confirmado: { label: 'Confirmado', bg: C.sucessoBg, fg: C.sucesso, bar: '#2E9E78' },
@@ -117,7 +117,7 @@ export const STATUS = {
   // pseudo-estado, só para cor/etiqueta (ver displayStatus abaixo) — nunca é
   // uma opção do seletor "Estado" nem entra na legenda do calendário.
   checkout: { label: 'Check-out', bg: C.erroBg, fg: C.erro, bar: C.erroBorda },
-};
+}));
 
 // Estado "efetivo" para pintar uma reserva concreta (barra do calendário,
 // Badge, cartões): a pedido do Caio, a reserva só fica vermelha de
@@ -252,7 +252,7 @@ export const PageHead = ({ title, sub, action }) => (
     {action}
   </div>
 );
-export const Card = ({ children, style, ...rest }) => <div {...rest} style={{ background: C.white, borderRadius: R.modal, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
+export const Card = ({ children, style, ...rest }) => <div {...rest} style={{ background: C.superficie, borderRadius: R.modal, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
 
 // Diálogo de confirmação genérico — usado antes de qualquer exclusão
 // permanente (apartamento, taxa, idioma, meio de pagamento, temporada...),
@@ -293,9 +293,9 @@ export const DragGrip = (props) => <span {...props}><GripVertical size={18} /></
 
 /* ── Dashboard ── */
 export function Stepper({ value, set, min = 0, max = 99, disabled }) {
-  const btn = { width: 36, height: 40, border: 'none', background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ocean };
+  const btn = { width: 36, height: 40, border: 'none', background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center', color: C.ink };
   return (
-    <div style={{ display: 'flex', alignItems: 'stretch', border: `1px solid ${C.line}`, borderRadius: R.cartao, overflow: 'hidden', opacity: disabled ? 0.5 : 1, background: C.white }}>
+    <div style={{ display: 'flex', alignItems: 'stretch', border: `1px solid ${C.line}`, borderRadius: R.cartao, overflow: 'hidden', opacity: disabled ? 0.5 : 1, background: C.superficie }}>
       <button type="button" disabled={disabled || value <= min} onClick={() => set(Math.max(min, value - 1))} style={{ ...btn, borderRight: `1px solid ${C.line}` }}><Minus size={15} /></button>
       <div style={{ flex: 1, display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 600, minWidth: 44 }}>{value}</div>
       <button type="button" disabled={disabled || value >= max} onClick={() => set(Math.min(max, value + 1))} style={{ ...btn, borderLeft: `1px solid ${C.line}` }}><Plus size={15} /></button>
@@ -303,7 +303,7 @@ export function Stepper({ value, set, min = 0, max = 99, disabled }) {
   );
 }
 export const MoneyInput = ({ value, onChange, style }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: R.campo, padding: '0 8px', background: C.white, ...style }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 4, border: `1px solid ${C.line}`, borderRadius: R.campo, padding: '0 8px', background: C.superficie, ...style }}>
     <span style={{ fontSize: 12, color: C.inkSoft }}>R$</span>
     <input className="pmf" type="number" step="1" value={value} onChange={onChange}
       style={{ width: '100%', border: 'none', outline: 'none', padding: '7px 0', fontSize: 13, fontFamily: F.sans, background: 'transparent', color: C.ink }} />

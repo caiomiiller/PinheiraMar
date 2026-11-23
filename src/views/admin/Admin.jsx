@@ -81,7 +81,7 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
           {/* símbolo do residencial escolhido, num quadrado branco (as ondas
               do Caminho do Mar sumiam sobre o fundo azul do próprio tema) */}
           {simbolo
-            ? <div title={residencial.nome} style={{ width: 40, height: 40, borderRadius: R.campo, background: C.white, display: 'grid', placeItems: 'center', flexShrink: 0, padding: 5, boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,.18)' }}>
+            ? <div title={residencial.nome} style={{ width: 40, height: 40, borderRadius: R.campo, background: C.superficie, display: 'grid', placeItems: 'center', flexShrink: 0, padding: 5, boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,.18)' }}>
                 <img key={simbolo} src={simbolo} alt={residencial.nome} className="pm-pop" style={{ width: 30, height: 30, objectFit: 'contain', display: 'block' }} />
               </div>
             : <div style={{ width: 34, height: 34, borderRadius: R.campo, background: 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center', color: C.white, flexShrink: 0 }}><Waves size={19} /></div>}
@@ -107,10 +107,10 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
               <ChevronDown size={14} style={{ flexShrink: 0 }} />
             </button>
             {picker && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: C.white, borderRadius: R.cartao, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: C.superficie, borderRadius: R.cartao, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
                 {data.residenciais.map(r => (
                   <button key={r.id} onClick={() => { setResidencialId(r.id); setPicker(false); }}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: r.id === residencialId ? C.espuma : C.white, color: C.ink, cursor: 'pointer', fontSize: 13, fontWeight: r.id === residencialId ? 700 : 500 }}>
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: r.id === residencialId ? C.espuma : C.superficie, color: C.ink, cursor: 'pointer', fontSize: 13, fontWeight: r.id === residencialId ? 700 : 500 }}>
                     {r.nome}
                   </button>
                 ))}
@@ -151,7 +151,7 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
                 {simbolo && (
-                  <span style={{ width: 26, height: 26, borderRadius: 6, background: C.white, display: 'grid', placeItems: 'center', padding: 3, boxSizing: 'border-box', flexShrink: 0 }}>
+                  <span style={{ width: 26, height: 26, borderRadius: 6, background: C.superficie, display: 'grid', placeItems: 'center', padding: 3, boxSizing: 'border-box', flexShrink: 0 }}>
                     <img src={simbolo} alt="" style={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }} />
                   </span>
                 )}
@@ -160,10 +160,10 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
               <ChevronDown size={14} style={{ flexShrink: 0, transform: picker ? 'rotate(180deg)' : 'none' }} />
             </button>
             {picker && (
-              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 14, right: 14, background: C.white, borderRadius: R.cartao, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 14, right: 14, background: C.superficie, borderRadius: R.cartao, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,.28)', zIndex: 60 }}>
                 {data.residenciais.map(r => (
                   <button key={r.id} onClick={() => { setResidencialId(r.id); setPicker(false); }}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '11px 12px', border: 'none', background: r.id === residencialId ? C.espuma : C.white, color: C.ink, cursor: 'pointer', fontSize: 13.5, fontWeight: r.id === residencialId ? 700 : 500 }}>
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '11px 12px', border: 'none', background: r.id === residencialId ? C.espuma : C.superficie, color: C.ink, cursor: 'pointer', fontSize: 13.5, fontWeight: r.id === residencialId ? 700 : 500 }}>
                     {r.nome}
                   </button>
                 ))}
@@ -187,7 +187,7 @@ export function Admin({ data, update, initialResidencialId, onTema }) {
         </nav>
         {maisAberto && (
           <div className="pm-tabbar-mais" onClick={() => setMaisAberto(false)} style={{ position: 'fixed', inset: 0, zIndex: 65, background: 'rgba(10,20,30,.45)', display: 'flex', alignItems: 'flex-end' }}>
-            <div role="dialog" aria-label="Mais opções do painel" onClick={e => e.stopPropagation()} style={{ width: '100%', maxHeight: '75vh', overflowY: 'auto', background: C.white, borderRadius: `${R.modal}px ${R.modal}px 0 0`, padding: '16px 14px calc(84px + env(safe-area-inset-bottom))' }}>
+            <div role="dialog" aria-label="Mais opções do painel" onClick={e => e.stopPropagation()} style={{ width: '100%', maxHeight: '75vh', overflowY: 'auto', background: C.superficie, borderRadius: `${R.modal}px ${R.modal}px 0 0`, padding: '16px 14px calc(84px + env(safe-area-inset-bottom))' }}>
               {GRUPOS.map(g => {
                 const itens = g.itens.filter(t => !BARRA_CELULAR.includes(t.id));
                 if (!itens.length) return null;
