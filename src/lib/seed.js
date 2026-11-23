@@ -235,7 +235,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       nome: 'Residencial Caminho do Mar', tipo: 'Apartamento',
       email: 'contato@pinheiramar.com.br', telefone: '48 98476-1800',
       cidade: 'Palhoça - Santa Catarina, Brasil',
-      endereco: 'Rua Hortêncio Pedro Antunes, 124 - Enseada da Pinheira', cep: '',
+      endereco: 'Rua Hortêncio Pedro Antunes, 55 - Enseada da Pinheira', cep: '',
       fuso: '(GMT-03:00) América/São Paulo', moeda: 'Real Brasileiro (R$)',
       sinalPct: 50, checkInHora: '13:00', checkOutHora: '10:00',
       politicas: {
