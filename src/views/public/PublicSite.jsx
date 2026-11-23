@@ -460,8 +460,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             </div>
           ))}
         </div>
+        {/* setas nas pontas: ‹ à esquerda e › à direita da fila (só no
+            computador; no telemóvel somem — ver App.jsx) */}
         {items.length > 4 && (
-          <div className="pm-row-arrows" style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <div className="pm-row-arrows" style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 16 }}>
             <button onClick={() => shift(-1)} aria-label={tr('ps_rolar_anteriores')} title={tr('ps_rolar_anteriores')} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronLeft size={16} /></button>
             <button onClick={() => shift(1)}  aria-label={tr('ps_rolar_seguintes')} title={tr('ps_rolar_seguintes')} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', display: 'grid', placeItems: 'center', color: GREY }}><ChevronRight size={16} /></button>
           </div>
