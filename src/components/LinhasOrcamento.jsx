@@ -11,7 +11,8 @@ import { SeloTaxa } from './SeloTaxa';
 export function LinhasOrcamento({ o, titulo }) {
   const { tr } = useIdioma();
   if (!o) return null;
-  const linha = { display: 'flex', justifyContent: 'space-between', gap: 10 };
+  // valor alinhado em baixo, na última linha do nome da despesa (a pedido do Caio)
+  const linha = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 };
   return (
     <div style={{ display: 'grid', gap: 6 }}>
       {titulo && <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: C.inkSoft, marginTop: 4 }}>{titulo}</div>}
@@ -26,7 +27,7 @@ export function LinhasOrcamento({ o, titulo }) {
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <SeloTaxa tipo={e.tipo} />{e.nome}{e.qtd > 1 ? ` × ${e.qtd}` : ''}
           </span>
-          <span>{money(e.subtotal)}</span>
+          <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{money(e.subtotal)}</span>
         </div>
       ))}
     </div>
