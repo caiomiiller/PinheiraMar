@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { C, F, R } from '../../lib/constants';
 import { money, nights, parseYMD, ymd, today, fmtShort, holdExpirado } from '../../lib/helpers';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Card, PageHead, Badge, Btn, DateInput, Select, STATUS } from '../../components/ui';
+import { Card, PageHead, Badge, Btn, DateInput, Select, STATUS, corSolidaStatus } from '../../components/ui';
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
@@ -348,7 +348,7 @@ export function Financeiro({ data, go }) {
           <button onClick={() => setResStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === 'todas' ? C.acao : C.espuma, color: resStatusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
           {['confirmado', 'reservado', 'pendente', 'cortesia', 'bloqueio'].map(st => (
             <button key={st} onClick={() => setResStatusFilter(st)}
-              style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === st ? STATUS[st].fg : C.espuma, color: resStatusFilter === st ? C.white : C.inkSoft }}>
+              style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: resStatusFilter === st ? corSolidaStatus(st) : C.espuma, color: resStatusFilter === st ? C.white : C.inkSoft }}>
               {STATUS[st].label}
             </button>
           ))}

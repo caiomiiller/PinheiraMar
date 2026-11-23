@@ -4,13 +4,13 @@ import { Plus, Search, Download, Upload, Database, Pencil, Trash2, Copy, Chevron
   Clock, Info, Users, Wallet, LogIn, LogOut, Car, Sparkles, PawPrint, Umbrella,
   BedDouble, Baby, Percent, Wind, Waves, Utensils, Wifi, Flame, Shield, Gift,
   Sun, Shirt, Sofa } from 'lucide-react';
-import { C, F, R, objetoTema } from '../../lib/constants';
+import { C, F, R, objetoTema, temaEscuroAtivo } from '../../lib/constants';
 import { money, nights, ymd, today, parseYMD, fmtShort, uid, code, isAvailable, stayBreakdown,
   nightlyRate, addDays, holidaysOn, HOLIDAY_LABELS, WD, HOLIDAY_COLORS, MS,
   seasonForDate, aptRates, roomFullName, overlaps, capacidadeBaseOf } from '../../lib/helpers';
 import { buildCSV, downloadBlob, rowToReserva, PAISES, reservaToRow, CSV_COLS } from '../../lib/csvUtils';
 import { Card, PageHead, Badge, Btn, Modal, Field, TextInput, DateInput, Select, Textarea, duplicateInList,
-  Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus, Stepper, MoneyInput } from '../../components/ui';
+  Note, STATUS, ConfirmDialog, CheckinBadge, CheckoutBadge, barBackground, displayStatus, Stepper, MoneyInput, corSolidaStatus } from '../../components/ui';
 import { moverPorId } from '../../hooks/useReorder';
 import { enviarConfirmacaoReserva } from '../../lib/dadosAdmin';
 import { extrasObrigatorios, quantidadeTaxa } from '../../lib/precos';
@@ -44,7 +44,7 @@ export function textoFalhaEmail(motivo) {
 // para identificação visual, ver pedido do gestor).
 const residencialOf = (data, apt) => (data.residenciais || []).find(r => r.id === apt?.residencialId) || (data.residenciais || [])[0];
 // os dois residenciais usam a mesma cor de ação (marinho)
-const residencialCor = () => C.ink;
+const residencialCor = () => C.acao;
 
 // Ícone intuitivo por palavra-chave no nome da taxa/extra — substitui o texto
 // truncado nos botões de atalho por Ícone + valor (pedido do Caio, 2026-09-23:
@@ -93,10 +93,10 @@ const safeYmd = (v) => {
 // de hoje ganha verde-pastel e tem precedência sobre as duas, que é o que
 // faltava distingui-lo. As barras das reservas são opacas e desenhadas por
 // cima, portanto nenhuma destas faixas as corta.
-const FIM_DE_SEMANA_CABECALHO = 'rgba(231,215,182,.25)';
-const FIM_DE_SEMANA_CELULA = 'rgba(231,215,182,.13)';
-const FERIADO_CABECALHO = 'rgba(62,124,177,.10)';
-const FERIADO_CELULA = 'rgba(62,124,177,.07)';
+// no tema escuro os tons são mais suaves (sobre fundo escuro pesavam demais)
+const TONS = objetoTema(() => (temaEscuroAtivo()
+  ? { fdsCab: 'rgba(231,215,182,.09)', fdsCel: 'rgba(231,215,182,.045)', ferCab: 'rgba(79,166,198,.14)', ferCel: 'rgba(79,166,198,.08)' }
+  : { fdsCab: 'rgba(231,215,182,.25)', fdsCel: 'rgba(231,215,182,.13)', ferCab: 'rgba(62,124,177,.10)', ferCel: 'rgba(62,124,177,.07)' }));
 // dia de hoje no calendário (refeito quando o tema claro/escuro muda)
 const HOJE = objetoTema(() => ({ cabecalho: C.sucessoBorda, celula: C.sucessoBg, texto: C.sucesso }));
 
@@ -623,7 +623,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                       style={{ width: COLW, flexShrink: 0, textAlign: 'center', padding: '6px 0 4px',
                         borderLeft: monthStart ? `2px solid ${C.line}` : 'none',
                         opacity: overflowMonth ? 0.6 : 1,
-                        background: isToday ? HOJE.cabecalho : (hol ? FERIADO_CABECALHO : (we ? FIM_DE_SEMANA_CABECALHO : 'transparent')) }}>
+                        background: isToday ? HOJE.cabecalho : (hol ? TONS.ferCab : (we ? TONS.fdsCab : 'transparent')) }}>
                       <div style={{ fontSize: 10.5, color: C.inkSoft, textTransform: 'uppercase' }}>
                         {monthStart ? cap1(d.toLocaleDateString('pt-BR', { month: 'short' })).replace('.', '') : WD[d.getDay()]}
                       </div>
@@ -672,7 +672,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                               onMouseDown={e => { e.preventDefault(); setDragSel({ aptId: apt.id, startIdx: i, endIdx: i }); }}
                               onMouseEnter={() => setDragSel(sel => (sel && sel.aptId === apt.id) ? { ...sel, endIdx: i } : sel)}
                               title="Clique para criar uma reserva, ou arraste para escolher um período"
-                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, borderLeft: monthStart ? `2px solid ${C.line}` : 'none', background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE.celula : (hol ? FERIADO_CELULA : (we ? FIM_DE_SEMANA_CELULA : C.superficie))), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
+                              style={{ width: COLW, height: '100%', borderRight: `1px solid ${C.line}`, borderLeft: monthStart ? `2px solid ${C.line}` : 'none', background: inDrag ? 'rgba(46,126,140,.28)' : (isToday ? HOJE.celula : (hol ? TONS.ferCel : (we ? TONS.fdsCel : C.superficie))), cursor: 'pointer', display: 'grid', placeItems: 'center', fontSize: 10.5, color: C.inkSoft, userSelect: 'none' }}>
                               {showPrices ? money(nightlyRate(apt, data.seasons, d)).replace('R$', '').trim() : ''}
                             </div>
                           );
@@ -838,7 +838,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
               <button onClick={() => setStatusFilter('todas')} style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === 'todas' ? C.acao : C.espuma, color: statusFilter === 'todas' ? C.white : C.inkSoft }}>Todas</button>
               {['confirmado', 'reservado', 'pendente', 'cortesia', 'bloqueio', 'cancelada'].map(st => (
                 <button key={st} onClick={() => setStatusFilter(st)}
-                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === st ? STATUS[st].fg : C.espuma, color: statusFilter === st ? C.white : C.inkSoft }}>
+                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontWeight: 600, background: statusFilter === st ? corSolidaStatus(st) : C.espuma, color: statusFilter === st ? C.white : C.inkSoft }}>
                   {STATUS[st].label}
                 </button>
               ))}

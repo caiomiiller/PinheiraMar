@@ -4,8 +4,8 @@
 // gravação falhar, a alteração fica na fila, aparece um aviso e dá para
 // tentar de novo; nada é "gravado só neste dispositivo" em silêncio.
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Waves, Home, LogOut, RefreshCw, AlertTriangle, Check, Eye, EyeOff, Upload } from 'lucide-react';
-import { C, F, R, objetoTema } from '../../lib/constants';
+import { Waves, Home, LogOut, RefreshCw, AlertTriangle, Check, Eye, EyeOff, Upload, Sun, Moon, Monitor } from 'lucide-react';
+import { C, F, R, objetoTema, aplicarPaleta } from '../../lib/constants';
 import { Admin } from './Admin';
 import { ConfirmDialog } from '../../components/ui';
 import {
@@ -91,7 +91,50 @@ function AvisoPainel({ titulo, texto, children }) {
   );
 }
 
+// Tema do painel (claro / escuro / automático = segue o sistema). Fica só
+// neste navegador; não toca nos dados.
+const CHAVE_TEMA = 'pinheiramar:tema-painel';
+const lerPreferenciaTema = () => { try { const v = localStorage.getItem(CHAVE_TEMA); return v === 'claro' || v === 'escuro' ? v : 'auto'; } catch { return 'auto'; } };
+const sistemaEscuro = () => { try { return window.matchMedia('(prefers-color-scheme: dark)').matches; } catch { return false; } };
+
+function useTemaPainel() {
+  const [preferencia, setPreferenciaEstado] = useState(lerPreferenciaTema);
+  const [doSistema, setDoSistema] = useState(sistemaEscuro);
+  useEffect(() => {
+    let mq; try { mq = window.matchMedia('(prefers-color-scheme: dark)'); } catch { return undefined; }
+    const ao = () => setDoSistema(mq.matches);
+    mq.addEventListener?.('change', ao);
+    return () => mq.removeEventListener?.('change', ao);
+  }, []);
+  // ao sair do painel (ex.: "Ver site") volta a paleta clara
+  useEffect(() => () => aplicarPaleta(false), []);
+  const escuro = preferencia === 'escuro' || (preferencia === 'auto' && doSistema);
+  // aplicada já aqui, antes de desenhar o resto do painel com as cores certas
+  aplicarPaleta(escuro);
+  const setPreferencia = (v) => { setPreferenciaEstado(v); try { localStorage.setItem(CHAVE_TEMA, v); } catch { /* sem armazenamento */ } };
+  return { preferencia, setPreferencia, escuro };
+}
+
+// Seletor no topo do painel: ☀ Claro · ☾ Escuro · Automático
+function SeletorTema({ preferencia, onEscolher }) {
+  const opcoes = [['claro', 'Claro', Sun], ['escuro', 'Escuro', Moon], ['auto', 'Automático', Monitor]];
+  return (
+    <div role="radiogroup" aria-label="Tema do painel" style={{ display: 'flex', alignItems: 'center', gap: 2, padding: 3, borderRadius: R.pilula, background: 'rgba(255,255,255,.12)' }}>
+      {opcoes.map(([id, rotulo, Icone]) => {
+        const on = preferencia === id;
+        return (
+          <button key={id} type="button" role="radio" aria-checked={on} title={rotulo} onClick={() => onEscolher(id)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: R.pilula, border: 'none', cursor: 'pointer', fontFamily: F.sans, fontSize: 12.5, fontWeight: 700, background: on ? '#FFFFFF' : 'transparent', color: on ? '#1B1C46' : 'rgba(255,255,255,.88)' }}>
+            <Icone size={13} /><span className="pm-tema-rotulo">{rotulo}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PainelGestao({ onVerSite }) {
+  const temaUI = useTemaPainel();
   const [sessao, setSessao] = useState(undefined); // undefined = a verificar
   useEffect(() => {
     let vivo = true;
@@ -103,10 +146,10 @@ export default function PainelGestao({ onVerSite }) {
   if (!sessao) {
     return <LoginScreen onEntrar={async (email, senha) => { const r = await entrar(email, senha); if (r.ok) setSessao(r.sessao); return r; }} />;
   }
-  return <PainelComDados sessao={sessao} onVerSite={onVerSite} onSair={async () => { await sair(); setSessao(null); }} />;
+  return <PainelComDados sessao={sessao} onVerSite={onVerSite} temaUI={temaUI} onSair={async () => { await sair(); setSessao(null); }} />;
 }
 
-function PainelComDados({ sessao, onVerSite, onSair }) {
+function PainelComDados({ sessao, onVerSite, onSair, temaUI }) {
   // cor da barra do topo conforme o residencial escolhido no Admin (TEMA_PAINEL)
   const [tema, setTema] = useState(null);
   const [base, setBase] = useState(null);          // cópia do servidor { data, versao, updatedAt }
@@ -242,6 +285,7 @@ function PainelComDados({ sessao, onVerSite, onSair }) {
           <span style={{ opacity: .7 }}>· {sessao?.user?.email}</span>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {temaUI && <SeletorTema preferencia={temaUI.preferencia} onEscolher={temaUI.setPreferencia} />}
           <button onClick={onVerSite} style={{ background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: R.campo, color: 'rgba(255,255,255,.9)', padding: '6px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Home size={13} /> Ver site
           </button>

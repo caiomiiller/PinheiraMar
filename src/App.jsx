@@ -123,6 +123,10 @@ export default function App() {
     /* botão fixo de WhatsApp do site público (só o ícone) — abaixo das janelas (z 100) */
     .pm-wa-flutuante{position:fixed;right:24px;bottom:24px;z-index:90;width:60px;height:60px;border-radius:50%;background:${C.whatsapp};color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px rgba(20,21,47,.28);transition:transform .15s ease;}
     .pm-wa-flutuante:hover{transform:scale(1.06);}
+    /* tema escuro do painel (data-tema-escuro em <html>, ver aplicarPaleta) */
+    :root[data-tema-escuro]{color-scheme:dark;}
+    :root[data-tema-escuro] body{background:#13142A;color:#E8E9F3;}
+    :root[data-tema-escuro] ::placeholder{color:#7D81A3;}
     .pmf:focus{border-color:${C.brisa}!important;box-shadow:0 0 0 3px rgba(45,127,157,.16)!important;}
     .pm-pop{animation:pmpop .18s ease;}
     @keyframes pmpop{from{opacity:0;transform:translateY(8px) scale(.99);}to{opacity:1;transform:none;}}
@@ -269,6 +273,7 @@ export default function App() {
       .pm-detail-counter-mobile{display:inline!important;}
       .pm-detail-counter-desktop{display:none!important;}
       .pm-detail-stickybar{display:flex!important;}
+      .pm-tema-rotulo{display:none;}
       .pm-wa-flutuante{right:16px;bottom:18px;width:56px;height:56px;}
       /* na página do apartamento fica acima da barra fixa de reserva */
       .pm-wa-flutuante.pm-wa-sobe{bottom:calc(92px + env(safe-area-inset-bottom));}

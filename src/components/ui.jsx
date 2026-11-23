@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { X, ChevronLeft, GripVertical, Minus, Plus, LogIn, LogOut } from 'lucide-react';
-import { C, F, R, objetoTema } from '../lib/constants';
+import { C, F, R, objetoTema, temaEscuroAtivo } from '../lib/constants';
 import { ymd, today } from '../lib/helpers';
 import { FOTOS_OTIMIZADAS } from '../lib/fotosOtimizadas';
 
@@ -107,17 +107,27 @@ export const Field = ({ label, children, hint, required }) => (
 //   check-out  (vermelho)       — estadia terminada (ver displayStatus)
 // Cancelada e check-out tinham exatamente a mesma cor; a pedido do Caio
 // (2026-11-11) o vermelho fica para a estadia terminada e a cancelada passa a roxo.
+// No tema escuro do painel as cores fixas abaixo trocam pelas de ESC (os
+// restantes já vêm da paleta C).
+const ESC = { pendente: ['#2A2D45', '#B4BAC8', '#6E7891'], cortesia: ['#123543', '#8FD0E8', '#4FA6C6'], bloqueio: ['#26283F', '#A9AEC2'], cancelada: ['#2E2340', '#C9A8EE', '#9A7BC4'] };
+const corFixa = (estado, i, claro) => (temaEscuroAtivo() && ESC[estado]?.[i]) || claro;
 export const STATUS = objetoTema(() => ({
-  pendente: { label: 'Pendente', bg: '#EDEFEF', fg: '#5C6B6A', bar: '#AEB8B7' },
+  pendente: { label: 'Pendente', bg: corFixa('pendente', 0, '#EDEFEF'), fg: corFixa('pendente', 1, '#5C6B6A'), bar: corFixa('pendente', 2, '#AEB8B7') },
   reservado: { label: 'Reservado', bg: C.avisoBg, fg: C.aviso, bar: '#E0A23A' },
   confirmado: { label: 'Confirmado', bg: C.sucessoBg, fg: C.sucesso, bar: '#2E9E78' },
-  cortesia: { label: 'Cortesia', bg: '#E3F1F6', fg: '#1D6F8C', bar: '#6FB3CB' },
-  bloqueio: { label: 'Bloqueio', bg: '#E9ECEC', fg: '#5C6B6A', bar: C.bordaForte, hatch: true },
-  cancelada: { label: 'Cancelada', bg: '#F1EAF8', fg: '#6D3FA0', bar: '#B79AD6' },
+  cortesia: { label: 'Cortesia', bg: corFixa('cortesia', 0, '#E3F1F6'), fg: corFixa('cortesia', 1, '#1D6F8C'), bar: corFixa('cortesia', 2, '#6FB3CB') },
+  bloqueio: { label: 'Bloqueio', bg: corFixa('bloqueio', 0, '#E9ECEC'), fg: corFixa('bloqueio', 1, '#5C6B6A'), bar: C.bordaForte, hatch: true },
+  cancelada: { label: 'Cancelada', bg: corFixa('cancelada', 0, '#F1EAF8'), fg: corFixa('cancelada', 1, '#6D3FA0'), bar: corFixa('cancelada', 2, '#B79AD6') },
   // pseudo-estado, só para cor/etiqueta (ver displayStatus abaixo) — nunca é
   // uma opção do seletor "Estado" nem entra na legenda do calendário.
   checkout: { label: 'Check-out', bg: C.erroBg, fg: C.erro, bar: C.erroBorda },
 }));
+// Fundo das etiquetas cheias (Badge, texto branco): no claro é a própria cor
+// do texto do estado; no escuro essa cor é clara, então usa um tom médio.
+const SOLIDO_ESCURO = { pendente: '#5A6577', reservado: '#9A6E0E', confirmado: '#1F7F5C', cortesia: '#1F7491', bloqueio: '#565A70', cancelada: '#6E4CA0', checkout: '#B23A30' };
+const solido = (estado, s) => (temaEscuroAtivo() && SOLIDO_ESCURO[estado]) || s.fg;
+// cor de fundo para botões/etiquetas cheias de um estado (com texto branco)
+export const corSolidaStatus = (estado) => solido(STATUS[estado] ? estado : 'pendente', STATUS[estado] || STATUS.pendente);
 
 // Estado "efetivo" para pintar uma reserva concreta (barra do calendário,
 // Badge, cartões): a pedido do Caio, a reserva só fica vermelha de
@@ -151,7 +161,8 @@ export const barBackground = (status) => {
 // contraste) com texto branco, em vez do estilo pastel anterior.
 export const Badge = ({ status }) => {
   const s = STATUS[status] || STATUS.pendente;
-  const bg = s.hatch ? hatchPattern(s.fg, s.bar) : s.fg;
+  const cor = solido(STATUS[status] ? status : 'pendente', s);
+  const bg = s.hatch ? hatchPattern(cor, s.bar) : cor;
   return <span style={{ background: bg, color: C.white, fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: R.pilula, ...(s.hatch ? { textShadow: '0 1px 2px rgba(0,0,0,.45)' } : {}) }}>{s.label}</span>;
 };
 
