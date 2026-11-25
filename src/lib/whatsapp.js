@@ -44,3 +44,10 @@ export function msgReserva({ codigo, aptos, ci, co, falhou }) {
   const base = `Olá! Fiz a reserva ${codigo}${detalhe ? ` (${detalhe})` : ''} pelo site`;
   return falhou ? `${base} e o pagamento não foi concluído. Pode me ajudar?` : `${base}.`;
 }
+
+// Datas próximas abaixo do mínimo de noites: o hóspede pede pelo WhatsApp.
+export function msgBrecha({ aptos, ci, co, noites, hospedes }) {
+  const nomes = [].concat(aptos).filter(Boolean).join(', ');
+  return `Olá! Vi no site que ${nomes ? `o(s) ${nomes}` : 'há apartamentos'} ${nomes && aptos.length > 1 ? 'estão' : 'está'} livre(s) ${junta([periodo(ci, co), `${noites} ${noites === 1 ? 'noite' : 'noites'}`, pessoas(hospedes)])}, abaixo do mínimo de noites. É possível reservar?`;
+}
+

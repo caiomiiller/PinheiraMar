@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { whatsappUrl, msgGeral, msgApartamento, msgErroReserva, msgReserva } from '../src/lib/whatsapp';
+import { whatsappUrl, msgGeral, msgApartamento, msgErroReserva, msgReserva, msgBrecha } from '../src/lib/whatsapp';
 import { WHATSAPP_URL } from '../src/lib/constants';
 
 const texto = (url) => new URL(url).searchParams.get('text');
@@ -43,5 +43,16 @@ describe('links de WhatsApp com mensagem', () => {
   it('contato geral', () => {
     expect(msgGeral('Residencial Caminho do Mar')).toBe('Olá! Vim pelo site e gostaria de informações sobre o Residencial Caminho do Mar.');
     expect(msgGeral()).toBe('Olá! Vim pelo site e gostaria de informações.');
+  });
+});
+
+describe('msgBrecha (datas abaixo do mínimo de noites)', () => {
+  it('leva apartamentos, datas, noites e pessoas', () => {
+    expect(msgBrecha({ aptos: ['Apto 01', 'Apto 03'], ci: '2026-12-21', co: '2026-12-23', noites: 2, hospedes: 4 }))
+      .toBe('Olá! Vi no site que o(s) Apto 01, Apto 03 estão livre(s) de 21/12/2026 a 23/12/2026, 2 noites, para 4 pessoas, abaixo do mínimo de noites. É possível reservar?');
+  });
+  it('um apartamento e uma noite, sem pessoas', () => {
+    expect(msgBrecha({ aptos: ['Apto 207'], ci: '2026-12-24', co: '2026-12-25', noites: 1 }))
+      .toBe('Olá! Vi no site que o(s) Apto 207 está livre(s) de 24/12/2026 a 25/12/2026, 1 noite, abaixo do mínimo de noites. É possível reservar?');
   });
 });
