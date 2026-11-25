@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
   Home, Users, X, Share2 } from 'lucide-react';
 import { F, fotoTopo, heroVersoes, LOGO_RESIDENCIAL, SIMBOLO_RESIDENCIAL, C, R } from '../../lib/constants';
-import { whatsappUrl, msgGeral, msgBrecha } from '../../lib/whatsapp';
+import { whatsappUrl, msgGeral, msgBrecha, msgCombinacao } from '../../lib/whatsapp';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
 import { orcamentoApartamento, regraNoites } from '../../lib/precos';
 import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
@@ -351,6 +351,34 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     // de tudo), depois as que dão para reservar e as com mais apartamentos
     return opc.sort((x, y) => (x.dist - y.dist) || (Number(x.abaixo) - Number(y.abaixo)) || (y.n - x.n)).slice(0, 4)
       .sort((x, y) => (x.j[0] < y.j[0] ? -1 : 1));
+  })();
+
+  // Combinação: quando nenhum apartamento (que caiba no grupo) está livre o
+  // período todo, procura DOIS que juntos o cubram — um da entrada até um
+  // dia X e outro de X até à saída (troca de apartamento a meio). Prefere
+  // partes que cumprem o mínimo de noites, o mesmo residencial e a troca
+  // mais equilibrada. Pede-se pelo WhatsApp (são duas reservas).
+  const combinacoes = (() => {
+    if (!valid || noitesPedido < 2) return [];
+    const cabe = (a) => a.ativo && catFilter(a) && (!hosp || a.capacidade >= hosp);
+    const aptos = data.apartamentos.filter(cabe);
+    if (aptos.some(a => isAvailable(data.reservas, a.id, ci, co))) return [];
+    const res = [];
+    for (let k = 1; k < noitesPedido; k++) {
+      const m = ymd(addDays(parseYMD(ci), k));
+      const primeiros = aptos.filter(a => isAvailable(data.reservas, a.id, ci, m));
+      const segundos = aptos.filter(a => isAvailable(data.reservas, a.id, m, co));
+      for (const a of primeiros) for (const b of segundos) {
+        if (a.id === b.id) continue;
+        const okMin = k >= regraNoites(data.seasons, ci).min && (noitesPedido - k) >= regraNoites(data.seasons, m).min;
+        res.push({ partes: [{ apt: a, ci, co: m }, { apt: b, ci: m, co }], okMin, mesmo: a.residencialId === b.residencialId, equilibrio: Math.abs(noitesPedido - 2 * k) });
+      }
+    }
+    res.sort((x, y) => (Number(y.okMin) - Number(x.okMin)) || (Number(y.mesmo) - Number(x.mesmo)) || (x.equilibrio - y.equilibrio));
+    // no máximo 2 sugestões, com dias de troca diferentes
+    const vistos = new Set(); const out = [];
+    for (const c of res) { const chave = c.partes[0].co; if (vistos.has(chave)) continue; vistos.add(chave); out.push(c); if (out.length >= 2) break; }
+    return out;
   })();
 
   // ?imovel=<id> na URL: assim que os grupos existem, desliza até essa secção
@@ -1085,6 +1113,27 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 </div>
                 </div>
               </div>
+              {combinacoes.length > 0 && (
+                <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: BLACK }}>{tr('ps_combo_datas_titulo', tr('noites', noitesPedido))} <span style={{ fontWeight: 400, color: GREY }}>· {tr('ps_combo_datas_desc')}</span></div>
+                  {combinacoes.map(c => (
+                    <div key={c.partes.map(x => x.apt.id + x.ci).join('|')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.cartao, padding: '10px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 15, color: BLACK }}>
+                        {c.partes.map((x, k) => (
+                          <React.Fragment key={x.apt.id + x.ci}>
+                            {k > 0 && <span aria-hidden style={{ fontWeight: 800, color: GREY }}>+</span>}
+                            <span><b>{x.apt.nome}</b> <span style={{ color: GREY }}>· {fmtJanela([x.ci, x.co])} · {tr('noites', nights(x.ci, x.co))}</span></span>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                      <a href={whatsappUrl(msgCombinacao({ partes: c.partes.map(x => ({ apto: x.apt.nome, ci: x.ci, co: x.co })), hospedes: hosp }))} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 40, padding: '0 14px', borderRadius: R.pilula, background: C.whatsapp, color: C.white, fontSize: 14, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
+                        <MessageCircle size={15} /> {tr('ps_pedir_combinacao')}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
               {alternativasGerais.length ? (
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
                   {alternativasGerais.map(({ j, n, livres, min, abaixo }) => abaixo ? (

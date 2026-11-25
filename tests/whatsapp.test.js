@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { whatsappUrl, msgGeral, msgApartamento, msgErroReserva, msgReserva, msgBrecha } from '../src/lib/whatsapp';
+import { whatsappUrl, msgGeral, msgApartamento, msgErroReserva, msgReserva, msgBrecha, msgCombinacao } from '../src/lib/whatsapp';
 import { WHATSAPP_URL } from '../src/lib/constants';
 
 const texto = (url) => new URL(url).searchParams.get('text');
@@ -54,5 +54,12 @@ describe('msgBrecha (datas abaixo do mínimo de noites)', () => {
   it('um apartamento e uma noite, sem pessoas', () => {
     expect(msgBrecha({ aptos: ['Apto 207'], ci: '2026-12-24', co: '2026-12-25', noites: 1 }))
       .toBe('Olá! Vi no site que o(s) Apto 207 está livre(s) de 24/12/2026 a 25/12/2026, 1 noite, abaixo do mínimo de noites. É possível reservar?');
+  });
+});
+
+describe('msgCombinacao (dois apartamentos cobrem as datas)', () => {
+  it('leva cada parte com as datas e as pessoas', () => {
+    expect(msgCombinacao({ partes: [{ apto: 'Apto 211', ci: '2026-12-20', co: '2026-12-22' }, { apto: 'Apto 212', ci: '2026-12-22', co: '2026-12-26' }], hospedes: 2 }))
+      .toBe('Olá! Vi no site uma combinação para as minhas datas: Apto 211 de 20/12/2026 a 22/12/2026 e Apto 212 de 22/12/2026 a 26/12/2026, para 2 pessoas. É possível reservar assim?');
   });
 });

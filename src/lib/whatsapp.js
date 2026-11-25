@@ -51,3 +51,8 @@ export function msgBrecha({ aptos, ci, co, noites, hospedes }) {
   return `Olá! Vi no site que ${nomes ? `o(s) ${nomes}` : 'há apartamentos'} ${nomes && aptos.length > 1 ? 'estão' : 'está'} livre(s) ${junta([periodo(ci, co), `${noites} ${noites === 1 ? 'noite' : 'noites'}`, pessoas(hospedes)])}, abaixo do mínimo de noites. É possível reservar?`;
 }
 
+// Combinação de dois apartamentos (troca a meio da estadia), pedida pelo WhatsApp.
+export function msgCombinacao({ partes, hospedes }) {
+  const trechos = (partes || []).map(p => `${p.apto} ${periodo(p.ci, p.co)}`).join(' e ');
+  return `Olá! Vi no site uma combinação para as minhas datas: ${junta([trechos, pessoas(hospedes)])}. É possível reservar assim?`;
+}
