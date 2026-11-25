@@ -95,8 +95,8 @@ const safeYmd = (v) => {
 // cima, portanto nenhuma destas faixas as corta.
 // no tema escuro os tons são mais suaves (sobre fundo escuro pesavam demais)
 const TONS = objetoTema(() => (temaEscuroAtivo()
-  ? { fdsCab: 'rgba(231,215,182,.09)', fdsCel: 'rgba(231,215,182,.045)', ferCab: 'rgba(79,166,198,.14)', ferCel: 'rgba(79,166,198,.08)' }
-  : { fdsCab: 'rgba(231,215,182,.25)', fdsCel: 'rgba(231,215,182,.13)', ferCab: 'rgba(62,124,177,.10)', ferCel: 'rgba(62,124,177,.07)' }));
+  ? { fdsCab: 'rgba(232,184,96,.24)', fdsCel: 'rgba(232,184,96,.12)', ferCab: 'rgba(79,166,198,.14)', ferCel: 'rgba(79,166,198,.08)' }
+  : { fdsCab: 'rgba(232,184,96,.45)', fdsCel: 'rgba(232,184,96,.24)', ferCab: 'rgba(62,124,177,.10)', ferCel: 'rgba(62,124,177,.07)' }));
 // dia de hoje no calendário (refeito quando o tema claro/escuro muda)
 const HOJE = objetoTema(() => ({ cabecalho: C.sucessoBorda, celula: C.sucessoBg, texto: C.sucesso }));
 
