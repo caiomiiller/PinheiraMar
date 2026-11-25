@@ -274,10 +274,11 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     return true;
   };
 
-  // Datas próximas (mesmo nº de noites, até 14 dias antes/depois) em que um
-  // apartamento está livre — para o hóspede ajustar a viagem.
+  // Datas próximas (N noites, até 14 dias antes/depois da entrada pedida) em
+  // que um apartamento está livre — para o hóspede ajustar a viagem. N é o
+  // nº de noites escolhido na caixa "Datas próximas" (por omissão, o da pesquisa).
   const janelaDesloc = (d) => {
-    const a = ymd(addDays(parseYMD(ci), d)), b = ymd(addDays(parseYMD(co), d));
+    const a = ymd(addDays(parseYMD(ci), d)), b = ymd(addDays(parseYMD(ci), d + noitesBusca));
     if (a < hojeBR || (ultimaNoite && ymd(addDays(parseYMD(b), -1)) > ultimaNoite)) return null;
     return [a, b];
   };
@@ -290,6 +291,19 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       if (j && isAvailable(data.reservas, aptId, j[0], j[1])) { res.push(j); if (res.length >= max) break; }
     }
     return res.sort((x, y) => (x[0] < y[0] ? -1 : 1));
+  };
+  // Noites livres DENTRO do período pedido, em blocos seguidos (quando o
+  // hóspede encurta a estadia na caixa "Datas próximas"): ex. 20–23 e 25–26.
+  const blocosNoPedido = (aptId) => {
+    if (!valid) return [];
+    const blocos = []; let ini = null;
+    const fim = parseYMD(co);
+    for (let d = parseYMD(ci); d <= fim; d = addDays(d, 1)) {
+      const livre = d < fim && isAvailable(data.reservas, aptId, ymd(d), ymd(addDays(d, 1)));
+      if (livre && ini === null) ini = d;
+      if (!livre && ini !== null) { blocos.push([ymd(ini), ymd(d)]); ini = null; }
+    }
+    return blocos;
   };
   const fmtJanela = ([a, b]) => `${fmtCurta(a)} – ${fmtCurta(b)}`;
   const escolherJanela = ([a, b]) => { setCi(a); setCo(b); setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); };
@@ -305,7 +319,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   // livres e se cumpre o mínimo de noites da temporada; se não cumpre, a
   // opção é pedir pelo WhatsApp em vez de reservar.
   const noitesPedido = valid ? nights(ci, co) : 0;
-  const noitesBusca = Math.max(1, Math.min(noitesAlt || noitesPedido, noitesPedido || 1));
+  // sem teto ligado à pesquisa: o hóspede pode subir de novo depois de
+  // escolher uma estadia mais curta (até 30 noites)
+  const MAX_NOITES_ALT = 30;
+  const noitesBusca = Math.max(1, Math.min(noitesAlt || noitesPedido || 1, MAX_NOITES_ALT));
   const alternativasGerais = (() => {
     if (!valid) return [];
     const cabe = (a) => a.ativo && catFilter(a) && (!hosp || a.capacidade >= hosp);
@@ -314,13 +331,15 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     const agora = aptos.filter(x => isAvailable(data.reservas, x.id, ci, co)).length;
     const opc = [];
     const ini0 = addDays(parseYMD(ci), -7);
-    const ultimoIni = addDays(parseYMD(co), 7 - noitesBusca);
+    const ultimoIni = addDays(parseYMD(ci), Math.max(7, noitesPedido + 7 - noitesBusca));
     for (let d = ini0; d <= ultimoIni; d = addDays(d, 1)) {
       const a = ymd(d), b = ymd(addDays(d, noitesBusca));
       if (a < hojeBR || (ultimaNoite && ymd(addDays(d, noitesBusca - 1)) > ultimaNoite)) continue;
       if (a === ci && b === co) continue;
       const livres = aptos.filter(x => isAvailable(data.reservas, x.id, a, b));
-      if (livres.length <= agora) continue;
+      // com o mesmo nº de noites ou menos, só o que dá MAIS opções do que as
+      // datas pedidas; com mais noites, qualquer janela com vaga
+      if (noitesBusca <= noitesPedido ? livres.length <= agora : !livres.length) continue;
       const min = regraNoites(data.seasons, a).min;
       // distância ao período pedido: 0 se a janela cabe dentro dele
       const antes = (parseYMD(ci) - d) / 86400000, depois = (addDays(d, noitesBusca) - parseYMD(co)) / 86400000;
@@ -486,6 +505,33 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
             : <div className="pm-card-title-row" style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.01em', color: BLACK, lineHeight: 1.3 }}>{apt.nome}</div>}
           <div style={{ fontSize: 16, color: GREY, marginTop: 3 }}>{dado(apt.piso)} · {dado(apt.vista)} · {tr('ps_ate_pessoas', apt.capacidade)}</div>
           {valid && !available && (() => {
+            // estadia encurtada na caixa "Datas próximas": mostra as brechas
+            // DENTRO das datas pedidas com pelo menos essas noites
+            if (noitesBusca < noitesPedido) {
+              const blocos = blocosNoPedido(apt.id).filter(j => nights(j[0], j[1]) >= noitesBusca);
+              return blocos.length ? (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: GREY, marginBottom: 6 }}>{tr('ps_livre_dentro')}</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {blocos.map(j => {
+                      const n = nights(j[0], j[1]); const min = regraNoites(data.seasons, j[0]).min;
+                      return n < min ? (
+                        <a key={j[0]} href={whatsappUrl(msgBrecha({ aptos: [apt.nome], ci: j[0], co: j[1], noites: n, hospedes: hosp }))} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                          style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, padding: '7px 12px', borderRadius: R.cartao, border: `1px dashed ${C.whatsapp}`, background: WHITE, color: BLACK, fontFamily: F.sans, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+                          <span>{fmtJanela(j)} · {tr('noites', n)}</span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: C.whatsapp }}><MessageCircle size={13} /> WhatsApp · {tr('ps_min_curto', min)}</span>
+                        </a>
+                      ) : (
+                        <button key={j[0]} type="button" onClick={e => { e.stopPropagation(); escolherJanela(j); }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: R.pilula, border: `1px solid ${BLACK}`, background: WHITE, color: BLACK, fontFamily: F.sans, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                          <CalendarDays size={14} /> {fmtJanela(j)} · {tr('noites', n)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : <div style={{ marginTop: 8, fontSize: 14, color: GREY }}>{tr('ps_sem_n_dentro', tr('noites', noitesBusca))}</div>;
+            }
             const alt = livresProximas(apt.id);
             return alt.length ? (
               <div style={{ marginTop: 10 }}>
@@ -1023,14 +1069,20 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                   <div style={{ fontSize: 17, fontWeight: 700, color: BLACK }}>{visiveis.length ? tr('ps_alt_titulo') : tr('ps_alt_titulo_nenhum')}</div>
                   <div style={{ fontSize: 15, color: GREY, marginTop: 4 }}>{tr('ps_alt_desc', hosp ? tr('pessoas', hosp) : '')}</div>
                 </div>
-                {/* nº de noites a procurar */}
+                {/* nº de noites a procurar + limpar a pesquisa */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <button type="button" onClick={() => { setCi(''); setCo(''); setHosp(0); setCalOpen(false); setGuestOpen(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, minHeight: 40, padding: '0 14px', fontSize: 14, fontWeight: 700, color: GREY, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, cursor: 'pointer', fontFamily: F.sans }}>
+                  <X size={14} /> {tr('ps_limpar_consulta')}
+                </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 6px 5px 14px', flexShrink: 0 }}>
                   <span style={{ fontSize: 15, fontWeight: 700, color: BLACK }}>{tr('ps_noites_rotulo')}</span>
                   <button type="button" aria-label={tr('ps_menos_noite')} disabled={noitesBusca <= 1} onClick={() => setNoitesAlt(Math.max(1, noitesBusca - 1))}
                     style={{ width: 36, height: 36, borderRadius: '50%', border: `1px solid ${noitesBusca <= 1 ? BORDER : C.bordaForte}`, background: WHITE, color: noitesBusca <= 1 ? C.inativo : BLACK, cursor: noitesBusca <= 1 ? 'default' : 'pointer', fontSize: 18 }}>−</button>
                   <span style={{ fontSize: 17, fontWeight: 800, minWidth: 18, textAlign: 'center', color: BLACK }}>{noitesBusca}</span>
-                  <button type="button" aria-label={tr('ps_mais_noite')} disabled={noitesBusca >= noitesPedido} onClick={() => setNoitesAlt(Math.min(noitesPedido, noitesBusca + 1))}
-                    style={{ width: 36, height: 36, borderRadius: '50%', border: `1px solid ${noitesBusca >= noitesPedido ? BORDER : C.bordaForte}`, background: WHITE, color: noitesBusca >= noitesPedido ? C.inativo : BLACK, cursor: noitesBusca >= noitesPedido ? 'default' : 'pointer', fontSize: 18 }}>+</button>
+                  <button type="button" aria-label={tr('ps_mais_noite')} disabled={noitesBusca >= MAX_NOITES_ALT} onClick={() => setNoitesAlt(Math.min(MAX_NOITES_ALT, noitesBusca + 1))}
+                    style={{ width: 36, height: 36, borderRadius: '50%', border: `1px solid ${noitesBusca >= MAX_NOITES_ALT ? BORDER : C.bordaForte}`, background: WHITE, color: noitesBusca >= MAX_NOITES_ALT ? C.inativo : BLACK, cursor: noitesBusca >= MAX_NOITES_ALT ? 'default' : 'pointer', fontSize: 18 }}>+</button>
+                </div>
                 </div>
               </div>
               {alternativasGerais.length ? (
@@ -1079,7 +1131,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                 <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: GREY, whiteSpace: 'nowrap' }}>{valid && !activeCategory ? tr('ps_indisp_titulo') : tr('ps_outros_apartamentos')}</div>
                 <div aria-hidden style={{ flex: 1, height: 1, background: BORDER }} />
               </div>
-              <div style={{ fontSize: 16, color: GREY, textAlign: 'center', marginBottom: 36 }}>{valid && !activeCategory ? tr('ps_indisp_desc') : tr('ps_outros_apartamentos_desc')}</div>
+              <div style={{ fontSize: 16, color: GREY, textAlign: 'center', marginBottom: 36 }}>{valid && !activeCategory ? (noitesBusca < noitesPedido ? tr('ps_indisp_desc_brechas', tr('noites', noitesBusca)) : tr('ps_indisp_desc')) : tr('ps_outros_apartamentos_desc')}</div>
               {groups.map(g => <PropertyGroup key={`outros-${g.residencial.id}`} g={g} invert last={g.residencial.id === idUltimoOutro} />)}
             </div>
           );
