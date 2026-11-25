@@ -182,7 +182,6 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [activeCategory, setActiveCategory] = useState(null);
-  const [sortMode, setSortMode] = useState('default'); // 'default' | 'price_asc' | 'price_desc'
   const [guestOpen, setGuestOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
   // apartamento cujo calendário de disponibilidade está aberto num popover —
@@ -230,18 +229,17 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       fits: !hosp || a.capacidade >= hosp,
       orc: valid ? orcamentoApartamento({ apt: a, seasons: data.seasons, taxas: data.taxasAdicionais, checkIn: ci, checkOut: co, hospedes: hosp || undefined }) : null,
     })).sort((x, y) => {
-      const priceDiff = sortMode === 'price_desc' ? (y.apt.preco - x.apt.preco) : (x.apt.preco - y.apt.preco);
       return (Number(y.available) - Number(x.available)) ||
         (Number(y.fits) - Number(x.fits)) ||
-        // sem ordenação explícita nem filtro de categoria, os apartamentos Frente Mar aparecem primeiro
-        (sortMode === 'default' && (!activeCategory || catIsResidencial(activeCategory)) ? (Number(y.apt.vista === 'Frente Mar') - Number(x.apt.vista === 'Frente Mar')) : 0) ||
-        priceDiff;
+        // sem filtro de categoria, os apartamentos Frente Mar aparecem primeiro; depois o mais barato
+        ((!activeCategory || catIsResidencial(activeCategory)) ? (Number(y.apt.vista === 'Frente Mar') - Number(x.apt.vista === 'Frente Mar')) : 0) ||
+        (x.apt.preco - y.apt.preco);
     });
     const availableApts = withInfo.filter(w => w.available).map(w => w.apt);
     const needsCombo = valid && hosp > 0 && hosp > maxCap;
     const combo = needsCombo ? findCombo(availableApts, hosp) : null;
     return { residencial: r, active, withInfo, maxCap, availableApts, needsCombo, combo };
-  }), [data, ci, co, hosp, valid, activeCategory, sortMode]);
+  }), [data, ci, co, hosp, valid, activeCategory]);
 
   const hasFrenteMar = data.apartamentos.some(a => a.ativo && a.vista === 'Frente Mar');
 
@@ -1071,15 +1069,6 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               </div>
               <div style={{ fontSize: 16, color: GREY, marginTop: 4 }}>{subtituloDisponibilidade}</div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, color: GREY, flexShrink: 0 }}>
-              {tr('ps_ordenar')}
-              <select value={sortMode} onChange={e => setSortMode(e.target.value)}
-                style={{ border: `1px solid ${BORDER}`, borderRadius: R.cartao, padding: '7px 10px', fontSize: 16, fontFamily: F.sans, color: BLACK, background: WHITE, cursor: 'pointer' }}>
-                <option value="default">{tr('ps_ordem_recomendados')}</option>
-                <option value="price_asc">{tr('ps_ordem_menor')}</option>
-                <option value="price_desc">{tr('ps_ordem_maior')}</option>
-              </select>
-            </label>
           </div>
         )}
         {(() => {
