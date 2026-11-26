@@ -1201,13 +1201,9 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           <div>
             <div style={{ fontSize: 16, fontWeight: 400, letterSpacing: '.2em', textTransform: 'uppercase', color: GREY, marginBottom: 14 }}>{tr('ps_horarios')}</div>
             <div style={{ fontSize: 17, color: GREY, lineHeight: 1.9 }}>
-              {data.residenciais.map(r => (
-                <div key={r.id} style={{ marginBottom: data.residenciais.length > 1 ? 6 : 0 }}>
-                  {data.residenciais.length > 1 && <div style={{ color: BLACK }}>{nomeCurtoResidencial(r)}</div>}
-                  <div>{tr('ps_checkin_a_partir', r.checkInHora || '13:00')}</div>
-                  <div>{tr('ps_checkout_ate', r.checkOutHora || '10:00')}</div>
-                </div>
-              ))}
+              {/* um único horário: os residenciais usam o mesmo (a pedido do Caio, 2026-11-26) */}
+              <div>{tr('ps_checkin_a_partir', data.residenciais[0]?.checkInHora || '14:00')}</div>
+              <div>{tr('ps_checkout_ate', data.residenciais[0]?.checkOutHora || '10:00')}</div>
             </div>
           </div>
         </div>

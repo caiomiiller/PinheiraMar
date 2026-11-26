@@ -644,7 +644,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                 const segs = data.reservas.filter(r => r.apartamentoId === apt.id && r.status !== 'cancelada').map(r => {
                   const rawS = Math.round((parseYMD(r.checkIn) - start) / MS);
                   const rawE = Math.round((parseYMD(r.checkOut) - start) / MS);
-                  // chega a meio do dia de check-in (13h) e sai a meio do dia de check-out (10h)
+                  // chega a meio do dia de check-in (14h) e sai a meio do dia de check-out (10h)
                   const left = Math.max(0, (rawS + 0.5) * COLW);
                   const right = Math.min(DAYS * COLW, (rawE + 0.5) * COLW);
                   return { r, left, right };
@@ -685,7 +685,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
                         // reserva já está em "Reservado" (sinal confirmado).
                         const sinalMark = r.status === 'reservado' ? `${residencial.sinalPct}% ` : '';
                         return (
-                          <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (13h) → ${fmtShort(r.checkOut)} (10h)${r.checkinRealizado ? ' · Check-in realizado' : ''}${r.checkoutRealizado ? ' · Check-out realizado' : ''}`}
+                          <button key={r.id} onClick={() => setEditing(r)} title={`${r.hospede || 'Bloqueio'} · ${fmtShort(r.checkIn)} (14h) → ${fmtShort(r.checkOut)} (10h)${r.checkinRealizado ? ' · Check-in realizado' : ''}${r.checkoutRealizado ? ' · Check-out realizado' : ''}`}
                             style={{ position: 'absolute', top: 7, height: 36, left: left + 2, width: Math.max(10, right - left - 4), background: barBackground(displayStatus(r)), color: C.white, border: 'none', borderRadius: R.campo, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '0 8px', textAlign: 'left', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', boxShadow: '0 1px 4px rgba(0,0,0,.12)' }}>
                             {r.status === 'bloqueio' ? '⛔ Bloqueio' : `${sinalMark}${r.hospede || 'Reserva'}`}
                           </button>
@@ -705,7 +705,7 @@ export function Reservations({ data, update, openReservationId, onOpenedReservat
             <span className="pm-hide-sm" style={{ width: 1, height: 16, background: C.line }} />
             {Object.entries(HOLIDAY_LABELS).map(([tp, label]) =>
               <span key={tp} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: HOLIDAY_COLORS[tp] }} /> {label}</span>)}
-            <span className="pm-hide-sm" style={{ marginLeft: 'auto' }}>Check-out 10h · check-in 13h — turnover no mesmo dia permitido.</span>
+            <span className="pm-hide-sm" style={{ marginLeft: 'auto' }}>Check-out 10h · check-in 14h — turnover no mesmo dia permitido.</span>
           </div>
           {(() => {
             const items = [];

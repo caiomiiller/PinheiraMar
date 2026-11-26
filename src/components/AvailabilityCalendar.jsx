@@ -27,7 +27,7 @@ const navBtnStyle = {
 // Calendário de disponibilidade — dois meses lado a lado (empilham no telemóvel).
 // Um dia fica ocupado apenas se pertencer à NOITE de uma reserva (checkIn <=
 // dia < checkOut): o dia de saída de uma reserva aparece livre para a próxima
-// entrar (sai às 10h, entra às 13h).
+// entrar (sai às 10h, entra às 14h).
 // `ate` = última noite que se pode reservar (fim da última temporada
 // cadastrada) — depois disso não há preço definido e o site não aceita datas.
 // "Hoje" é o de Brasília (o mesmo que o servidor usa para validar).
@@ -51,7 +51,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
   const foraDoLimite = (d) => !!ate && (escolhendoSaida ? ymd(addDays(d, -1)) > ate : ymd(d) > ate);
 
   // Ao escolher a saída, o dia em que começa a próxima reserva também serve
-  // (sai às 10h, a outra entra às 13h) — só não dá para passar por cima dela.
+  // (sai às 10h, a outra entra às 14h) — só não dá para passar por cima dela.
   const limiteSaida = (apt && escolhendoSaida) ? ultimaSaidaPossivel(reservas || [], apt.id, ymd(selCi)) : null;
   const saidaValida = (d) => escolhendoSaida && ymd(d) > ymd(selCi) && (!limiteSaida || ymd(d) <= limiteSaida);
 
@@ -109,7 +109,7 @@ export function AvailabilityCalendar({ apt, reservas, ci, co, onChange, initialM
                 const isStart = selCi && ymd(d) === ymd(selCi);
                 const isEnd = rangeEnd && ymd(d) === ymd(rangeEnd);
                 // Dia "só de saída": a noite dele está ocupada (outra reserva entra às
-                // 13h), mas a noite anterior está livre — dá para sair nele às 10h.
+                // 14h), mas a noite anterior está livre — dá para sair nele às 10h.
                 // Antes de escolher a entrada aparece verde, para não confundir.
                 const ontem = addDays(d, -1);
                 const soSaida = !past && !fechado && isBlockedNight(d) && ymd(ontem) >= hoje && !isBlockedNight(ontem);

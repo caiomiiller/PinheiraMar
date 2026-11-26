@@ -19,7 +19,7 @@ export const taxas = () => ([
 
 export const estado = (extra = {}) => ({
   versaoDados: 99,
-  residenciais: [{ id: 'r1', nome: 'Residencial Teste', sinalPct: 50, checkInHora: '13:00', checkOutHora: '10:00', email: 'contato@exemplo.com', telefone: '(48) 0000-0000' }],
+  residenciais: [{ id: 'r1', nome: 'Residencial Teste', sinalPct: 50, checkInHora: '14:00', checkOutHora: '10:00', email: 'contato@exemplo.com', telefone: '(48) 0000-0000' }],
   apartamentos: [apt('a1'), apt('a2', { capacidade: 6 })],
   seasons: [temporada()],
   taxasAdicionais: taxas(),

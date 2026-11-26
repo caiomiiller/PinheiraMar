@@ -5,7 +5,7 @@ import { estado, reserva } from './fixtures.js';
 
 const hojeOpts = { agora: Date.parse('2026-10-23T15:00:00Z'), hoje: '2026-10-23' };
 
-// Entrada 13h, saída 10h: o dia em que uma estadia termina e o dia em que
+// Entrada 14h, saída 10h: o dia em que uma estadia termina e o dia em que
 // outra começa podem ser o mesmo — a ocupação conta NOITES, não dias.
 const saiEm02 = reserva({ id: 'x1', apartamentoId: 'a1', checkIn: '2026-10-30', checkOut: '2026-11-02' });
 const entraEm06 = reserva({ id: 'x2', apartamentoId: 'a1', checkIn: '2026-11-06', checkOut: '2026-11-09' });

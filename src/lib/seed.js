@@ -100,7 +100,7 @@ export function seedData() {
     // exemplo de reserva "Reservado" — sinal de 50% já confirmado, falta o
     // saldo/check-in (é o caso que a cor amarela existe para sinalizar)
     mk('a305', '2026-06-19', '2026-06-26', 'Rui', 'Tavares', 2, 0, 'reservado', 'Site', { email: 'rui.t@email.com', tel: '21 99777-3344' }),
-    // Turnover no mesmo dia (14/06): João sai até às 10h e a Família Becker entra a partir das 13h
+    // Turnover no mesmo dia (14/06): João sai até às 10h e a Família Becker entra a partir das 14h
     // checkoutRealizado: true — exemplo de estadia já finalizada (etiqueta vermelha)
     mk('a204', '2026-06-12', '2026-06-14', 'João', 'Pereira', 4, 0, 'confirmado', 'Telefone', { email: 'jp@email.com', tel: '48 99555-9090' }, [], true, true),
     mk('a204', '2026-06-14', '2026-06-19', 'Helena', 'Becker', 3, 1, 'confirmado', 'Site', { email: 'becker@email.com', tel: '51 99444-2211' }),
@@ -122,7 +122,7 @@ export function seedData() {
 
 • O Residencial oferece apartamentos mobiliados para locação de temporada. Não estão incluídos: café da manhã, roupas de cama/mesa/banho, itens de higiene pessoal nem utensílios de praia.
 
-CHECK-IN: 13h00 | CHECK-OUT: 10h00
+CHECK-IN: 14h00 | CHECK-OUT: 10h00
 
 ---
 
@@ -212,7 +212,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       cidade: 'Palhoça - Santa Catarina, Brasil',
       endereco: 'Rua Dom Patrício, 82 - Enseada da Pinheira', cep: '88.139-427',
       fuso: '(GMT-03:00) América/São Paulo', moeda: 'Real Brasileiro (R$)',
-      sinalPct: 50, checkInHora: '13:00', checkOutHora: '10:00',
+      sinalPct: 50, checkInHora: '14:00', checkOutHora: '10:00',
       politicas: {
         reservas: { titulo: 'Termos e Políticas de Hospedagem', texto: politicasReservasTexto },
         cancelamento: { titulo: 'Política de Cancelamento', texto: politicasCancelamentoTexto },
@@ -237,7 +237,7 @@ NOTA: A contagem de dias é feita em relação à data de check-in. Todos os pra
       cidade: 'Palhoça - Santa Catarina, Brasil',
       endereco: 'Rua Hortêncio Pedro Antunes, 55 - Enseada da Pinheira', cep: '',
       fuso: '(GMT-03:00) América/São Paulo', moeda: 'Real Brasileiro (R$)',
-      sinalPct: 50, checkInHora: '13:00', checkOutHora: '10:00',
+      sinalPct: 50, checkInHora: '14:00', checkOutHora: '10:00',
       politicas: {
         // Mesmas políticas do PinheiraMar, como pedido.
         reservas: { titulo: 'Termos e Políticas de Hospedagem', texto: politicasReservasTexto },

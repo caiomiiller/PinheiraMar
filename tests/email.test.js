@@ -4,7 +4,7 @@ import path from 'node:path';
 import { parametrosEmail } from '../server/email.js';
 import { reserva } from './fixtures.js';
 
-const residencial = { nome: 'Residencial Teste', sinalPct: 50, checkInHora: '13:00', checkOutHora: '10:00', telefone: '(48) 0000-0000' };
+const residencial = { nome: 'Residencial Teste', sinalPct: 50, checkInHora: '14:00', checkOutHora: '10:00', telefone: '(48) 0000-0000' };
 const apt = (nome) => ({ nome, vista: 'Frente Mar' });
 
 describe('parametrosEmail', () => {
@@ -13,7 +13,7 @@ describe('parametrosEmail', () => {
     expect(p.titulo).toBe('Reserva confirmada!');
     expect(p.rotulo_sinal).toBe('Sinal pago (50%)');
     expect(p.restante_fmt.replace(/\s/g, ' ')).toBe('R$ 500,00');
-    expect(p.horarios).toBe('Check-in a partir das 13:00 · check-out até 10:00');
+    expect(p.horarios).toBe('Check-in a partir das 14:00 · check-out até 10:00');
   });
   it('fluxo manual (sem pagamento) → "Reserva recebida" e sinal a pagar', () => {
     const p = parametrosEmail([{ reserva: reserva({ total: 1000, sinal: 500, valorPago: 0 }), apt: apt('Apto 1') }], residencial);

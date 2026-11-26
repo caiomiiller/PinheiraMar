@@ -82,7 +82,7 @@ export function stayBreakdown(apt, seasons, ci, co, guests) {
   return { total, n, perNight };
 }
 // Intervalo meia-aberto [check-in, check-out): o dia de check-out (saída até às 10h)
-// pode coincidir com o dia de check-in de outra reserva (entrada a partir das 13h),
+// pode coincidir com o dia de check-in de outra reserva (entrada a partir das 14h),
 // permitindo terminar e iniciar reservas no mesmo dia sem conflito.
 export const overlaps = (aCi, aCo, bCi, bCo) => parseYMD(aCi) < parseYMD(bCo) && parseYMD(aCo) > parseYMD(bCi);
 
@@ -171,7 +171,7 @@ export function isAvailable(reservations, aptId, ci, co, ignoreId) {
 
 // Dado um check-in, devolve a ÚLTIMA data que ainda serve de check-out para
 // este apartamento: o dia em que começa a primeira noite já ocupada. Esse dia
-// é uma saída válida (sai às 10h, a próxima reserva entra às 13h); as datas
+// é uma saída válida (sai às 10h, a próxima reserva entra às 14h); as datas
 // depois dele não, porque atravessam uma noite ocupada. `null` = sem
 // reserva à frente dentro de `maxNoites` noites.
 export function ultimaSaidaPossivel(reservations, aptId, checkIn, maxNoites = 400) {

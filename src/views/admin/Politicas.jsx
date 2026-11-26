@@ -15,7 +15,7 @@ export const POLITICAS_SEED = {
 
 • O Residencial oferece apartamentos mobiliados para locação de temporada. Não estão incluídos: café da manhã, roupas de cama/mesa/banho, itens de higiene pessoal nem utensílios de praia.
 
-CHECK-IN: 13h00 | CHECK-OUT: 10h00
+CHECK-IN: 14h00 | CHECK-OUT: 10h00
 
 ---
 

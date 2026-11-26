@@ -57,7 +57,7 @@ function regrasDaCasa(data, tr) {
   const vagaObrig = achar(/estacion|vaga|garagem/i, 'obrigatoria');
   const estacionamento = [vagaObrig ? tr('ap_regra_vaga_obrig') : tr('ap_regra_vaga'), vagaExtra ? tr('ap_regra_vaga_extra', money(vagaExtra.preco)) : null].filter(Boolean).join(' ');
   return [
-    { icon: Clock, titulo: tr('ap_regra_checkin'), texto: tr('ap_regra_checkin_txt', data.settings.checkInHora || '13:00') },
+    { icon: Clock, titulo: tr('ap_regra_checkin'), texto: tr('ap_regra_checkin_txt', data.settings.checkInHora || '14:00') },
     { icon: DoorOpen, titulo: tr('ap_regra_checkout'), texto: tr('ap_regra_checkout_txt', data.settings.checkOutHora || '10:00') },
     { icon: VolumeX, titulo: tr('ap_regra_silencio'), texto: tr('ap_regra_silencio_txt') },
     { icon: PawPrint, titulo: tr('ap_regra_pets'), texto: pet ? tr('ap_regra_pets_txt', money(pet.preco)) : tr('ap_regra_pets_consulte') },
