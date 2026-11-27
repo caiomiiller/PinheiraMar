@@ -351,6 +351,9 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   // livres. Abaixo do mínimo de noites também aparece: na página do
   // apartamento o hóspede vê fotos e valores e pede pelo WhatsApp.
   const noitesPedido = valid ? nights(bci, bco) : 0;
+  // Apartamentos que a lista mostra no topo para umas datas (filtro ativo +
+  // livres) — o número em cada opção tem de bater com o que se vê ao escolhê-la.
+  const naLista = (a, b) => data.apartamentos.filter(x => x.ativo && catFilter(x) && isAvailable(data.reservas, x.id, a, b));
   // sem teto ligado à pesquisa: o hóspede pode subir de novo depois de
   // escolher uma estadia mais curta (até 30 noites)
   const MAX_NOITES_ALT = 30;
@@ -374,7 +377,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       if (noitesBusca <= noitesPedido ? livres.length <= agora : !livres.length) continue;
       // distância ao período pedido: 0 se a janela cabe dentro dele
       const antes = (parseYMD(bci) - d) / 86400000, depois = (addDays(d, noitesBusca) - parseYMD(bco)) / 86400000;
-      opc.push({ j: [a, b], n: livres.length, livres, dist: Math.max(0, antes, depois) });
+      opc.push({ j: [a, b], n: naLista(a, b).length, livres, dist: Math.max(0, antes, depois) });
     }
     // mais perto do período pedido primeiro (as brechas dentro dele antes
     // de tudo), depois as com mais apartamentos livres
@@ -444,6 +447,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
         }
       }
     }
+    // A brecha nasce da agenda de UM apartamento, mas nessas datas podem
+    // estar livres outros (com uma janela livre maior que a contém): conta
+    // os que a lista mostra ao escolher a opção.
+    for (const o of Object.values(out)) o.aptos = naLista(o.j[0], o.j[1]);
     return Object.values(out).sort((x, y) => (y.dentro - x.dentro) || (x.dist - y.dist) || (y.n - x.n) || (y.aptos.length - x.aptos.length)).slice(0, 6)
       .sort((x, y) => (x.j[0] < y.j[0] ? -1 : x.j[0] > y.j[0] ? 1 : 0));
   })();
