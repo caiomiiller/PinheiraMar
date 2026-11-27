@@ -201,6 +201,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   const [calCi, setCalCi] = useState('');
   const [calCo, setCalCo] = useState('');
   const resultsRef = useRef(null);
+  const listaRef = useRef(null); // início da lista de apartamentos (depois da caixa de opções)
   const searchInlineRef = useRef(null);
   const headerRef = useRef(null);
   const groupRefs = useRef({});
@@ -323,7 +324,18 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   const irPara = (a, b) => {
     if (a === ci && b === co) return;
     vindoDeOpcao.current = true; setCi(a); setCo(b);
-    setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    // numa opção proposta a caixa fica em cima: desliza logo para os
+    // apartamentos livres nessas datas; ao voltar às datas pedidas, para o topo
+    if (a === bci && b === bco) { setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); return; }
+    // desconta o que fica fixo no topo (cabeçalho e barra de filtros), que
+    // muda entre computador e telemóvel
+    setTimeout(() => {
+      const el = listaRef.current; if (!el) return;
+      const fixos = [...document.querySelectorAll('.pm-pubsite-header, .pm-pubsite-catbar')]
+        .filter(x => getComputedStyle(x).position === 'sticky' || getComputedStyle(x).position === 'fixed')
+        .reduce((m, x) => Math.max(m, x.getBoundingClientRect().bottom), 0);
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - fixos - 12, behavior: 'smooth' });
+    }, 120);
   };
   const escolherJanela = ([a, b]) => irPara(a, b);
   const voltarBase = () => irPara(bci, bco);
@@ -1239,6 +1251,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           );
           return <>
             {(!visiveis.length || !naBase) && caixaAlt}
+            <div ref={listaRef} />
             {gruposOrdenados.map(g => <PropertyGroup key={g.residencial.id} g={g} last={g.residencial.id === idUltimoVisivel} />)}
             {visiveis.length > 0 && naBase && caixaAlt}
           </>;
