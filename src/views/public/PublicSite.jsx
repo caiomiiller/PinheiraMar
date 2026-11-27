@@ -144,7 +144,17 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   // estadia para caber numa brecha entre reservas). Volta ao da pesquisa
   // sempre que as datas mudam.
   const [noitesAlt, setNoitesAlt] = useState(0);
-  useEffect(() => { setNoitesAlt(0); }, [ci, co]);
+  // Datas-base: as que o HÓSPEDE escolheu na pesquisa. Clicar numa opção
+  // proposta (datas próximas, brecha) muda as datas em vista mas NÃO a base —
+  // as opções continuam calculadas à volta do pedido original, para não
+  // "andar" a cada clique e o hóspede se perder longe das datas dele.
+  const [base, setBase] = useState(null);
+  const vindoDeOpcao = useRef(false);
+  useEffect(() => {
+    if (vindoDeOpcao.current) { vindoDeOpcao.current = false; return; }
+    setBase(ci && co && ci < co ? { ci, co } : null);
+    setNoitesAlt(0);
+  }, [ci, co]);
   const [hosp, setHosp] = useState(() => pesquisaDoLink.hosp || 0);
   const [pesquisaCopiada, setPesquisaCopiada] = useState(false);
   const [booking, setBooking] = useState(null);
@@ -275,8 +285,10 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   // Datas próximas (N noites, até 14 dias antes/depois da entrada pedida) em
   // que um apartamento está livre — para o hóspede ajustar a viagem. N é o
   // nº de noites escolhido na caixa "Datas próximas" (por omissão, o da pesquisa).
+  const bci = base?.ci || ci, bco = base?.co || co;
+  const naBase = ci === bci && co === bco;
   const janelaDesloc = (d) => {
-    const a = ymd(addDays(parseYMD(ci), d)), b = ymd(addDays(parseYMD(ci), d + noitesBusca));
+    const a = ymd(addDays(parseYMD(bci), d)), b = ymd(addDays(parseYMD(bci), d + noitesBusca));
     if (a < hojeBR || (ultimaNoite && ymd(addDays(parseYMD(b), -1)) > ultimaNoite)) return null;
     return [a, b];
   };
@@ -295,8 +307,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   const blocosNoPedido = (aptId) => {
     if (!valid) return [];
     const blocos = []; let ini = null;
-    const fim = parseYMD(co);
-    for (let d = parseYMD(ci); d <= fim; d = addDays(d, 1)) {
+    const fim = parseYMD(bco);
+    for (let d = parseYMD(bci); d <= fim; d = addDays(d, 1)) {
       const livre = d < fim && isAvailable(data.reservas, aptId, ymd(d), ymd(addDays(d, 1)));
       if (livre && ini === null) ini = d;
       if (!livre && ini !== null) { blocos.push([ymd(ini), ymd(d)]); ini = null; }
@@ -304,7 +316,17 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     return blocos;
   };
   const fmtJanela = ([a, b]) => `${fmtCurta(a)} – ${fmtCurta(b)}`;
-  const escolherJanela = ([a, b]) => { setCi(a); setCo(b); setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); };
+  const mesCurto = (s) => parseYMD(s).toLocaleDateString(locale, { month: 'short' });
+  const fmtIntervalo = ([a, b]) => (a.slice(0, 7) === b.slice(0, 7)
+    ? `${Number(a.slice(8))}–${Number(b.slice(8))} ${mesCurto(a)}`
+    : `${Number(a.slice(8))} ${mesCurto(a)} – ${Number(b.slice(8))} ${mesCurto(b)}`);
+  const irPara = (a, b) => {
+    if (a === ci && b === co) return;
+    vindoDeOpcao.current = true; setCi(a); setCo(b);
+    setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
+  const escolherJanela = ([a, b]) => irPara(a, b);
+  const voltarBase = () => irPara(bci, bco);
 
   // Topo da lista: o que cabe no filtro E está livre nas datas; o resto
   // (fora do filtro ou ocupado) vai para a secção de baixo.
@@ -316,7 +338,7 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   // 7 dias depois do pedido. Cada janela diz quantos apartamentos ficam
   // livres e se cumpre o mínimo de noites da temporada; se não cumpre, a
   // opção é pedir pelo WhatsApp em vez de reservar.
-  const noitesPedido = valid ? nights(ci, co) : 0;
+  const noitesPedido = valid ? nights(bci, bco) : 0;
   // sem teto ligado à pesquisa: o hóspede pode subir de novo depois de
   // escolher uma estadia mais curta (até 30 noites)
   const MAX_NOITES_ALT = 30;
@@ -326,21 +348,21 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     const cabe = (a) => a.ativo && catFilter(a) && (!hosp || a.capacidade >= hosp);
     const aptos = data.apartamentos.filter(cabe);
     // só interessa o que dá MAIS opções do que as datas pedidas
-    const agora = aptos.filter(x => isAvailable(data.reservas, x.id, ci, co)).length;
+    const agora = aptos.filter(x => isAvailable(data.reservas, x.id, bci, bco)).length;
     const opc = [];
-    const ini0 = addDays(parseYMD(ci), -7);
-    const ultimoIni = addDays(parseYMD(ci), Math.max(7, noitesPedido + 7 - noitesBusca));
+    const ini0 = addDays(parseYMD(bci), -7);
+    const ultimoIni = addDays(parseYMD(bci), Math.max(7, noitesPedido + 7 - noitesBusca));
     for (let d = ini0; d <= ultimoIni; d = addDays(d, 1)) {
       const a = ymd(d), b = ymd(addDays(d, noitesBusca));
       if (a < hojeBR || (ultimaNoite && ymd(addDays(d, noitesBusca - 1)) > ultimaNoite)) continue;
-      if (a === ci && b === co) continue;
+      if (a === bci && b === bco) continue;
       const livres = aptos.filter(x => isAvailable(data.reservas, x.id, a, b));
       // com o mesmo nº de noites ou menos, só o que dá MAIS opções do que as
       // datas pedidas; com mais noites, qualquer janela com vaga
       if (noitesBusca <= noitesPedido ? livres.length <= agora : !livres.length) continue;
       const min = regraNoites(data.seasons, a).min;
       // distância ao período pedido: 0 se a janela cabe dentro dele
-      const antes = (parseYMD(ci) - d) / 86400000, depois = (addDays(d, noitesBusca) - parseYMD(co)) / 86400000;
+      const antes = (parseYMD(bci) - d) / 86400000, depois = (addDays(d, noitesBusca) - parseYMD(bco)) / 86400000;
       opc.push({ j: [a, b], n: livres.length, livres, min, abaixo: noitesBusca < min, dist: Math.max(0, antes, depois) });
     }
     // as que dão para reservar antes, depois as que pedem WhatsApp; mais
@@ -360,16 +382,16 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     if (!valid || noitesPedido < 2) return [];
     const cabe = (a) => a.ativo && catFilter(a) && (!hosp || a.capacidade >= hosp);
     const aptos = data.apartamentos.filter(cabe);
-    if (aptos.some(a => isAvailable(data.reservas, a.id, ci, co))) return [];
+    if (aptos.some(a => isAvailable(data.reservas, a.id, bci, bco))) return [];
     const res = [];
     for (let k = 1; k < noitesPedido; k++) {
-      const m = ymd(addDays(parseYMD(ci), k));
-      const primeiros = aptos.filter(a => isAvailable(data.reservas, a.id, ci, m));
-      const segundos = aptos.filter(a => isAvailable(data.reservas, a.id, m, co));
+      const m = ymd(addDays(parseYMD(bci), k));
+      const primeiros = aptos.filter(a => isAvailable(data.reservas, a.id, bci, m));
+      const segundos = aptos.filter(a => isAvailable(data.reservas, a.id, m, bco));
       for (const a of primeiros) for (const b of segundos) {
         if (a.id === b.id) continue;
-        const okMin = k >= regraNoites(data.seasons, ci).min && (noitesPedido - k) >= regraNoites(data.seasons, m).min;
-        res.push({ partes: [{ apt: a, ci, co: m }, { apt: b, ci: m, co }], okMin, mesmo: a.residencialId === b.residencialId, equilibrio: Math.abs(noitesPedido - 2 * k) });
+        const okMin = k >= regraNoites(data.seasons, bci).min && (noitesPedido - k) >= regraNoites(data.seasons, m).min;
+        res.push({ partes: [{ apt: a, ci: bci, co: m }, { apt: b, ci: m, co: bco }], okMin, mesmo: a.residencialId === b.residencialId, equilibrio: Math.abs(noitesPedido - 2 * k) });
       }
     }
     res.sort((x, y) => (Number(y.okMin) - Number(x.okMin)) || (Number(y.mesmo) - Number(x.mesmo)) || (x.equilibrio - y.equilibrio));
@@ -377,6 +399,39 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     const vistos = new Set(); const out = [];
     for (const c of res) { const chave = c.partes[0].co; if (vistos.has(chave)) continue; vistos.add(chave); out.push(c); if (out.length >= 2) break; }
     return out;
+  })();
+
+  // Brechas mais curtas: noites seguidas livres, por apartamento, de 7 dias
+  // antes da entrada a 7 dias depois da saída pedidas — mesmo com menos
+  // noites do que o pedido, porque podem combinar-se. As que tocam as datas
+  // do hóspede vêm primeiro; abaixo do mínimo de noites pede-se pelo WhatsApp.
+  const brechas = (() => {
+    if (!valid || noitesPedido < 2) return [];
+    const cabe = (a) => a.ativo && catFilter(a) && (!hosp || a.capacidade >= hosp);
+    let ini = addDays(parseYMD(bci), -7); const fim = addDays(parseYMD(bco), 7);
+    if (ymd(ini) < hojeBR) ini = parseYMD(hojeBR);
+    const out = {}; // agrupadas por datas: várias com a mesma brecha = uma opção
+    for (const apt of data.apartamentos.filter(cabe)) {
+      let run = null;
+      for (let d = ini; d <= fim; d = addDays(d, 1)) {
+        const livre = d < fim && (!ultimaNoite || ymd(d) <= ultimaNoite) && isAvailable(data.reservas, apt.id, ymd(d), ymd(addDays(d, 1)));
+        if (livre && !run) run = d;
+        if (!livre && run) {
+          const a = ymd(run), b = ymd(d), n = nights(a, b);
+          if (n < noitesPedido) {
+            const dentro = Math.max(0, (Math.min(d, parseYMD(bco)) - Math.max(run, parseYMD(bci))) / 86400000);
+            const dist = dentro ? 0 : Math.min(Math.abs(run - parseYMD(bco)), Math.abs(d - parseYMD(bci))) / 86400000;
+            const min = regraNoites(data.seasons, a).min;
+            const k = a + '|' + b;
+            if (!out[k]) out[k] = { aptos: [], j: [a, b], n, dentro, dist, min, abaixo: n < min };
+            out[k].aptos.push(apt);
+          }
+          run = null;
+        }
+      }
+    }
+    return Object.values(out).sort((x, y) => (y.dentro - x.dentro) || (x.dist - y.dist) || (y.n - x.n) || (y.aptos.length - x.aptos.length)).slice(0, 6)
+      .sort((x, y) => (x.j[0] < y.j[0] ? -1 : x.j[0] > y.j[0] ? 1 : 0));
   })();
 
   // ?imovel=<id> na URL: assim que os grupos existem, desliza até essa secção
@@ -1079,76 +1134,113 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           // destino, sem também apertar a separação entre residenciais).
           const visiveis = gruposOrdenados.filter(g => nTopo(g) > 0);
           const idUltimoVisivel = temOutros ? null : visiveis[visiveis.length - 1]?.residencial.id;
+          const livresNaBase = data.apartamentos.some(a => a.ativo && catFilter(a) && (!hosp || a.capacidade >= hosp) && isAvailable(data.reservas, a.id, bci, bco));
+          // Caixa de opções à volta das datas do hóspede. Pouco texto: um título
+          // com as datas pedidas e três grupos, do mais perto do pedido para o
+          // mais longe — trocar de apartamento nas mesmas datas, a mesma
+          // duração noutras datas, estadias mais curtas.
+          const rotuloSecao = { fontSize: 13, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: GREY, margin: '18px 0 8px' };
+          const gradeOpcoes = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(136px, 1fr))', gap: 8 };
+          const cartaoOpcao = (ativo, tracejado) => ({ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, padding: '10px 12px', borderRadius: R.cartao, background: WHITE, border: ativo ? `2px solid ${BLACK}` : tracejado ? `1px dashed ${C.whatsapp}` : `1px solid ${BORDER}`, margin: ativo ? 0 : 1, fontFamily: F.sans, textAlign: 'left', textDecoration: 'none', cursor: 'pointer', minWidth: 0 });
+          const linhaData = { fontSize: 15.5, fontWeight: 700, color: BLACK, whiteSpace: 'nowrap' };
+          const linhaWhats = { display: 'flex', alignItems: 'center', gap: 5, fontSize: 13.5, fontWeight: 700, color: C.whatsapp };
           const caixaAlt = valid && (
-            <div style={{ border: `1px solid ${BORDER}`, background: LIGHT, borderRadius: R.modal, padding: '18px 20px', marginBottom: 40 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
-                <div style={{ minWidth: 0, flex: '1 1 320px' }}>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: BLACK }}>{visiveis.length ? tr('ps_alt_titulo') : tr('ps_alt_titulo_nenhum')}</div>
-                  <div style={{ fontSize: 15, color: GREY, marginTop: 4 }}>{tr('ps_alt_desc', hosp ? tr('pessoas', hosp) : '')}</div>
+            <div style={{ border: `1px solid ${BORDER}`, background: LIGHT, borderRadius: R.modal, padding: '18px 20px 20px', marginBottom: 40 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: BLACK }}>{livresNaBase ? tr('ps_alt_titulo') : tr('ps_alt_titulo_nenhum_base', fmtIntervalo([bci, bco]))}</div>
+                  <div style={{ fontSize: 15, color: GREY, marginTop: 2 }}>{tr('ps_alt_desc_base', hosp ? tr('pessoas', hosp) : '')}</div>
                 </div>
-                {/* nº de noites a procurar + limpar a pesquisa */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <button type="button" onClick={() => { setCi(''); setCo(''); setHosp(0); setCalOpen(false); setGuestOpen(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, minHeight: 40, padding: '0 14px', fontSize: 14, fontWeight: 700, color: GREY, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, cursor: 'pointer', fontFamily: F.sans }}>
-                  <X size={14} /> {tr('ps_limpar_consulta')}
-                </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.pilula, padding: '5px 6px 5px 14px', flexShrink: 0 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: BLACK }}>{tr('ps_noites_rotulo')}</span>
-                  <button type="button" aria-label={tr('ps_menos_noite')} disabled={noitesBusca <= 1} onClick={() => setNoitesAlt(Math.max(1, noitesBusca - 1))}
-                    style={{ width: 36, height: 36, borderRadius: '50%', border: `1px solid ${noitesBusca <= 1 ? BORDER : C.bordaForte}`, background: WHITE, color: noitesBusca <= 1 ? C.inativo : BLACK, cursor: noitesBusca <= 1 ? 'default' : 'pointer', fontSize: 18 }}>−</button>
-                  <span style={{ fontSize: 17, fontWeight: 800, minWidth: 18, textAlign: 'center', color: BLACK }}>{noitesBusca}</span>
-                  <button type="button" aria-label={tr('ps_mais_noite')} disabled={noitesBusca >= MAX_NOITES_ALT} onClick={() => setNoitesAlt(Math.min(MAX_NOITES_ALT, noitesBusca + 1))}
-                    style={{ width: 36, height: 36, borderRadius: '50%', border: `1px solid ${noitesBusca >= MAX_NOITES_ALT ? BORDER : C.bordaForte}`, background: WHITE, color: noitesBusca >= MAX_NOITES_ALT ? C.inativo : BLACK, cursor: noitesBusca >= MAX_NOITES_ALT ? 'default' : 'pointer', fontSize: 18 }}>+</button>
-                </div>
-                </div>
+                {!naBase && (
+                  <button type="button" onClick={voltarBase}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 40, padding: '0 14px 0 10px', borderRadius: R.pilula, border: `1px solid ${BLACK}`, background: WHITE, color: BLACK, fontFamily: F.sans, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <ChevronLeft size={16} /> {tr('ps_voltar_datas', fmtIntervalo([bci, bco]))}
+                  </button>
+                )}
               </div>
-              {combinacoes.length > 0 && (
-                <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: BLACK }}>{tr('ps_combo_datas_titulo', tr('noites', noitesPedido))} <span style={{ fontWeight: 400, color: GREY }}>· {tr('ps_combo_datas_desc')}</span></div>
+
+              {combinacoes.length > 0 && (<>
+                <div style={rotuloSecao}>{tr('ps_sec_troca')}</div>
+                <div style={{ display: 'grid', gap: 8 }}>
                   {combinacoes.map(c => (
-                    <div key={c.partes.map(x => x.apt.id + x.ci).join('|')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.cartao, padding: '10px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 15, color: BLACK }}>
+                    <div key={c.partes.map(x => x.apt.id + x.ci).join('|')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R.cartao, padding: '8px 8px 8px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', columnGap: 8, rowGap: 2, flexWrap: 'wrap', fontSize: 15, color: BLACK, minWidth: 0, flex: '1 1 240px' }}>
                         {c.partes.map((x, k) => (
                           <React.Fragment key={x.apt.id + x.ci}>
-                            {k > 0 && <span aria-hidden style={{ fontWeight: 800, color: GREY }}>+</span>}
-                            <span><b>{x.apt.nome}</b> <span style={{ color: GREY }}>· {fmtJanela([x.ci, x.co])} · {tr('noites', nights(x.ci, x.co))}</span></span>
+                            {k > 0 && <ChevronRight aria-hidden size={15} color={GREY} />}
+                            <span style={{ whiteSpace: 'nowrap' }}><b>{x.apt.nome}</b> <span style={{ color: GREY }}>{fmtIntervalo([x.ci, x.co])}</span></span>
                           </React.Fragment>
                         ))}
                       </div>
-                      <a href={whatsappUrl(msgCombinacao({ partes: c.partes.map(x => ({ apto: x.apt.nome, ci: x.ci, co: x.co })), hospedes: hosp }))} target="_blank" rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 40, padding: '0 14px', borderRadius: R.pilula, background: C.whatsapp, color: C.white, fontSize: 14, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
-                        <MessageCircle size={15} /> {tr('ps_pedir_combinacao')}
+                      <a href={whatsappUrl(msgCombinacao({ partes: c.partes.map(x => ({ apto: x.apt.nome, ci: x.ci, co: x.co })), hospedes: hosp }))} target="_blank" rel="noopener noreferrer" aria-label={tr('ps_pedir_combinacao')}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 38, padding: '0 14px', borderRadius: R.pilula, background: C.whatsapp, color: C.white, fontSize: 14, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
+                        <MessageCircle size={15} /> {tr('ps_pedir_curto')}
                       </a>
                     </div>
                   ))}
                 </div>
-              )}
+              </>)}
+
+              <div style={{ ...rotuloSecao, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <span>{tr('ps_sec_mesma_duracao')}</span>
+                {/* nº de noites procuradas, compacto, junto do grupo que controla */}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textTransform: 'none', letterSpacing: 0 }}>
+                  <button type="button" aria-label={tr('ps_menos_noite')} disabled={noitesBusca <= 1} onClick={() => setNoitesAlt(Math.max(1, noitesBusca - 1))}
+                    style={{ width: 30, height: 30, borderRadius: '50%', border: `1px solid ${noitesBusca <= 1 ? BORDER : C.bordaForte}`, background: WHITE, color: noitesBusca <= 1 ? C.inativo : BLACK, cursor: noitesBusca <= 1 ? 'default' : 'pointer', fontSize: 16, lineHeight: 1 }}>−</button>
+                  <span style={{ fontSize: 14.5, fontWeight: 700, color: BLACK, minWidth: 64, textAlign: 'center' }}>{tr('noites', noitesBusca)}</span>
+                  <button type="button" aria-label={tr('ps_mais_noite')} disabled={noitesBusca >= MAX_NOITES_ALT} onClick={() => setNoitesAlt(Math.min(MAX_NOITES_ALT, noitesBusca + 1))}
+                    style={{ width: 30, height: 30, borderRadius: '50%', border: `1px solid ${noitesBusca >= MAX_NOITES_ALT ? BORDER : C.bordaForte}`, background: WHITE, color: noitesBusca >= MAX_NOITES_ALT ? C.inativo : BLACK, cursor: noitesBusca >= MAX_NOITES_ALT ? 'default' : 'pointer', fontSize: 16, lineHeight: 1 }}>+</button>
+                </span>
+              </div>
               {alternativasGerais.length ? (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-                  {alternativasGerais.map(({ j, n, livres, min, abaixo }) => abaixo ? (
-                    <a key={j[0]} href={whatsappUrl(msgBrecha({ aptos: livres.slice(0, 3).map(a => a.nome), ci: j[0], co: j[1], noites: noitesBusca, hospedes: hosp }))} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, padding: '10px 14px', borderRadius: R.cartao, border: `1px dashed ${C.whatsapp}`, background: WHITE, textDecoration: 'none', fontFamily: F.sans }}>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: BLACK }}>{fmtJanela(j)}</span>
-                      <span style={{ fontSize: 14, color: GREY }}>{tr('ps_n_livres', n)} · {tr('ps_minimo_noites', min)}</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, fontWeight: 700, color: C.whatsapp }}><MessageCircle size={14} /> {tr('ps_pedir_whatsapp')}</span>
-                    </a>
-                  ) : (
-                    <button key={j[0]} type="button" onClick={() => escolherJanela(j)}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, padding: '10px 14px', borderRadius: R.cartao, border: `1px solid ${BORDER}`, background: WHITE, cursor: 'pointer', fontFamily: F.sans, textAlign: 'left' }}>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: BLACK }}>{fmtJanela(j)}</span>
-                      <span style={{ fontSize: 14, color: C.sucesso, fontWeight: 600 }}>{tr('ps_n_livres', n)} · {tr('noites', noitesBusca)}</span>
-                    </button>
-                  ))}
+                <div style={gradeOpcoes}>
+                  {alternativasGerais.map(({ j, n, livres, min, abaixo }) => {
+                    const ativo = j[0] === ci && j[1] === co;
+                    return abaixo ? (
+                      <a key={j[0]} href={whatsappUrl(msgBrecha({ aptos: livres.slice(0, 3).map(a => a.nome), ci: j[0], co: j[1], noites: noitesBusca, hospedes: hosp }))} target="_blank" rel="noopener noreferrer" style={cartaoOpcao(false, true)}>
+                        <span style={linhaData}>{fmtIntervalo(j)}</span>
+                        <span style={{ fontSize: 14, color: GREY }}>{tr('ps_n_livres', n)} · {tr('ps_min_curto', min)}</span>
+                        <span style={linhaWhats}><MessageCircle size={13} /> WhatsApp</span>
+                      </a>
+                    ) : (
+                      <button key={j[0]} type="button" onClick={() => escolherJanela(j)} aria-pressed={ativo} style={cartaoOpcao(ativo)}>
+                        <span style={linhaData}>{fmtIntervalo(j)}</span>
+                        <span style={{ fontSize: 14, color: C.sucesso, fontWeight: 600 }}>{tr('ps_n_livres', n)}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
-                <div style={{ fontSize: 15, color: GREY, marginTop: 12 }}>{tr('ps_alt_sem', tr('noites', noitesBusca))}</div>
+                <div style={{ fontSize: 15, color: GREY }}>{tr('ps_alt_sem_curto', tr('noites', noitesBusca))}</div>
               )}
+
+              {brechas.length > 0 && (<>
+                <div style={rotuloSecao}>{tr('ps_brechas_titulo')}</div>
+                <div style={gradeOpcoes}>
+                  {brechas.map(({ aptos, j, n, dentro, min, abaixo }) => {
+                    const ativo = j[0] === ci && j[1] === co;
+                    const corpo = <>
+                      {dentro > 0 && <span style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', color: C.acao }}>{tr('ps_nas_suas_datas')}</span>}
+                      <span style={linhaData}>{fmtIntervalo(j)}</span>
+                      <span style={{ fontSize: 14, color: abaixo ? GREY : C.sucesso, fontWeight: abaixo ? 500 : 600 }}>
+                        {tr('noites', n)}{abaixo ? ` · ${tr('ps_min_curto', min)}` : ` · ${aptos.length === 1 ? aptos[0].nome : tr('ps_n_livres', aptos.length)}`}
+                      </span>
+                      {abaixo && <span style={linhaWhats}><MessageCircle size={13} /> WhatsApp</span>}
+                    </>;
+                    return abaixo ? (
+                      <a key={j.join()} href={whatsappUrl(msgBrecha({ aptos: aptos.slice(0, 3).map(a => a.nome), ci: j[0], co: j[1], noites: n, hospedes: hosp }))} target="_blank" rel="noopener noreferrer" style={cartaoOpcao(false, true)}>{corpo}</a>
+                    ) : (
+                      <button key={j.join()} type="button" onClick={() => escolherJanela(j)} aria-pressed={ativo} style={cartaoOpcao(ativo)}>{corpo}</button>
+                    );
+                  })}
+                </div>
+              </>)}
             </div>
           );
           return <>
-            {!visiveis.length && caixaAlt}
+            {(!visiveis.length || !naBase) && caixaAlt}
             {gruposOrdenados.map(g => <PropertyGroup key={g.residencial.id} g={g} last={g.residencial.id === idUltimoVisivel} />)}
-            {visiveis.length > 0 && caixaAlt}
+            {visiveis.length > 0 && naBase && caixaAlt}
           </>;
         })()}
 
