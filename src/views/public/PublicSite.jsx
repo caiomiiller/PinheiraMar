@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Waves, MapPin, MessageCircle, CalendarDays, Heart, ChevronLeft, ChevronRight,
   Home, Users, X, Share2 } from 'lucide-react';
 import { F, fotoTopo, heroVersoes, LOGO_RESIDENCIAL, SIMBOLO_RESIDENCIAL, C, R } from '../../lib/constants';
-import { whatsappUrl, msgGeral, msgBrecha, msgCombinacao } from '../../lib/whatsapp';
+import { whatsappUrl, msgGeral, msgCombinacao } from '../../lib/whatsapp';
 import { money, ymd, today, parseYMD, addDays, isAvailable, nights, pad } from '../../lib/helpers';
 import { orcamentoApartamento, regraNoites } from '../../lib/precos';
 import { ultimaNoiteReservavel, hojeISO } from '../../lib/reservas';
@@ -348,8 +348,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
   // Datas próximas com apartamentos livres: janelas de N noites (N = o da
   // pesquisa ou menos, se o hóspede encurtar) que começam de 7 dias antes a
   // 7 dias depois do pedido. Cada janela diz quantos apartamentos ficam
-  // livres e se cumpre o mínimo de noites da temporada; se não cumpre, a
-  // opção é pedir pelo WhatsApp em vez de reservar.
+  // livres. Abaixo do mínimo de noites também aparece: na página do
+  // apartamento o hóspede vê fotos e valores e pede pelo WhatsApp.
   const noitesPedido = valid ? nights(bci, bco) : 0;
   // sem teto ligado à pesquisa: o hóspede pode subir de novo depois de
   // escolher uma estadia mais curta (até 30 noites)
@@ -372,16 +372,13 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
       // com o mesmo nº de noites ou menos, só o que dá MAIS opções do que as
       // datas pedidas; com mais noites, qualquer janela com vaga
       if (noitesBusca <= noitesPedido ? livres.length <= agora : !livres.length) continue;
-      const min = regraNoites(data.seasons, a).min;
       // distância ao período pedido: 0 se a janela cabe dentro dele
       const antes = (parseYMD(bci) - d) / 86400000, depois = (addDays(d, noitesBusca) - parseYMD(bco)) / 86400000;
-      opc.push({ j: [a, b], n: livres.length, livres, min, abaixo: noitesBusca < min, dist: Math.max(0, antes, depois) });
+      opc.push({ j: [a, b], n: livres.length, livres, dist: Math.max(0, antes, depois) });
     }
-    // as que dão para reservar antes, depois as que pedem WhatsApp; mais
-    // apartamentos livres e mais perto do pedido primeiro
     // mais perto do período pedido primeiro (as brechas dentro dele antes
-    // de tudo), depois as que dão para reservar e as com mais apartamentos
-    return opc.sort((x, y) => (x.dist - y.dist) || (Number(x.abaixo) - Number(y.abaixo)) || (y.n - x.n)).slice(0, 4)
+    // de tudo), depois as com mais apartamentos livres
+    return opc.sort((x, y) => (x.dist - y.dist) || (y.n - x.n)).slice(0, 4)
       .sort((x, y) => (x.j[0] < y.j[0] ? -1 : 1));
   })();
 
@@ -410,13 +407,19 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     // no máximo 2 sugestões, com dias de troca diferentes
     const vistos = new Set(); const out = [];
     for (const c of res) { const chave = c.partes[0].co; if (vistos.has(chave)) continue; vistos.add(chave); out.push(c); if (out.length >= 2) break; }
+    // valor total: são duas reservas, cada parte com o seu orçamento e taxas
+    for (const c of out) {
+      const orcs = c.partes.map(x => orcamentoApartamento({ apt: x.apt, seasons: data.seasons, taxas: data.taxasAdicionais, checkIn: x.ci, checkOut: x.co, hospedes: hosp || undefined }));
+      c.total = orcs.every(Boolean) ? orcs.reduce((s, o) => s + o.total, 0) : 0;
+    }
     return out;
   })();
 
   // Brechas mais curtas: noites seguidas livres, por apartamento, de 7 dias
   // antes da entrada a 7 dias depois da saída pedidas — mesmo com menos
   // noites do que o pedido, porque podem combinar-se. As que tocam as datas
-  // do hóspede vêm primeiro; abaixo do mínimo de noites pede-se pelo WhatsApp.
+  // do hóspede vêm primeiro. Abaixo do mínimo de noites também aparecem: o
+  // pedido pelo WhatsApp fica na página do apartamento.
   const brechas = (() => {
     if (!valid || noitesPedido < 2) return [];
     const cabe = (a) => a.ativo && catFilter(a) && (!hosp || a.capacidade >= hosp);
@@ -433,9 +436,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           if (n < noitesPedido) {
             const dentro = Math.max(0, (Math.min(d, parseYMD(bco)) - Math.max(run, parseYMD(bci))) / 86400000);
             const dist = dentro ? 0 : Math.min(Math.abs(run - parseYMD(bco)), Math.abs(d - parseYMD(bci))) / 86400000;
-            const min = regraNoites(data.seasons, a).min;
             const k = a + '|' + b;
-            if (!out[k]) out[k] = { aptos: [], j: [a, b], n, dentro, dist, min, abaixo: n < min };
+            if (!out[k]) out[k] = { aptos: [], j: [a, b], n, dentro, dist };
             out[k].aptos.push(apt);
           }
           run = null;
@@ -465,6 +467,12 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
     } catch { /* ignora */ }
     setDetail(apt);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  // Parte de uma combinação: abre o apartamento já com as datas dessa parte
+  // (fotos, valores) sem mudar as datas-base da pesquisa.
+  const verParte = (x) => {
+    if (x.ci !== ci || x.co !== co) { vindoDeOpcao.current = true; setCi(x.ci); setCo(x.co); }
+    openDetail(x.apt);
   };
 
   // link recebido com ?apto=<id>: abre logo esse apartamento
@@ -607,14 +615,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: GREY, marginBottom: 6 }}>{tr('ps_livre_dentro')}</div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {blocos.map(j => {
-                      const n = nights(j[0], j[1]); const min = regraNoites(data.seasons, j[0]).min;
-                      return n < min ? (
-                        <a key={j[0]} href={whatsappUrl(msgBrecha({ aptos: [apt.nome], ci: j[0], co: j[1], noites: n, hospedes: hosp }))} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                          style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, padding: '7px 12px', borderRadius: R.cartao, border: `1px dashed ${C.whatsapp}`, background: WHITE, color: BLACK, fontFamily: F.sans, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
-                          <span>{fmtJanela(j)} · {tr('noites', n)}</span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: C.whatsapp }}><MessageCircle size={13} /> WhatsApp · {tr('ps_min_curto', min)}</span>
-                        </a>
-                      ) : (
+                      const n = nights(j[0], j[1]);
+                      return (
                         <button key={j[0]} type="button" onClick={e => { e.stopPropagation(); escolherJanela(j); }}
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: R.pilula, border: `1px solid ${BLACK}`, background: WHITE, color: BLACK, fontFamily: F.sans, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                           <CalendarDays size={14} /> {fmtJanela(j)} · {tr('noites', n)}
@@ -1153,9 +1155,8 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
           // duração noutras datas, estadias mais curtas.
           const rotuloSecao = { fontSize: 13, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: GREY, margin: '18px 0 8px' };
           const gradeOpcoes = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(136px, 1fr))', gap: 8 };
-          const cartaoOpcao = (ativo, tracejado) => ({ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, padding: '10px 12px', borderRadius: R.cartao, background: WHITE, border: ativo ? `2px solid ${BLACK}` : tracejado ? `1px dashed ${C.whatsapp}` : `1px solid ${BORDER}`, margin: ativo ? 0 : 1, fontFamily: F.sans, textAlign: 'left', textDecoration: 'none', cursor: 'pointer', minWidth: 0 });
+          const cartaoOpcao = (ativo) => ({ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, padding: '10px 12px', borderRadius: R.cartao, background: WHITE, border: ativo ? `2px solid ${BLACK}` : `1px solid ${BORDER}`, margin: ativo ? 0 : 1, fontFamily: F.sans, textAlign: 'left', textDecoration: 'none', cursor: 'pointer', minWidth: 0 });
           const linhaData = { fontSize: 15.5, fontWeight: 700, color: BLACK, whiteSpace: 'nowrap' };
-          const linhaWhats = { display: 'flex', alignItems: 'center', gap: 5, fontSize: 13.5, fontWeight: 700, color: C.whatsapp };
           const caixaAlt = valid && (
             <div style={{ border: `1px solid ${BORDER}`, background: LIGHT, borderRadius: R.modal, padding: '18px 20px 20px', marginBottom: 40 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
@@ -1180,14 +1181,20 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
                         {c.partes.map((x, k) => (
                           <React.Fragment key={x.apt.id + x.ci}>
                             {k > 0 && <ChevronRight aria-hidden size={15} color={GREY} />}
-                            <span style={{ whiteSpace: 'nowrap' }}><b>{x.apt.nome}</b> <span style={{ color: GREY }}>{fmtIntervalo([x.ci, x.co])}</span></span>
+                            <button type="button" onClick={() => verParte(x)} title={tr('ps_ver_parte')}
+                              style={{ whiteSpace: 'nowrap', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer', fontFamily: F.sans, fontSize: 15, color: BLACK, textDecoration: 'underline', textDecorationColor: C.bordaForte, textUnderlineOffset: 4 }}>
+                              <b>{x.apt.nome}</b> <span style={{ color: GREY }}>{fmtIntervalo([x.ci, x.co])}</span>
+                            </button>
                           </React.Fragment>
                         ))}
                       </div>
-                      <a href={whatsappUrl(msgCombinacao({ partes: c.partes.map(x => ({ apto: x.apt.nome, ci: x.ci, co: x.co })), hospedes: hosp }))} target="_blank" rel="noopener noreferrer" aria-label={tr('ps_pedir_combinacao')}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexShrink: 0, marginLeft: 'auto' }}>
+                      {c.total > 0 && <span style={{ fontSize: 15, color: GREY, whiteSpace: 'nowrap' }}><b style={{ color: BLACK }}>{money(c.total)}</b> {tr('ps_total')}</span>}
+                      <a href={whatsappUrl(msgCombinacao({ partes: c.partes.map(x => ({ apto: x.apt.nome, ci: x.ci, co: x.co })), hospedes: hosp, total: c.total ? money(c.total) : '' }))} target="_blank" rel="noopener noreferrer" aria-label={tr('ps_pedir_combinacao')}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 38, padding: '0 14px', borderRadius: R.pilula, background: C.whatsapp, color: C.white, fontSize: 14, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
                         <MessageCircle size={15} /> {tr('ps_pedir_curto')}
                       </a>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -1206,15 +1213,9 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               </div>
               {alternativasGerais.length ? (
                 <div style={gradeOpcoes}>
-                  {alternativasGerais.map(({ j, n, livres, min, abaixo }) => {
+                  {alternativasGerais.map(({ j, n }) => {
                     const ativo = j[0] === ci && j[1] === co;
-                    return abaixo ? (
-                      <a key={j[0]} href={whatsappUrl(msgBrecha({ aptos: livres.slice(0, 3).map(a => a.nome), ci: j[0], co: j[1], noites: noitesBusca, hospedes: hosp }))} target="_blank" rel="noopener noreferrer" style={cartaoOpcao(false, true)}>
-                        <span style={linhaData}>{fmtIntervalo(j)}</span>
-                        <span style={{ fontSize: 14, color: GREY }}>{tr('ps_n_livres', n)} · {tr('ps_min_curto', min)}</span>
-                        <span style={linhaWhats}><MessageCircle size={13} /> WhatsApp</span>
-                      </a>
-                    ) : (
+                    return (
                       <button key={j[0]} type="button" onClick={() => escolherJanela(j)} aria-pressed={ativo} style={cartaoOpcao(ativo)}>
                         <span style={linhaData}>{fmtIntervalo(j)}</span>
                         <span style={{ fontSize: 14, color: C.sucesso, fontWeight: 600 }}>{tr('ps_n_livres', n)}</span>
@@ -1229,20 +1230,14 @@ function PublicSiteConteudo({ data, onReservar, lang, setLang, idiomasAtivos }) 
               {brechas.length > 0 && (<>
                 <div style={rotuloSecao}>{tr('ps_brechas_titulo')}</div>
                 <div style={gradeOpcoes}>
-                  {brechas.map(({ aptos, j, n, dentro, min, abaixo }) => {
+                  {brechas.map(({ aptos, j, n, dentro }) => {
                     const ativo = j[0] === ci && j[1] === co;
-                    const corpo = <>
-                      {dentro > 0 && <span style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', color: C.acao }}>{tr('ps_nas_suas_datas')}</span>}
-                      <span style={linhaData}>{fmtIntervalo(j)}</span>
-                      <span style={{ fontSize: 14, color: abaixo ? GREY : C.sucesso, fontWeight: abaixo ? 500 : 600 }}>
-                        {tr('noites', n)}{abaixo ? ` · ${tr('ps_min_curto', min)}` : ` · ${aptos.length === 1 ? aptos[0].nome : tr('ps_n_livres', aptos.length)}`}
-                      </span>
-                      {abaixo && <span style={linhaWhats}><MessageCircle size={13} /> WhatsApp</span>}
-                    </>;
-                    return abaixo ? (
-                      <a key={j.join()} href={whatsappUrl(msgBrecha({ aptos: aptos.slice(0, 3).map(a => a.nome), ci: j[0], co: j[1], noites: n, hospedes: hosp }))} target="_blank" rel="noopener noreferrer" style={cartaoOpcao(false, true)}>{corpo}</a>
-                    ) : (
-                      <button key={j.join()} type="button" onClick={() => escolherJanela(j)} aria-pressed={ativo} style={cartaoOpcao(ativo)}>{corpo}</button>
+                    return (
+                      <button key={j.join()} type="button" onClick={() => escolherJanela(j)} aria-pressed={ativo} style={cartaoOpcao(ativo)}>
+                        {dentro > 0 && <span style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', color: C.acao }}>{tr('ps_nas_suas_datas')}</span>}
+                        <span style={linhaData}>{fmtIntervalo(j)}</span>
+                        <span style={{ fontSize: 14, color: C.sucesso, fontWeight: 600 }}>{tr('noites', n)} · {aptos.length === 1 ? aptos[0].nome : tr('ps_n_livres', aptos.length)}</span>
+                      </button>
                     );
                   })}
                 </div>

@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Heart, BedDouble, Wifi, Users,
   Sun, Clock, VolumeX, PawPrint, CigaretteOff, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { Faixa, FAIXA_INDEX, BRAND } from '../../components/Brand';
 import { C, F, GOOGLE_RATING, R, SIMBOLO_RESIDENCIAL } from '../../lib/constants';
-import { whatsappUrl, msgApartamento } from '../../lib/whatsapp';
+import { whatsappUrl, msgApartamento, msgPedidoMinimo } from '../../lib/whatsapp';
 import { money, nights, ymd, today, addDays, isAvailable } from '../../lib/helpers';
 import { orcamentoReserva, regraNoites } from '../../lib/precos';
 import { useIdioma } from '../../lib/i18n';
@@ -179,6 +179,13 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
   );
 
   const canBookNow = !!(localNights && isAvail && meetsMin && (!useApt2 || (apt2Id && isAvail2)) && comboAtendeReq);
+  // Abaixo do mínimo de noites mas livre: o hóspede vê tudo (fotos, valores)
+  // e pede a reserva pelo WhatsApp — fica só a nossa aprovação.
+  const pedeWhats = !!(localNights && isAvail && abaixoMin && !acimaMax && (!useApt2 || (apt2Id && isAvail2)) && comboAtendeReq);
+  const linkPedido = pedeWhats ? whatsappUrl(msgPedidoMinimo({
+    aptos: [apt.nome, useApt2 && apt2 ? apt2.nome : null], ci: localCi, co: localCo, noites: localNights,
+    hospedes: localHosp, total: orc ? money(totalComExtras) : '', minimo: minN,
+  })) : null;
   const nQuartos = apt.quartos || 1;
   const nCamas = camas.reduce((n, c) => n + (Number(c.qtd) || 0), 0) || 1;
 
@@ -576,10 +583,17 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
 
               {/* mínimo / máximo de noites */}
               {(abaixoMin || acimaMax) && (
-                <div role="alert" style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 10, padding: '10px 12px', borderRadius: R.cartao, background: C.avisoBg, fontSize: 16.5, color: C.aviso, fontWeight: 600 }}>
-                  <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
-                  {abaixoMin ? tr('ap_minimo_noites', minN, regra.temporada?.nome) : tr('ap_maximo_noites', maxN, regra.temporada?.nome)}
-                </div>
+                pedeWhats ? (
+                  <div role="status" style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 10, padding: '10px 12px', borderRadius: R.cartao, background: C.infoBg, border: `1px solid ${C.infoBorda}`, fontSize: 16, color: C.info, fontWeight: 600, lineHeight: 1.4 }}>
+                    <MessageCircle size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+                    {tr('ap_minimo_whats', minN)}
+                  </div>
+                ) : (
+                  <div role="alert" style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 10, padding: '10px 12px', borderRadius: R.cartao, background: C.avisoBg, fontSize: 16.5, color: C.aviso, fontWeight: 600 }}>
+                    <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
+                    {abaixoMin ? tr('ap_minimo_noites', minN, regra.temporada?.nome) : tr('ap_maximo_noites', maxN, regra.temporada?.nome)}
+                  </div>
+                )
               )}
 
               {/* disponibilidade e detalhe do preço */}
@@ -604,7 +618,12 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                 </div>
               )}
 
-              {(() => {
+              {pedeWhats ? (
+                <a href={linkPedido} target="_blank" rel="noopener noreferrer"
+                  style={{ width: '100%', minHeight: 54, padding: '0 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: C.whatsapp, color: C.white, borderRadius: R.cartao, fontWeight: 700, fontSize: 17, textDecoration: 'none', fontFamily: F.sans, boxSizing: 'border-box' }}>
+                  <MessageCircle size={19} /> {tr('ap_btn_pedir_whats')}
+                </a>
+              ) : (() => {
                 const canBook = canBookNow;
                 const label = !localNights ? tr('ap_btn_selecione_datas')
                   : !isAvail ? tr('ap_btn_indisponivel')
@@ -625,7 +644,7 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                 );
               })()}
 
-              <p style={{ textAlign: 'center', fontSize: 16, color: C.inkSoft, marginTop: 10 }}>{tr('ap_sem_cobrancas', data.settings.sinalPct)}</p>
+              <p style={{ textAlign: 'center', fontSize: 16, color: C.inkSoft, marginTop: 10 }}>{pedeWhats ? tr('ap_whats_nota') : tr('ap_sem_cobrancas', data.settings.sinalPct)}</p>
             </div>
 
             {/* precisa de ajuda */}
@@ -658,6 +677,19 @@ export function AptDetailPage({ apt, data, ci, co, hosp, setCi, setCo, setHosp, 
                 <div style={{ fontSize: 16, color: C.inkSoft, textDecoration: 'underline' }}>{tr('ap_ver_detalhes_preco')}</div>
               </button>
               {btn(tr('ap_reservar_curto'), handleBook)}
+            </>
+          );
+          if (pedeWhats && orc) return (
+            <>
+              <button onClick={() => openSheet(false)} style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: F.sans, color: C.ink, minWidth: 0 }}>
+                <div style={{ fontSize: 16, color: C.inkSoft }}>{fmtCurta(localCi)} – {fmtCurta(localCo)} · {tr('noites', localNights)}</div>
+                <div style={{ fontSize: 19, fontWeight: 700 }}>{money(totalComExtras)} <span style={{ fontSize: 16, fontWeight: 500, color: C.inkSoft }}>{tr('ps_total')}</span></div>
+                <div style={{ fontSize: 15, color: C.info, fontWeight: 600 }}>{tr('ap_min_curto_barra', minN)}</div>
+              </button>
+              <a href={linkPedido} target="_blank" rel="noopener noreferrer"
+                style={{ minHeight: 52, padding: '0 18px', display: 'inline-flex', alignItems: 'center', gap: 7, background: C.whatsapp, color: C.white, borderRadius: R.cartao, fontWeight: 700, fontSize: 17, textDecoration: 'none', fontFamily: F.sans, flexShrink: 0 }}>
+                <MessageCircle size={18} /> {tr('ap_pedir_curto')}
+              </a>
             </>
           );
           if (localNights > 0 && !isAvail) return (

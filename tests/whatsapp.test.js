@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { whatsappUrl, msgGeral, msgApartamento, msgErroReserva, msgReserva, msgBrecha, msgCombinacao } from '../src/lib/whatsapp';
+import { whatsappUrl, msgGeral, msgApartamento, msgErroReserva, msgReserva, msgPedidoMinimo, msgCombinacao } from '../src/lib/whatsapp';
 import { WHATSAPP_URL } from '../src/lib/constants';
 
 const texto = (url) => new URL(url).searchParams.get('text');
@@ -46,18 +46,22 @@ describe('links de WhatsApp com mensagem', () => {
   });
 });
 
-describe('msgBrecha (datas abaixo do mínimo de noites)', () => {
-  it('leva apartamentos, datas, noites e pessoas', () => {
-    expect(msgBrecha({ aptos: ['Apto 01', 'Apto 03'], ci: '2026-12-21', co: '2026-12-23', noites: 2, hospedes: 4 }))
-      .toBe('Olá! Vi no site que o(s) Apto 01, Apto 03 estão livre(s) de 21/12/2026 a 23/12/2026, 2 noites, para 4 pessoas, abaixo do mínimo de noites. É possível reservar?');
+describe('msgPedidoMinimo (reserva abaixo do mínimo de noites)', () => {
+  it('leva apartamento, datas, noites, pessoas, valor e o mínimo', () => {
+    expect(msgPedidoMinimo({ aptos: ['Apto 102'], ci: '2026-12-28', co: '2026-12-30', noites: 2, hospedes: 2, total: 'R$ 1.315,00', minimo: 3 }))
+      .toBe('Olá! Gostaria de reservar o Apto 102 de 28/12/2026 a 30/12/2026 (2 noites), para 2 pessoas, no valor de R$ 1.315,00. Vi no site que o mínimo nestas datas é de 3 noites — é possível aprovar esta reserva?');
   });
-  it('um apartamento e uma noite, sem pessoas', () => {
-    expect(msgBrecha({ aptos: ['Apto 207'], ci: '2026-12-24', co: '2026-12-25', noites: 1 }))
-      .toBe('Olá! Vi no site que o(s) Apto 207 está livre(s) de 24/12/2026 a 25/12/2026, 1 noite, abaixo do mínimo de noites. É possível reservar?');
+  it('dois apartamentos e uma noite, sem pessoas nem valor', () => {
+    expect(msgPedidoMinimo({ aptos: ['Apto 01', 'Apto 03'], ci: '2026-12-24', co: '2026-12-25', noites: 1, minimo: 2 }))
+      .toBe('Olá! Gostaria de reservar o Apto 01 + Apto 03 de 24/12/2026 a 25/12/2026 (1 noite). Vi no site que o mínimo nestas datas é de 2 noites — é possível aprovar esta reserva?');
   });
 });
 
 describe('msgCombinacao (dois apartamentos cobrem as datas)', () => {
+  it('com o valor total das duas partes', () => {
+    expect(msgCombinacao({ partes: [{ apto: 'Apto 102', ci: '2026-12-20', co: '2026-12-23' }, { apto: 'Apto 101', ci: '2026-12-23', co: '2026-12-26' }], hospedes: 2, total: 'R$ 3.100,00' }))
+      .toBe('Olá! Vi no site uma combinação para as minhas datas: Apto 102 de 20/12/2026 a 23/12/2026 e Apto 101 de 23/12/2026 a 26/12/2026, para 2 pessoas, no valor total de R$ 3.100,00. É possível reservar assim?');
+  });
   it('leva cada parte com as datas e as pessoas', () => {
     expect(msgCombinacao({ partes: [{ apto: 'Apto 211', ci: '2026-12-20', co: '2026-12-22' }, { apto: 'Apto 212', ci: '2026-12-22', co: '2026-12-26' }], hospedes: 2 }))
       .toBe('Olá! Vi no site uma combinação para as minhas datas: Apto 211 de 20/12/2026 a 22/12/2026 e Apto 212 de 22/12/2026 a 26/12/2026, para 2 pessoas. É possível reservar assim?');

@@ -45,14 +45,16 @@ export function msgReserva({ codigo, aptos, ci, co, falhou }) {
   return falhou ? `${base} e o pagamento não foi concluído. Pode me ajudar?` : `${base}.`;
 }
 
-// Datas próximas abaixo do mínimo de noites: o hóspede pede pelo WhatsApp.
-export function msgBrecha({ aptos, ci, co, noites, hospedes }) {
-  const nomes = [].concat(aptos).filter(Boolean).join(', ');
-  return `Olá! Vi no site que ${nomes ? `o(s) ${nomes}` : 'há apartamentos'} ${nomes && aptos.length > 1 ? 'estão' : 'está'} livre(s) ${junta([periodo(ci, co), `${noites} ${noites === 1 ? 'noite' : 'noites'}`, pessoas(hospedes)])}, abaixo do mínimo de noites. É possível reservar?`;
+// Reserva abaixo do mínimo de noites: o hóspede já viu o apartamento, as
+// fotos e o valor no site e pede a nossa aprovação pelo WhatsApp.
+export function msgPedidoMinimo({ aptos, ci, co, noites, hospedes, total, minimo }) {
+  const nomes = [].concat(aptos).filter(Boolean).join(' + ');
+  const estadia = junta([`${nomes} ${periodo(ci, co)} (${noites} ${noites === 1 ? 'noite' : 'noites'})`, pessoas(hospedes), total ? `no valor de ${total}` : '']);
+  return `Olá! Gostaria de reservar o ${estadia}. Vi no site que o mínimo nestas datas é de ${minimo} noites — é possível aprovar esta reserva?`;
 }
 
 // Combinação de dois apartamentos (troca a meio da estadia), pedida pelo WhatsApp.
-export function msgCombinacao({ partes, hospedes }) {
+export function msgCombinacao({ partes, hospedes, total }) {
   const trechos = (partes || []).map(p => `${p.apto} ${periodo(p.ci, p.co)}`).join(' e ');
-  return `Olá! Vi no site uma combinação para as minhas datas: ${junta([trechos, pessoas(hospedes)])}. É possível reservar assim?`;
+  return `Olá! Vi no site uma combinação para as minhas datas: ${junta([trechos, pessoas(hospedes), total ? `no valor total de ${total}` : ''])}. É possível reservar assim?`;
 }
